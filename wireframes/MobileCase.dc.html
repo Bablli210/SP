@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mobile case study</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&amp;family=Instrument+Serif:ital@0;1&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;font-family:"Archivo","Helvetica Neue",sans-serif;color:#0E0E0E;background:#F3F2EE}
+a{color:#0E0E0E;text-decoration:none}a:hover{color:#2B3BF2}
+</style>
+</helmet>
+<div style="width: 390px; height: 2600px; box-sizing: border-box; background: #F3F2EE; display: flex; flex-direction: column">
+  <div style="position: relative; height: 700px; background: #C9C6BD; flex-shrink: 0">
+    <div style="position: absolute; left: 16px; right: 16px; top: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; text-transform: uppercase">
+      <a href="MobileHome.dc.html" style="font-weight: 700">Serious Play</a>
+      <a href="MobileHome.dc.html" style="padding: 10px 14px; background: #F3F2EE; border-radius: 999px; font-family: 'IBM Plex Mono', monospace; font-size: 11px">Close</a>
+    </div>
+    <span style="position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%); font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; text-transform: uppercase; color: #3A3935; white-space: nowrap">Hero · full-screen</span>
+    <div style="position: absolute; left: 16px; right: 16px; bottom: 20px; display: flex; flex-direction: column; gap: 6px">
+      <span style="font-family: 'Instrument Serif', serif; font-size: 64px; line-height: 0.88">[Project name]</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; text-transform: uppercase">N°014 · 2025</span>
+    </div>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; padding: 24px 16px; border-bottom: 1px solid #0E0E0E">
+    <div style="display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; color: #5E5D59">Client</span><span style="font-family: 'Instrument Serif', serif; font-size: 20px">[Client]</span></div>
+    <div style="display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; color: #5E5D59">Discipline</span><span style="font-family: 'Instrument Serif', serif; font-size: 20px">[Identity]</span></div>
+    <div style="grid-column: 1 / span 2; display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; color: #2B3BF2">Finding</span><span style="font-family: 'Instrument Serif', serif; font-size: 22px; line-height: 1.15">[One-sentence insight.]</span></div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 16px; padding: 24px 16px">
+    <div style="aspect-ratio: 4/5; background: #DCD9D1"></div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px"><div style="aspect-ratio: 4/5; background: #DCD9D1"></div><div style="aspect-ratio: 4/5; background: #DCD9D1"></div></div>
+    <div style="aspect-ratio: 9/16; background: #0E0E0E; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #BEBDB8; text-transform: uppercase">Film · autoplays muted</div>
+  </div>
+  <a href="MobileCase.dc.html" style="margin-top: auto; height: 260px; background: #C9C6BD; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; padding: 20px 16px">
+    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; text-transform: uppercase">Next project</span>
+    <span style="font-family: 'Instrument Serif', serif; font-size: 48px; line-height: 0.9">[Next] →</span>
+  </a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2600}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

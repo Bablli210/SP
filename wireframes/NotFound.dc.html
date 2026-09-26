@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>404</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&amp;family=Instrument+Serif:ital@0;1&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;font-family:"Archivo","Helvetica Neue",sans-serif;color:#0E0E0E;background:#F3F2EE}
+a{color:#0E0E0E;text-decoration:none}a:hover{color:#2B3BF2}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; position: relative; overflow: hidden; background: #F3F2EE">
+  <header style="position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: space-between; align-items: center; padding: 28px 40px; font-size: 12px; letter-spacing: 0.02em; text-transform: uppercase; z-index: 3">
+    <a href="Home.dc.html" style="font-weight: 700">Serious Play</a>
+    <nav style="display: flex; gap: 24px"><a href="WorkIndex.dc.html">Work</a><a href="Studio.dc.html">Studio</a><a href="Services.dc.html">Services</a><a href="Lab.dc.html">Lab</a><a href="Contact.dc.html">Contact</a></nav>
+  </header>
+  <div style="position: absolute; left: 120px; top: 520px; width: 220px; height: 275px; background: #DCD9D1; transform: rotate(-38deg)"></div>
+  <div style="position: absolute; left: 380px; top: 610px; width: 220px; height: 275px; background: #CFCCC3; transform: rotate(71deg)"></div>
+  <div style="position: absolute; left: 820px; top: 560px; width: 220px; height: 275px; background: #DCD9D1; transform: rotate(-12deg)"></div>
+  <div style="position: absolute; left: 1080px; top: 480px; width: 220px; height: 275px; background: #CFCCC3; transform: rotate(24deg)"></div>
+  <div style="position: absolute; left: 600px; top: 660px; width: 220px; height: 275px; background: #DCD9D1; transform: rotate(-80deg)"></div>
+  <div style="position: absolute; left: 40px; top: 150px; display: flex; flex-direction: column; gap: 20px; z-index: 2">
+    <span style="font-size: 260px; line-height: 0.8; font-weight: 800; font-stretch: 62%">404</span>
+    <span style="font-family: 'Instrument Serif', serif; font-size: 36px">This page fell off the ring.</span>
+    <a href="Home.dc.html" style="align-self: flex-start; padding: 14px 20px; background: #0E0E0E; color: #F3F2EE; font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em">Back to the work →</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
