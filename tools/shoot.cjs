@@ -53,6 +53,8 @@ const localMap = [
       return route.continue();
     });
     await p.goto(url, { waitUntil: "load" });
+    // Rulebook screenshots show the site without the concept navigation pill
+    if (jpeg) await p.addStyleTag({ content: ".sp-concept{display:none!important}" });
     await p.waitForTimeout(wait);
     const file = `${out}-${name}.${jpeg ? "jpg" : "png"}`;
     fs.mkdirSync(path.dirname(file), { recursive: true });
