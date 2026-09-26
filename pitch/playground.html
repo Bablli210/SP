@@ -1,0 +1,815 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Playground · Serious Play</title>
+<meta name="description" content="Serious Play is a brand studio. We create brands rooted by serious research and driven by playful imagination.">
+<meta name="theme-color" content="#F3F2EF">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400..900&family=Figtree:wght@400..800&display=swap">
+<script>document.documentElement.classList.add('js')</script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<style>
+:root{
+  --chalk:#F3F2EF;--chalk-2:#E7E6E2;--paper:#FBFAF8;--ink:#151515;--ink-2:#4A4A48;
+  --tomato:#FF4A3D;--sun:#FFC631;--cobalt:#2D4BFF;--mint:#2FC79A;--gum:#FF8BD1;
+  --fd:"Unbounded","Arial Black","Helvetica Neue",Arial,sans-serif;
+  --fb:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --gut:clamp(16px,3vw,48px);
+  --spring:cubic-bezier(.3,1.6,.5,1);
+  --out:cubic-bezier(.2,.8,.2,1);
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{background:var(--chalk);color:var(--ink);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+body{margin:0;padding-bottom:96px;background:var(--chalk);color:var(--ink);font:400 17px/1.55 var(--fb);overflow-x:clip;-webkit-font-smoothing:antialiased}
+::selection{background:var(--sun);color:var(--ink)}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--cobalt);outline-offset:3px}
+.sr{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.skip{position:absolute;left:var(--gut);top:-80px;z-index:50;padding:12px 18px;border-radius:999px;background:var(--ink);color:var(--chalk);font-weight:700;text-decoration:none}
+.skip:focus{top:12px}
+
+/* ---------- header ---------- */
+.hd{display:flex;align-items:center;gap:14px 28px;padding:18px var(--gut)}
+.brand{display:inline-flex;align-items:center;gap:12px;font:700 16px/1 var(--fd);letter-spacing:-.01em;text-decoration:none;white-space:nowrap;border-radius:12px}
+.brand-b{display:inline-flex}
+.brand-b span{display:grid;place-items:center;width:34px;height:34px;border:2px solid var(--ink);border-radius:9px;font:900 16px/1 var(--fd);transition:transform .4s var(--spring)}
+.brand-b span:first-child{background:var(--tomato);transform:rotate(-7deg)}
+.brand-b span:last-child{margin-left:-5px;background:var(--cobalt);color:var(--chalk);transform:translateY(3px) rotate(6deg)}
+.brand:hover .brand-b span:first-child{transform:translateY(-3px) rotate(5deg)}
+.brand:hover .brand-b span:last-child{transform:translateY(0) rotate(-6deg)}
+.nav{flex:1;display:flex;justify-content:center}
+.nav ul{display:flex;gap:4px;margin:0;padding:0;list-style:none}
+.nav a{display:block;padding:10px 16px;border-radius:999px;font-weight:600;font-size:16px;text-decoration:none;transition:background-color .2s}
+.nav a:hover{background:rgba(21,21,21,.08)}
+.mess{display:inline-flex;align-items:center;gap:12px;height:58px;padding:0 28px 0 18px;border:2px solid var(--ink);border-radius:999px;background:var(--ink);color:var(--chalk);font:700 17px/1 var(--fb);white-space:nowrap;cursor:pointer;transition:transform .35s var(--spring),background-color .2s,color .2s}
+.mess:hover{transform:translateY(-2px) rotate(-2deg)}
+.mess:active{transform:scale(.95)}
+.mess[aria-pressed="true"]{background:var(--paper);color:var(--ink)}
+.mess:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.mess svg{width:32px;height:32px;overflow:visible}
+.mess .ic{transform-box:fill-box;transform-origin:center;transition:transform .5s var(--spring)}
+.mess:not(:disabled):hover .i1,.mess[aria-pressed="true"] .i1{transform:translate(-2px,-7px) rotate(-30deg)}
+.mess:not(:disabled):hover .i2,.mess[aria-pressed="true"] .i2{transform:translate(1px,5px) rotate(28deg)}
+.mess:not(:disabled):hover .i3,.mess[aria-pressed="true"] .i3{transform:translate(3px,-6px) rotate(42deg)}
+.mess[aria-pressed="true"]:hover .ic{transform:none}
+@media (max-width:760px){
+  .hd{flex-wrap:wrap;padding-top:14px;padding-bottom:12px}
+  .nav{order:3;flex-basis:100%}
+  .nav ul{width:100%;justify-content:space-between}
+  .nav a{padding:8px 10px;font-size:15px}
+  .mess{margin-left:auto;height:50px;padding:0 20px 0 14px;font-size:16px}
+  .mess{height:48px;gap:8px;padding:0 18px 0 12px;font-size:15px}
+  .mess svg{width:26px;height:26px}
+  .brand{gap:10px}
+  .brand-n{font-size:13px}
+}
+@media (max-width:384px){.brand-n{display:none}}
+
+/* ---------- hero playground ---------- */
+.hero{padding:0 var(--gut)}
+.pg{position:relative;height:min(78vh,720px);min-height:320px;overflow:hidden;isolation:isolate;touch-action:pan-y;border-radius:clamp(20px,2.4vw,32px);background-color:var(--chalk-2);background-image:radial-gradient(circle,rgba(21,21,21,.13) 1.1px,transparent 1.7px);background-size:22px 22px;background-position:11px 11px}
+@media (max-width:640px){.pg{height:70vh;min-height:400px}}
+.pg-word{margin:0;padding:48px 16px 0;font-size:inherit}
+.js .pg-word{padding:0}
+.pg-lab{position:absolute;top:18px;z-index:0;display:flex;align-items:center;gap:8px;margin:0;font:700 11px/1 var(--fb);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);pointer-events:none}
+.pg-lab--l{left:20px}.pg-lab--r{right:20px}
+.pg-dot{width:9px;height:9px;border:1.5px solid var(--ink-2);border-radius:50%;transition:background-color .2s}
+.pg.is-mess .pg-dot{background:var(--tomato);border-color:var(--ink)}
+@media (max-width:640px){.pg-lab{top:14px}.pg-lab--l{left:14px}.pg-lab--r{right:14px}.pg-lab .x{display:none}}
+.pg-ghost{position:absolute;inset:0;z-index:0;width:100%;height:100%;fill:none;stroke:rgba(21,21,21,.24);stroke-width:1.5;stroke-dasharray:5 5;pointer-events:none}
+.pc{display:inline-grid;width:64px;height:64px;margin:4px;vertical-align:top;z-index:1;touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+.js .pc{position:absolute;left:0;top:0;display:block;margin:0;will-change:transform}
+.pc.held{cursor:grabbing}
+.pc-f{display:grid;place-items:center;width:100%;height:100%;transition:transform .3s var(--spring)}
+@media (hover:hover) and (pointer:fine){.pc:hover .pc-f{transform:scale(1.04)}}
+.pc.held .pc-f{transform:scale(1.07)}
+.pc-l .pc-f{padding-top:.04em;border:var(--bw,2px) solid var(--ink);border-radius:var(--rad,14px);background:var(--bg);color:var(--fg);font:900 var(--fs,34px)/1 var(--fd);box-shadow:inset 0 calc(var(--bw,2px) * -2.6) 0 rgba(21,21,21,.16),inset 0 calc(var(--bw,2px) * 1.3) 0 rgba(255,255,255,.3)}
+.pc-t{padding:0;border:0;background:none;border-radius:var(--rad,50%)}
+.pc-t .pc-f{overflow:hidden;border:var(--bw,2px) solid var(--ink);border-radius:var(--rad,50%);background:var(--paper)}
+.pc-t svg{display:block;width:100%;height:100%}
+.pc-t:focus-visible{outline:none}
+.pc-t:focus-visible .pc-f{outline:3px solid var(--cobalt);outline-offset:3px}
+.pc-s svg{display:block;width:100%;height:100%;overflow:visible}
+.pc-s svg *{stroke:var(--ink);stroke-width:2;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.hero-ft{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px 56px;align-items:end;padding-top:clamp(22px,2.6vw,36px)}
+.thesis{max-width:28ch;margin:0;font:500 clamp(23px,2.7vw,40px)/1.16 var(--fb);letter-spacing:-.022em}
+.hl-s{text-decoration:underline;text-decoration-thickness:.075em;text-underline-offset:.14em}
+.hl-p{padding:0 .14em;border-radius:.2em;background:var(--sun);-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.hint{display:grid;gap:10px;margin:0;padding:0 0 4px;list-style:none;font:600 15px/1.35 var(--fb)}
+.hint li{display:flex;align-items:center;gap:10px}
+.hint svg{flex:none;width:22px;height:22px}
+.pg-note{margin:0;padding:8px 12px;border:1.5px dashed var(--ink-2);border-radius:10px;font:500 14px/1.4 var(--fb);color:var(--ink-2)}
+@media (max-width:760px){.hero-ft{grid-template-columns:1fr}}
+
+/* ---------- sections ---------- */
+.sec{padding:clamp(96px,12vw,176px) var(--gut) 0;scroll-margin-top:8px}
+.sec-hd{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:20px 56px;align-items:end;margin-bottom:clamp(40px,5vw,72px)}
+.ey{display:flex;align-items:center;gap:10px;margin:0 0 18px;font:700 12px/1 var(--fb);letter-spacing:.16em;text-transform:uppercase}
+.ey svg{width:16px;height:16px;overflow:visible}
+.ey svg *{stroke:var(--ink);stroke-width:1.5}
+.h2{margin:0;font:800 clamp(40px,6.6vw,104px)/.95 var(--fd);letter-spacing:-.045em}
+.sec-hd p{max-width:40ch;margin:0;color:var(--ink-2);font-size:clamp(17px,1.35vw,20px);line-height:1.5}
+@media (max-width:760px){.sec-hd{grid-template-columns:1fr}}
+
+/* work */
+.works{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(36px,4vw,60px) clamp(14px,2.4vw,40px);margin:0;padding:0;list-style:none}
+@media (min-width:1000px){.works{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.works li:nth-child(even){margin-top:clamp(28px,5vw,80px)}
+.card{display:block;width:100%;padding:0;border:0;background:none;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.card-t{display:block;transform:perspective(1000px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(var(--ty,0px));transition:transform .7s var(--out)}
+.card.tilting .card-t{transition:transform .14s linear}
+.card:active .card-t{--ty:2px}
+.card-c{display:block;aspect-ratio:4/5;overflow:hidden;border:2px solid var(--ink);border-radius:clamp(14px,1.4vw,22px);background:var(--paper)}
+.card-c svg{display:block;width:100%;height:100%}
+.card-s{position:relative;display:inline-block;max-width:calc(100% - 20px);margin:-28px 0 0 12px;padding:10px 14px 11px;border:2px solid var(--ink);border-radius:12px;background:var(--bg);color:var(--fg);transform:rotate(var(--r));transition:transform .45s var(--spring)}
+.card:hover .card-s{transform:rotate(calc(var(--r) * -1)) scale(1.04)}
+.card-n{display:block;font:700 clamp(14px,1.3vw,20px)/1.12 var(--fd);letter-spacing:-.015em}
+.card-m{display:block;margin-top:5px;font:600 13px/1.3 var(--fb)}
+.card:focus-visible{outline:none}
+.card:focus-visible .card-c{outline:3px solid var(--cobalt);outline-offset:4px}
+
+/* studio */
+.svcs{display:flex;flex-wrap:wrap;align-items:flex-start;gap:clamp(26px,3vw,44px) clamp(16px,2.2vw,32px);margin:0;padding:0;list-style:none}
+.svc{display:flex;flex-direction:column;align-items:flex-start;gap:12px;max-width:100%}
+.svc-p{display:inline-block;padding:.5em .9em .56em;border:2px solid var(--ink);border-radius:999px;background:var(--bg);color:var(--fg);font:700 clamp(19px,2.5vw,38px)/1 var(--fd);letter-spacing:-.03em;transform:rotate(var(--r));transition:transform .5s var(--spring)}
+.svc:hover .svc-p,.svc:active .svc-p{transform:rotate(var(--r)) scale(1.08,.86)}
+.svc-n{max-width:30ch;padding-left:1em;color:var(--ink-2);font-size:15px;line-height:1.4}
+
+/* method */
+.rules{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:clamp(12px,1.4vw,22px);margin:0;padding:0;list-style:none}
+@media (max-width:1100px){.rules{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:700px){.rules{grid-template-columns:repeat(2,minmax(0,1fr))}.rules li:last-child{grid-column:1/-1}}
+.rules li{display:flex}
+.rule{flex:1;display:block;padding:0;border:0;background:none;text-align:left;cursor:pointer;perspective:1400px;-webkit-tap-highlight-color:transparent}
+.rule-i{display:grid;height:100%;min-height:clamp(236px,23vw,340px);transform-style:preserve-3d;transition:transform .8s cubic-bezier(.3,1.3,.45,1)}
+.rule[aria-pressed="true"] .rule-i{transform:rotateY(180deg)}
+@media (hover:hover) and (pointer:fine){
+  .rule:hover .rule-i{transform:rotateY(-12deg)}
+  .rule[aria-pressed="true"]:hover .rule-i{transform:rotateY(192deg)}
+}
+.face{grid-area:1/1;display:flex;flex-direction:column;gap:10px;padding:clamp(16px,1.5vw,24px);border:2px solid var(--ink);border-radius:clamp(16px,1.4vw,22px);background:var(--paper);-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.face-b{background:var(--bg);color:var(--fg);transform:rotateY(180deg)}
+.r-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.r-suit{flex:1;display:grid;place-items:center;min-height:44px;padding:8px 0}
+.r-suit svg{width:clamp(40px,4vw,60px);height:auto;overflow:visible}
+.face-f .r-suit svg *{fill:none;stroke:var(--ink);stroke-width:2;stroke-dasharray:4 4;vector-effect:non-scaling-stroke}
+.face-b .r-suit svg *{fill:currentColor;stroke:none}
+.r-no{font:800 clamp(44px,4.4vw,72px)/.8 var(--fd);letter-spacing:-.05em}
+.r-tag{padding:6px 10px;border:1.5px solid currentColor;border-radius:999px;font:700 11px/1 var(--fb);letter-spacing:.12em;text-transform:uppercase}
+.r-name{font:700 clamp(20px,1.8vw,28px)/1.05 var(--fd);letter-spacing:-.03em}
+.r-name--b{font-size:13px;font-family:var(--fb);letter-spacing:.12em;text-transform:uppercase}
+.r-line{min-height:2.8em;color:var(--ink-2);font-size:15px;line-height:1.4}
+.r-play{font:600 clamp(18px,1.55vw,23px)/1.18 var(--fd);letter-spacing:-.025em}
+.r-flip{display:flex;align-items:center;gap:6px;margin-top:4px;font:700 11px/1 var(--fb);letter-spacing:.12em;text-transform:uppercase}
+.r-flip svg{width:14px;height:14px}
+.rule:focus-visible{outline:none}
+.rule:focus-visible .face{outline:3px solid var(--cobalt);outline-offset:3px}
+
+/* contact */
+.yt{margin:0 0 clamp(28px,4vw,56px);font:900 clamp(64px,13.4vw,250px)/.88 var(--fd);letter-spacing:-.05em}
+.yt .w{display:inline-block;white-space:nowrap}
+.yt .ch{display:inline-block;color:var(--c,var(--ink));transform:rotate(var(--rot,0deg));transition:color .25s,transform .55s var(--spring)}
+.yt.rolled .ch{-webkit-text-stroke:.024em var(--ink);paint-order:stroke fill;text-shadow:.045em .05em 0 var(--ink)}
+.ct-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px 56px;align-items:end}
+.ct-lede{max-width:36ch;margin:0 0 24px;color:var(--ink-2);font-size:clamp(18px,1.6vw,22px);line-height:1.45}
+.ct-links{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.ct-links a{font:600 clamp(22px,2.9vw,44px)/1.15 var(--fb);letter-spacing:-.02em;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.16em;overflow-wrap:anywhere;transition:text-decoration-color .2s}
+.ct-links a:hover{text-decoration-color:var(--tomato)}
+.roll{display:inline-flex;align-items:center;gap:12px;height:58px;padding:0 26px 0 16px;border:2px solid var(--ink);border-radius:999px;background:var(--paper);font:700 17px/1 var(--fb);cursor:pointer;transition:transform .35s var(--spring)}
+.roll:hover{transform:translateY(-2px) rotate(2deg)}
+.roll:active{transform:scale(.95)}
+.roll svg{width:30px;height:30px}
+.roll{justify-self:start}
+@media (max-width:760px){.ct-grid{grid-template-columns:1fr}.yt{font-size:min(27vw,150px)}}
+.ft{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 32px;margin:clamp(88px,10vw,140px) var(--gut) 0;padding-top:20px;border-top:2px solid var(--ink);color:var(--ink-2);font-size:14px}
+.ft p{margin:0}
+
+/* case preview */
+.case{width:min(1060px,calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 32px);padding:0;border:0;background:none;color:var(--ink);overflow:visible}
+.case::backdrop{background:rgba(21,21,21,.62)}
+.case[open]{animation:pop .5s var(--spring)}
+@keyframes pop{from{transform:scale(.94) rotate(-1.2deg)}}
+.case-in{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1fr);max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain;border:2px solid var(--ink);border-radius:clamp(20px,2vw,28px);background:var(--chalk)}
+.case-cv{aspect-ratio:4/5;border-right:2px solid var(--ink)}
+.case-cv svg{display:block;width:100%;height:100%}
+.case-bd{display:flex;flex-direction:column;gap:18px;padding:clamp(56px,4.4vw,64px) clamp(22px,3.2vw,48px) clamp(24px,3.2vw,48px)}
+.case-meta{margin:0;color:var(--ink-2);font:700 12px/1.3 var(--fb);letter-spacing:.14em;text-transform:uppercase}
+.case-t{margin:0;font:800 clamp(30px,3.6vw,52px)/1 var(--fd);letter-spacing:-.04em}
+.case-sum{margin:0;font-size:clamp(18px,1.6vw,22px);line-height:1.4}
+.case-find{margin:4px 0;padding:16px 20px 18px;border:2px solid var(--ink);border-radius:18px;background:var(--sun);transform:rotate(-1deg)}
+.case-find b{display:block;margin-bottom:8px;font:700 11px/1 var(--fb);letter-spacing:.14em;text-transform:uppercase}
+.case-find span{font:600 clamp(17px,1.5vw,20px)/1.35 var(--fb)}
+.case-svc{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
+.case-svc li{padding:7px 12px;border:1.5px solid var(--ink);border-radius:999px;font-size:14px;font-weight:600}
+.case-note{margin:auto 0 0;color:var(--ink-2);font-size:13px}
+.case-x{position:absolute;top:14px;right:14px;z-index:2;display:grid;place-items:center;width:46px;height:46px;border:2px solid var(--ink);border-radius:50%;background:var(--ink);color:var(--chalk);cursor:pointer;transition:transform .35s var(--spring)}
+.case-x:hover{transform:rotate(90deg)}
+.case-x svg{width:18px;height:18px}
+@media (max-width:760px){.case-in{grid-template-columns:1fr}.case-cv{aspect-ratio:16/10;border-right:0;border-bottom:2px solid var(--ink)}}
+html:has(.case[open]){overflow:hidden}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
+  .card-t{transform:none!important}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#work">Skip to work</a>
+
+<header class="hd" id="top">
+  <a class="brand" href="#top" aria-label="Serious Play, back to top">
+    <span class="brand-b" aria-hidden="true"><span>S</span><span>P</span></span>
+    <span class="brand-n">Serious Play</span>
+  </a>
+  <nav class="nav" aria-label="Primary">
+    <ul>
+      <li><a href="#work">Work</a></li>
+      <li><a href="#studio">Studio</a></li>
+      <li><a href="#method">Method</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+  <button class="mess" id="mess" type="button" aria-pressed="false" aria-controls="playground" aria-describedby="pg-note">
+    <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+      <circle class="ic i1" cx="6.5" cy="19" r="5" fill="#FFC631" stroke="currentColor" stroke-width="1.5"/>
+      <rect class="ic i2" x="12" y="14" width="10" height="10" rx="2.5" fill="#2FC79A" stroke="currentColor" stroke-width="1.5"/>
+      <path class="ic i3" d="M24 24 28 14.5 32 24Z" fill="#FF4A3D" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+    </svg>
+    <span id="mess-l">Make a mess</span>
+  </button>
+</header>
+
+<main>
+  <section class="hero" aria-label="Introduction">
+    <div class="pg" id="playground" role="group" aria-label="Toybox: letter blocks, shapes and project tokens">
+      <svg class="pg-ghost" id="pg-ghost" aria-hidden="true" focusable="false"></svg>
+      <p class="pg-lab pg-lab--l" aria-hidden="true">Box 03<span class="x">&middot; 11 letters &middot; 8 projects &middot; 3 shapes</span></p>
+      <p class="pg-lab pg-lab--r" aria-hidden="true"><span class="pg-dot"></span><span id="grav">Gravity off</span></p>
+      <h1 class="pg-word"><span class="sr">Serious Play</span><span class="pc pc-l" aria-hidden="true" style="--bg:var(--tomato);--fg:var(--ink)"><span class="pc-f">S</span></span><span class="pc pc-l" aria-hidden="true" style="--bg:var(--sun);--fg:var(--ink)"><span class="pc-f">E</span></span><span class="pc pc-l" aria-hidden="true" style="--bg:var(--cobalt);--fg:var(--chalk)"><span class="pc-f">R</span></span><span class="pc pc-l" aria-hidden="true" style="--bg:var(--mint);--fg:var(--ink)"><span class="pc-f">I</span></span><span class="pc pc-l" aria-hidden="true" style="--bg:var(--gum);--fg:var(--ink)"><span class="pc-f">O</span></span><span class="pc pc-l" aria-hidden="true" style="--bg:var(--ink);--fg:var(--chalk)"><span class="pc-f">U</span></span><span class="pc pc-l" aria-hidden="true" style="--bg:var(--sun);--fg:var(--ink)"><span class="pc-f">S</span></span><span class="pc pc-l" aria-hidden="true" style="--bg:var(--cobalt);--fg:var(--chalk)"><span class="pc-f">P</span></span><span class="pc pc-l" aria-hidden="true" style="--bg:var(--tomato);--fg:var(--ink)"><span class="pc-f">L</span></span><span class="pc pc-l" aria-hidden="true" style="--bg:var(--mint);--fg:var(--ink)"><span class="pc-f">A</span></span><span class="pc pc-l" aria-hidden="true" style="--bg:var(--gum);--fg:var(--ink)"><span class="pc-f">Y</span></span></h1>
+      <span class="pc pc-s" data-shape="star" aria-hidden="true"><span class="pc-f"><svg viewBox="0 0 100 100" focusable="false"><polygon id="star-shape" fill="#FFC631" points="50,3 97,50 50,97 3,50"/></svg></span></span>
+      <span class="pc pc-s" data-shape="half" aria-hidden="true"><span class="pc-f"><svg viewBox="0 0 200 100" focusable="false"><path fill="#2D4BFF" d="M2 99A98 98 0 0 1 198 99Z"/></svg></span></span>
+      <span class="pc pc-s" data-shape="tri" aria-hidden="true"><span class="pc-f"><svg viewBox="0 0 100 88" focusable="false"><path fill="#FF4A3D" d="M50 3 97 86H3Z"/></svg></span></span>
+      <div id="tokens" role="group" aria-label="Projects in the box"></div>
+    </div>
+    <div class="hero-ft">
+      <p class="thesis">We create brands rooted by <span class="hl-s">serious research</span> and driven by <span class="hl-p">playful imagination</span>.</p>
+      <div>
+        <ul class="hint">
+          <li><svg viewBox="0 0 22 22" aria-hidden="true" focusable="false"><path d="M11 2v18M2 11h18M11 2 8 5M11 2l3 3M11 20l-3-3M11 20l3-3M2 11l3-3M2 11l3 3M20 11l-3-3M20 11l-3 3" fill="none" stroke="#151515" stroke-width="1.8" stroke-linecap="round"/></svg>Drag anything. Throw it. We&rsquo;ll tidy up.</li>
+          <li><svg viewBox="0 0 22 22" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="4" fill="#FF8BD1" stroke="#151515" stroke-width="1.6"/><circle cx="11" cy="11" r="8.5" fill="none" stroke="#151515" stroke-width="1.6" stroke-dasharray="3 3"/></svg><span id="hint-open">Double-tap a project to open it.</span></li>
+        </ul>
+        <p class="pg-note" id="pg-note" hidden></p>
+      </div>
+    </div>
+    <p class="sr" id="pg-live" aria-live="polite"></p>
+  </section>
+
+  <section class="sec" id="work" aria-labelledby="work-h">
+    <div class="sec-hd">
+      <div>
+        <p class="ey"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.5" fill="#FF4A3D"/></svg>Work</p>
+        <h2 class="h2" id="work-h">The Toybox</h2>
+      </div>
+      <p>Eight brands, each one researched hard and made to be picked up. Open a project to see what the research found.</p>
+    </div>
+    <ul class="works" id="works"></ul>
+  </section>
+
+  <section class="sec" id="studio" aria-labelledby="studio-h">
+    <div class="sec-hd">
+      <div>
+        <p class="ey"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="13" height="13" rx="3" fill="#2FC79A"/></svg>Studio</p>
+        <h2 class="h2" id="studio-h">What&rsquo;s in the box</h2>
+      </div>
+      <p>Serious Play is a brand studio. We do the reading, the interviews and the audits first, so the ideas can be as bold as they like. This is what we make with them.</p>
+    </div>
+    <ul class="svcs" id="svcs"></ul>
+  </section>
+
+  <section class="sec" id="method" aria-labelledby="method-h">
+    <div class="sec-hd">
+      <div>
+        <p class="ey"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 1.5 14.5 14h-13Z" fill="#FFC631" stroke-linejoin="round"/></svg>Method</p>
+        <h2 class="h2" id="method-h">Rules of Play</h2>
+      </div>
+      <p>Five rules, always played in order. The front of each card is the serious part. Flip it to see how we play it.</p>
+    </div>
+    <ol class="rules" id="rules"></ol>
+  </section>
+
+  <section class="sec" id="contact" aria-labelledby="contact-h">
+    <p class="ey"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.5 12a6.5 6.5 0 0 1 13 0Z" fill="#2D4BFF"/></svg>Contact</p>
+    <h2 class="yt" id="contact-h"><span class="sr">Your turn.</span><span id="yt" aria-hidden="true"><span class="w"><span class="ch">Y</span><span class="ch">o</span><span class="ch">u</span><span class="ch">r</span></span> <span class="w"><span class="ch">t</span><span class="ch">u</span><span class="ch">r</span><span class="ch">n</span><span class="ch">.</span></span></span></h2>
+    <div class="ct-grid">
+      <div>
+        <p class="ct-lede">Bring a brief, a hunch or a half-built brand. We&rsquo;ll bring the research and the toys.</p>
+        <ul class="ct-links">
+          <li><a href="mailto:info@seriousplaystudio.com" id="ct-mail">info@seriousplaystudio.com</a></li>
+          <li><a href="https://instagram.com/seriousplaystudio" id="ct-ig" rel="noopener">@seriousplaystudio</a></li>
+        </ul>
+      </div>
+      <button class="roll" id="roll" type="button">
+        <svg viewBox="0 0 30 30" aria-hidden="true" focusable="false" id="die"><rect x="2" y="2" width="26" height="26" rx="7" fill="#FFC631" stroke="#151515" stroke-width="2"/><g id="pips" fill="#151515"></g></svg>
+        Roll the dice
+      </button>
+    </div>
+  </section>
+</main>
+
+<footer class="ft">
+  <p>&copy; 2026 Serious Play. Serious research. Playful imagination.</p>
+  <p>Projects shown are placeholders for the concept.</p>
+</footer>
+
+<dialog class="case" id="case" aria-labelledby="case-t">
+  <button class="case-x" id="case-x" type="button" aria-label="Close case preview"><svg viewBox="0 0 18 18" aria-hidden="true" focusable="false"><path d="M3 3l12 12M15 3 3 15" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+  <div class="case-in">
+    <div class="case-cv" id="case-cv" aria-hidden="true"></div>
+    <div class="case-bd">
+      <p class="case-meta" id="case-meta"></p>
+      <h2 class="case-t" id="case-t"></h2>
+      <p class="case-sum" id="case-sum"></p>
+      <p class="case-find"><b>What the research found</b><span id="case-find"></span></p>
+      <ul class="case-svc" id="case-svc" aria-label="Services"></ul>
+      <p class="case-note">Placeholder project for the concept.</p>
+    </div>
+  </div>
+</dialog>
+
+<script src="shared/projects.js"></script>
+<script>
+(() => {
+'use strict';
+const SP = window.SP; if (!SP) return;
+const d = document, $ = (s, r = d) => r.querySelector(s);
+const C = {chalk:'#F3F2EF', ink:'#151515', tomato:'#FF4A3D', sun:'#FFC631', cobalt:'#2D4BFF', mint:'#2FC79A', gum:'#FF8BD1'};
+/* text colour per toy colour, picked by measured contrast (chalk on tomato is only 2.98:1, so tomato takes ink) */
+const ON = {tomato:C.ink, sun:C.ink, mint:C.ink, gum:C.ink, cobalt:C.chalk, ink:C.chalk};
+const TOYS = ['tomato', 'sun', 'cobalt', 'mint', 'gum'];
+const FD = 'Unbounded, Arial Black, sans-serif', FB = 'Figtree, system-ui, sans-serif';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rnd = SP.rng(SP.hash('serious-play:playground'));
+const tilt = () => ((0.8 + rnd() * 2.4) * (rnd() < .5 ? -1 : 1)).toFixed(1);
+const mqRM = matchMedia('(prefers-reduced-motion: reduce)');
+const mqFine = matchMedia('(hover: hover) and (pointer: fine)');
+const cover = (p, ratio, variant) => SP.cover(p, {ratio, font: FD, mono: FB, variant}).replace('role="img"', 'aria-hidden="true" focusable="false"');
+function starPts(cx, cy, R) {
+  let s = '';
+  for (let i = 0; i < 16; i++) { const a = (22.5 + 22.5 * i) * Math.PI / 180, r = i % 2 ? R * .7 : R; s += (cx + Math.cos(a) * r).toFixed(1) + ',' + (cy + Math.sin(a) * r).toFixed(1) + ' '; }
+  return s.trim();
+}
+d.addEventListener('touchstart', () => {}, {passive: true}); /* lets :active styles fire on iOS */
+
+/* ---------------- case preview ---------------- */
+const dlg = $('#case');
+let opener = null;
+function openCase(i, from) {
+  const p = SP.projects[i]; if (!p || dlg.open) return;
+  $('#case-cv').innerHTML = cover(p, 'portrait', 1);
+  $('#case-meta').textContent = 'N°' + p.no + ' · ' + p.sector + ' · ' + p.year;
+  $('#case-t').textContent = p.name;
+  $('#case-sum').textContent = p.summary;
+  $('#case-find').textContent = p.finding;
+  $('#case-svc').innerHTML = p.services.map(s => '<li>' + esc(s) + '</li>').join('');
+  opener = from || null;
+  dlg.showModal();
+}
+dlg.addEventListener('close', () => { if (opener && opener.isConnected) opener.focus(); opener = null; });
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+$('#case-x').addEventListener('click', () => dlg.close());
+
+/* ---------------- work: the toybox ---------------- */
+const works = $('#works');
+const STK = ['sun', 'gum', 'mint', 'tomato', 'cobalt', 'sun', 'mint', 'gum'];
+works.innerHTML = SP.projects.map((p, i) => {
+  const c = STK[i % STK.length];
+  return '<li><button class="card" type="button" aria-haspopup="dialog" data-i="' + i + '"><span class="card-t"><span class="card-c">' + cover(p, 'portrait', 0) +
+    '</span><span class="card-s" style="--bg:' + C[c] + ';--fg:' + ON[c] + ';--r:' + tilt() + 'deg"><span class="card-n">' + esc(p.name) +
+    '</span><span class="card-m">' + esc(p.sector) + ' · ' + p.year + '</span></span></span></button></li>';
+}).join('');
+works.addEventListener('click', e => { const b = e.target.closest('.card'); if (b) openCase(+b.dataset.i, b); });
+let tCard = null, tX = 0, tY = 0, tRaf = 0;
+function tiltReset(c) { c.classList.remove('tilting'); c.style.removeProperty('--rx'); c.style.removeProperty('--ry'); c.style.removeProperty('--ty'); }
+function tiltApply() {
+  tRaf = 0; if (!tCard) return;
+  const r = tCard.getBoundingClientRect(), nx = (tX - r.left) / r.width - .5, ny = (tY - r.top) / r.height - .5, s = tCard.style;
+  tCard.classList.add('tilting');
+  s.setProperty('--ry', (nx * 12).toFixed(2) + 'deg');
+  s.setProperty('--rx', (ny * -9).toFixed(2) + 'deg');
+  s.setProperty('--ty', '-6px');
+}
+works.addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse' || !mqFine.matches || mqRM.matches) return;
+  const c = e.target.closest('.card'); if (!c) return;
+  if (tCard && tCard !== c) tiltReset(tCard);
+  tCard = c; tX = e.clientX; tY = e.clientY;
+  if (!tRaf) tRaf = requestAnimationFrame(tiltApply);
+}, {passive: true});
+works.addEventListener('pointerout', e => {
+  const c = e.target.closest('.card');
+  if (c && !c.contains(e.relatedTarget)) { tiltReset(c); if (tCard === c) tCard = null; }
+}, {passive: true});
+
+/* ---------------- studio: services ---------------- */
+const SC = ['cobalt', 'sun', 'gum', 'mint', 'tomato', 'sun'];
+$('#svcs').innerHTML = SP.services.map((s, i) => {
+  const c = SC[i % SC.length];
+  return '<li class="svc"><span class="svc-p" style="--bg:' + C[c] + ';--fg:' + ON[c] + ';--r:' + tilt() + 'deg">' + esc(s.name) + '</span><span class="svc-n">' + esc(s.note) + '</span></li>';
+}).join('');
+
+/* ---------------- method: rules of play ---------------- */
+const FLIP = '<svg viewBox="0 0 14 14" aria-hidden="true" focusable="false"><path d="M12 7a5 5 0 1 1-1.5-3.6M12 1.5v3h-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const SUITS = ['<circle cx="30" cy="30" r="26"/>', '<path d="M30 4 57 54H3Z"/>', '<polygon points="' + starPts(30, 30, 28) + '"/>', '<rect x="4" y="4" width="52" height="52" rx="11"/>', '<path d="M2 46A28 28 0 0 1 58 46Z"/>'];
+const suit = i => '<span class="r-suit" aria-hidden="true"><svg viewBox="0 0 60 60" focusable="false">' + SUITS[i % 5] + '</svg></span>';
+const rules = $('#rules');
+rules.innerHTML = SP.method.map((m, i) => {
+  const c = TOYS[i % 5], no = '<span class="r-no"><span class="sr">Rule </span>' + (i + 1) + '</span>';
+  return '<li><button class="rule" type="button" aria-pressed="false"><span class="rule-i">' +
+    '<span class="face face-f">' + '<span class="r-top">' + no + '<span class="r-tag">Serious</span></span>' + suit(i) + '<span class="r-name">' + esc(m.step) + '</span><span class="r-line">' + esc(m.serious) + '</span><span class="r-flip" aria-hidden="true">' + FLIP + 'Flip</span></span>' +
+    '<span class="face face-b" aria-hidden="true" style="--bg:' + C[c] + ';--fg:' + ON[c] + '"><span class="r-top">' + no + '<span class="r-tag">Play</span></span>' + suit(i) + '<span class="r-name r-name--b">' + esc(m.step) + '</span><span class="r-play">' + esc(m.play) + '</span></span>' +
+    '</span></button></li>';
+}).join('');
+rules.addEventListener('click', e => {
+  const b = e.target.closest('.rule'); if (!b) return;
+  const on = b.getAttribute('aria-pressed') !== 'true';
+  b.setAttribute('aria-pressed', on);
+  b.querySelector('.face-f').setAttribute('aria-hidden', on);
+  b.querySelector('.face-b').setAttribute('aria-hidden', !on);
+});
+
+/* ---------------- contact: roll the dice ---------------- */
+const PIPS = {1:[[15,15]], 2:[[9,9],[21,21]], 3:[[9,9],[15,15],[21,21]], 4:[[9,9],[21,9],[9,21],[21,21]], 5:[[9,9],[21,9],[15,15],[9,21],[21,21]], 6:[[9,9],[21,9],[9,15],[21,15],[9,21],[21,21]]};
+const drawDie = f => { $('#pips').innerHTML = PIPS[f].map(p => '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="2.4"/>').join(''); };
+let face = 5; drawDie(face);
+const chars = [...d.querySelectorAll('#yt .ch')], cur = [];
+$('#roll').addEventListener('click', () => {
+  let f; do f = 1 + (Math.random() * 6 | 0); while (f === face); face = f; drawDie(f);
+  const still = mqRM.matches;
+  if (!still) $('#die').animate([{rotate: '0deg'}, {rotate: '360deg'}], {duration: 520, easing: 'cubic-bezier(.3,1.4,.5,1)'});
+  chars.forEach((ch, i) => {
+    let c; do c = TOYS[Math.random() * 5 | 0]; while (c === cur[i] || c === cur[i - 1]);
+    cur[i] = c;
+    ch.style.setProperty('--c', C[c]);
+    ch.style.setProperty('--rot', still ? '0deg' : ((Math.random() * 2 - 1) * 7).toFixed(1) + 'deg');
+    if (!still && ch.animate) ch.animate([{translate: '0 0'}, {translate: '0 -.16em'}, {translate: '0 0'}], {duration: 460, delay: i * 30, easing: 'cubic-bezier(.3,.7,.4,1)'});
+  });
+  $('#contact-h').classList.add('rolled');
+});
+
+/* ================= the playground ================= */
+const box = $('#playground'), tokWrap = $('#tokens'), btn = $('#mess');
+const pieces = [], pmap = new Map();
+box.querySelectorAll('.pc-l').forEach(el => pieces.push({el, kind: 'letter', shape: 'rect'}));
+box.querySelectorAll('.pc-s').forEach(el => pieces.push({el, kind: 'shape', shape: el.dataset.shape}));
+const TSH = ['circle', 'square', 'pill', 'circle', 'square', 'pill', 'circle', 'square'];
+SP.projects.forEach((p, i) => {
+  const b = d.createElement('button');
+  b.type = 'button'; b.className = 'pc pc-t'; b.title = p.name;
+  b.setAttribute('aria-label', p.name + ', open case preview');
+  b.setAttribute('aria-haspopup', 'dialog');
+  b.innerHTML = '<span class="pc-f">' + cover(p, 'square', 2) + '</span>';
+  tokWrap.appendChild(b);
+  pieces.push({el: b, kind: 'token', shape: TSH[i], idx: i});
+});
+pieces.forEach(p => { p.x = p.y = p.a = 0; pmap.set(p.el, p); });
+
+$('#star-shape').setAttribute('points', starPts(50, 50, 47));
+function unitPoly(shape) {
+  if (shape === 'tri') return [[0, 1], [.5, 0], [1, 1]];
+  const v = []; for (let k = 0; k <= 14; k++) { const t = Math.PI + k * Math.PI / 14; v.push([.5 + .5 * Math.cos(t), 1 + Math.sin(t)]); }
+  return v;
+}
+function centroid(v) {
+  let a = 0, cx = 0, cy = 0;
+  for (let i = 0; i < v.length; i++) { const p = v[i], q = v[(i + 1) % v.length], f = p[0] * q[1] - q[0] * p[1]; a += f; cx += (p[0] + q[0]) * f; cy += (p[1] + q[1]) * f; }
+  return [cx / (3 * a), cy / (3 * a)];
+}
+
+/* ---- tidy layout: a precise grid computed from the box ---- */
+let W = 0, H = 0, maxV = 30;
+function geom(p, w, h, bx, by, rad, bw) {
+  p.w = w; p.h = h; p.rad = rad; p.bx = bx; p.by = by; p.verts = null;
+  if (p.shape === 'half' || p.shape === 'tri') {
+    const u = unitPoly(p.shape), c = centroid(u);
+    p.verts = u.map(q => ({x: q[0] * w, y: q[1] * h})); p.ox = c[0] * w; p.oy = c[1] * h;
+  } else { p.ox = w / 2; p.oy = h / 2; }
+  p.tx = bx + p.ox; p.ty = by + p.oy;
+  const st = p.el.style;
+  st.width = w + 'px'; st.height = h + 'px'; st.transformOrigin = p.ox + 'px ' + p.oy + 'px';
+  st.setProperty('--rad', rad + 'px'); st.setProperty('--bw', bw + 'px');
+}
+function layout() {
+  W = box.clientWidth; H = box.clientHeight;
+  const narrow = W < 640, pad = clamp(W * .04, 14, 56), padT = pad + (narrow ? 22 : 26), g = clamp(W * .008, 4, 14);
+  const avail = H - padT - pad;
+  let s = Math.min((W - 2 * pad - 6 * g) / 7, 220);
+  const rows = (7 * s - 3 * g) / 10 >= 56 ? 1 : 2, units = rows === 1 ? 10 : 5, cg = rows === 1 ? 9 * g : 4 * g;
+  const tOf = s => Math.min((7 * s + 6 * g - cg) / units, 1.5 * s), gapOf = s => Math.max(2 * g, .16 * s);
+  const hOf = s => 2 * s + g + gapOf(s) + rows * tOf(s) + (rows - 1) * g;
+  if (hOf(s) > avail) { let lo = 8, hi = s; for (let k = 0; k < 24; k++) { const m = (lo + hi) / 2; if (hOf(m) > avail) hi = m; else lo = m; } s = lo; }
+  const t = tOf(s), x0 = (W - 7 * s - 6 * g) / 2, y0 = padT + Math.max(0, avail - hOf(s)) * (narrow ? .42 : .5);
+  const bw = clamp(s * .018, 1.5, 3);
+  maxV = clamp(s * .55, 22, 48);
+  let li = 0;
+  pieces.forEach(p => {
+    if (p.kind === 'letter') {
+      const col = li < 7 ? li : li - 7, row = li < 7 ? 0 : 1; li++;
+      geom(p, s, s, x0 + col * (s + g), y0 + row * (s + g), s * .2, bw);
+      p.el.style.setProperty('--fs', (s * .56).toFixed(1) + 'px');
+    } else if (p.kind === 'shape') {
+      const col = {star: 4, half: 5, tri: 6}[p.shape], h = p.shape === 'half' ? s / 2 : p.shape === 'tri' ? s * .88 : s;
+      geom(p, s, h, x0 + col * (s + g), y0 + 2 * s + g - h, 0, bw);
+    }
+  });
+  const toks = pieces.filter(p => p.kind === 'token'), per = rows === 1 ? 8 : 4, top = y0 + 2 * s + g + gapOf(s);
+  for (let r = 0; r < rows; r++) {
+    const row = toks.slice(r * per, r * per + per), ws = row.map(p => p.shape === 'pill' ? 2 * t + g : t);
+    let x = (W - ws.reduce((a, b) => a + b, 0) - (row.length - 1) * g) / 2;
+    row.forEach((p, i) => { geom(p, ws[i], t, x, top + r * (t + g), p.shape === 'square' ? t * .24 : t / 2, bw); x += ws[i] + g; });
+  }
+  drawGhost();
+}
+function drawGhost() {
+  const gh = $('#pg-ghost'), f = n => n.toFixed(1);
+  gh.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  gh.innerHTML = pieces.map(p => {
+    if (p.shape === 'star') return '<polygon points="' + starPts(p.bx + p.w / 2, p.by + p.h / 2, p.w * .47) + '"/>';
+    if (p.verts) return '<polygon points="' + p.verts.map(v => f(p.bx + v.x) + ',' + f(p.by + v.y)).join(' ') + '"/>';
+    return '<rect x="' + f(p.bx) + '" y="' + f(p.by) + '" width="' + f(p.w) + '" height="' + f(p.h) + '" rx="' + f(p.rad) + '"/>';
+  }).join('');
+}
+function render() {
+  for (const p of pieces) p.el.style.transform = 'translate3d(' + (p.x - p.ox).toFixed(2) + 'px,' + (p.y - p.oy).toFixed(2) + 'px,0) rotate(' + p.a.toFixed(4) + 'rad)';
+}
+function snap() { pieces.forEach(p => { p.x = p.tx; p.y = p.ty; p.a = 0; }); render(); }
+
+/* ---- physics (Matter.js), created on first use ---- */
+let M = null, engine = null, mouse = null, mc = null, walls = [], bodies = [];
+let state = 'tidy', tween = null, raf = 0, last = 0, acc = 0, drag = null, lastTap = null, zTop = 10, clickGuard = 0;
+const STEP = 1000 / 60;
+const canPlay = () => !!window.Matter && !mqRM.matches;
+function initPhysics() {
+  if (engine) return true;
+  if (!window.Matter) return false;
+  M = window.Matter;
+  engine = M.Engine.create({enableSleeping: true, positionIterations: 10, velocityIterations: 8});
+  engine.gravity.y = 1.3;
+  mouse = M.Mouse.create(box);
+  const el = mouse.element;
+  /* Matter binds mouse, touch and wheel listeners to the element. Drop them all: the page must keep scrolling,
+     and pointer events below feed the mouse only for presses that start on a piece. */
+  el.removeEventListener('wheel', mouse.mousewheel);
+  el.removeEventListener('mousewheel', mouse.mousewheel);
+  el.removeEventListener('DOMMouseScroll', mouse.mousewheel);
+  ['mousemove', 'touchmove'].forEach(t => el.removeEventListener(t, mouse.mousemove));
+  ['mousedown', 'touchstart'].forEach(t => el.removeEventListener(t, mouse.mousedown));
+  ['mouseup', 'touchend'].forEach(t => el.removeEventListener(t, mouse.mouseup));
+  mc = M.MouseConstraint.create(engine, {mouse, constraint: {stiffness: .24, damping: .1, angularStiffness: 0}});
+  M.Composite.add(engine.world, mc);
+  return true;
+}
+function buildWalls() {
+  if (walls.length) M.Composite.remove(engine.world, walls);
+  const T = 200, o = {isStatic: true, friction: .5, restitution: .4};
+  const k = (parseFloat(getComputedStyle(box).borderTopLeftRadius) || 24) * .62;
+  walls = [
+    M.Bodies.rectangle(W / 2, H + T / 2, W + 2 * T, T, o),
+    M.Bodies.rectangle(W / 2, -T / 2, W + 2 * T, T, o),
+    M.Bodies.rectangle(-T / 2, H / 2, T, H + 2 * T, o),
+    M.Bodies.rectangle(W + T / 2, H / 2, T, H + 2 * T, o)
+  ];
+  /* small wedges keep pieces out of the rounded corners */
+  [[0, 0, 1, 1], [W, 0, -1, 1], [0, H, 1, -1], [W, H, -1, -1]].forEach(([x, y, sx, sy]) =>
+    walls.push(M.Bodies.fromVertices(x + sx * k / 3, y + sy * k / 3, [[{x, y}, {x: x + sx * k, y}, {x, y: y + sy * k}]], o)));
+  M.Composite.add(engine.world, walls);
+}
+function makeBody(p) {
+  const o = {restitution: .4, friction: .42, frictionStatic: .8, frictionAir: .012, slop: .04, density: p.kind === 'letter' ? .004 : .0022};
+  let b;
+  if (p.shape === 'circle') b = M.Bodies.circle(p.x, p.y, p.w / 2, o, 30);
+  else if (p.shape === 'star') b = M.Bodies.polygon(p.x, p.y, 8, p.w * .47, o);
+  else if (p.verts) b = M.Bodies.fromVertices(p.x, p.y, [p.verts.map(v => ({x: v.x, y: v.y}))], o);
+  else b = M.Bodies.rectangle(p.x, p.y, p.w, p.h, Object.assign({chamfer: {radius: Math.min(p.rad, Math.min(p.w, p.h) / 2 - .5)}}, o));
+  M.Body.setAngle(b, p.a);
+  return b;
+}
+function makeBodies() {
+  if (bodies.length) M.Composite.remove(engine.world, bodies);
+  bodies = pieces.map(p => (p.body = makeBody(p)));
+  M.Composite.add(engine.world, bodies);
+}
+function startMess(throwIt) {
+  if (!canPlay() || !initPhysics()) return false;
+  tween = null; acc = 0; last = 0;
+  buildWalls(); makeBodies();
+  state = 'mess';
+  bodies.forEach(b => {
+    if (throwIt) {
+      M.Body.setVelocity(b, {x: (Math.random() * 2 - 1) * H * .02, y: -(.008 + Math.random() * .022) * H});
+      M.Body.setAngularVelocity(b, (Math.random() * 2 - 1) * .22);
+    } else M.Body.setAngularVelocity(b, (Math.random() * 2 - 1) * .03);
+  });
+  sync(true); kick();
+  return true;
+}
+const normA = a => { a %= 2 * Math.PI; if (a > Math.PI) a -= 2 * Math.PI; if (a < -Math.PI) a += 2 * Math.PI; return a; };
+const backOut = k => { const c1 = 1.5, c3 = c1 + 1, q = k - 1; return 1 + c3 * q * q * q + c1 * q * q; };
+function tidy() {
+  if (state !== 'mess') return;
+  release();
+  if (bodies.length) { M.Composite.remove(engine.world, bodies); bodies = []; }
+  pieces.forEach(p => { p.body = null; });
+  state = 'tidy';
+  if (mqRM.matches) snap();
+  else { tween = {t0: performance.now(), dur: 700, items: pieces.map((p, i) => ({p, fx: p.x, fy: p.y, fa: normA(p.a), d: i * 18}))}; kick(); }
+  sync(true);
+}
+function intro() {
+  if (mqRM.matches) return snap();
+  pieces.forEach(p => { p.x = p.tx; p.y = p.ty - (22 + rnd() * 34); p.a = (rnd() * 2 - 1) * .28; });
+  tween = {t0: performance.now(), dur: 620, items: pieces.map((p, i) => ({p, fx: p.x, fy: p.y, fa: p.a, d: i * 22}))};
+  render(); kick();
+}
+function guard() {
+  for (const p of pieces) {
+    const b = p.body; if (!b) continue;
+    const v = b.velocity, sp = Math.hypot(v.x, v.y);
+    if (sp > maxV) M.Body.setVelocity(b, {x: v.x / sp * maxV, y: v.y / sp * maxV});
+    if (Math.abs(b.angularVelocity) > .4) M.Body.setAngularVelocity(b, Math.sign(b.angularVelocity) * .4);
+    const x = b.position.x, y = b.position.y;
+    if (x < 0 || x > W || y < 0 || y > H) { /* safety net: never lose a piece */
+      M.Body.setPosition(b, {x: clamp(x, p.w / 2, W - p.w / 2), y: clamp(y, p.h / 2, H - p.h / 2)});
+      M.Body.setVelocity(b, {x: 0, y: 0});
+    }
+  }
+}
+function tick(now) {
+  raf = 0;
+  let more = false;
+  if (state === 'mess' && engine) {
+    const dt = last ? Math.min(now - last, 64) : STEP; last = now; acc += dt;
+    if (drag) bodies.forEach(b => { if (b.isSleeping) M.Sleeping.set(b, false); });
+    let n = 0;
+    while (acc >= STEP && n < 4) { M.Engine.update(engine, STEP); guard(); acc -= STEP; n++; }
+    for (const p of pieces) { const b = p.body; if (b) { p.x = b.position.x; p.y = b.position.y; p.a = b.angle; } }
+    render();
+    more = !!drag || bodies.some(b => !b.isSleeping);
+  } else if (tween) {
+    const tw = tween; let done = true;
+    for (const it of tw.items) {
+      const p = it.p; let k = (now - tw.t0 - it.d) / tw.dur;
+      if (k < 1) done = false;
+      const e = backOut(clamp(k, 0, 1));
+      p.x = it.fx + (p.tx - it.fx) * e; p.y = it.fy + (p.ty - it.fy) * e; p.a = it.fa * (1 - e);
+    }
+    if (done) { tween = null; snap(); } else { render(); more = true; }
+  }
+  if (more) raf = requestAnimationFrame(tick); else last = 0;
+}
+function kick() { if (!raf) raf = requestAnimationFrame(tick); }
+
+/* ---- pointer input: only presses that start on a piece are captured ---- */
+function feed(type, cx, cy) {
+  /* Matter.Mouse maps pageX/Y minus the element's page offset, so passing page coordinates
+     keeps the physics point under the finger at any scroll position */
+  mouse[type]({pageX: cx + window.scrollX, pageY: cy + window.scrollY, button: 0});
+  const m = mouse.position; m.x = clamp(m.x, 2, W - 2); m.y = clamp(m.y, 2, H - 2);
+}
+function grab(p, cx, cy) {
+  const b = p.body; if (!b || !drag) return;
+  feed('mousedown', cx, cy);
+  const c = mc.constraint, m = mouse.position;
+  c.pointA = m; c.bodyB = mc.body = b;
+  c.pointB = {x: m.x - b.position.x, y: m.y - b.position.y}; c.angleB = b.angle;
+  bodies.forEach(o => M.Sleeping.set(o, false));
+  drag.grabbed = true;
+  p.el.classList.add('held'); p.el.style.zIndex = ++zTop;
+  kick();
+}
+function endDrag() {
+  removeEventListener('pointermove', onMove);
+  removeEventListener('pointerup', onUp);
+  removeEventListener('pointercancel', onUp);
+  if (drag) drag.p.el.classList.remove('held');
+  drag = null;
+}
+function release() {
+  if (!drag) return;
+  if (drag.grabbed && mouse) { mouse.button = -1; mc.constraint.bodyB = mc.body = null; mc.constraint.pointB = null; }
+  endDrag();
+}
+function onMove(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  drag.cx = e.clientX; drag.cy = e.clientY;
+  if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > (e.pointerType === 'mouse' ? 4 : 8)) {
+    drag.moved = true;
+    if (state !== 'mess' && startMess(false)) grab(drag.p, drag.x0, drag.y0);
+  }
+  if (drag.grabbed) feed('mousemove', e.clientX, e.clientY);
+}
+function onUp(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  const dd = drag;
+  endDrag();
+  clickGuard = performance.now() + 500;
+  if (dd.grabbed) { feed('mouseup', e.clientX, e.clientY); kick(); }
+  if (e.type === 'pointerup' && !dd.moved && performance.now() - dd.t0 < 450) tap(dd.p);
+}
+function tap(p) {
+  const now = performance.now();
+  if (p.kind === 'token' && lastTap && lastTap.p === p && now - lastTap.t < 420) { lastTap = null; openCase(p.idx, p.el); return; }
+  lastTap = {p, t: now};
+  if (state !== 'mess' && !mqRM.matches && p.el.firstElementChild.animate)
+    p.el.firstElementChild.animate([{rotate: '0deg'}, {rotate: '-8deg'}, {rotate: '6deg'}, {rotate: '0deg'}], {duration: 380, easing: 'ease-out'});
+}
+box.addEventListener('pointerdown', e => {
+  if (drag || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  const el = e.target.closest('.pc'), p = el && pmap.get(el); if (!p) return;
+  drag = {id: e.pointerId, p, x0: e.clientX, y0: e.clientY, cx: e.clientX, cy: e.clientY, t0: performance.now(), moved: false, grabbed: false};
+  addEventListener('pointermove', onMove, {passive: true});
+  addEventListener('pointerup', onUp);
+  addEventListener('pointercancel', onUp);
+  if (state === 'mess') grab(p, e.clientX, e.clientY);
+});
+box.addEventListener('dragstart', e => e.preventDefault());
+addEventListener('scroll', () => { if (drag && drag.grabbed) feed('mousemove', drag.cx, drag.cy); }, {passive: true});
+/* keyboard and assistive tech: Enter or Space on a token opens it (pointer clicks are handled as double-taps) */
+tokWrap.addEventListener('click', e => {
+  const b = e.target.closest('.pc-t'); if (!b || performance.now() < clickGuard) return;
+  openCase(pmap.get(b).idx, b);
+});
+
+/* ---- header toggle + availability ---- */
+function sync(announce) {
+  const on = state === 'mess';
+  btn.setAttribute('aria-pressed', on);
+  $('#mess-l').textContent = on ? 'Tidy up' : 'Make a mess';
+  $('#grav').textContent = on ? 'Gravity on' : 'Gravity off';
+  box.classList.toggle('is-mess', on);
+  if (announce) $('#pg-live').textContent = on ? 'Everything is loose. Drag and throw the pieces.' : 'All tidy.';
+}
+function avail() {
+  const ok = canPlay(), note = $('#pg-note');
+  btn.disabled = !ok;
+  note.hidden = ok;
+  note.textContent = ok ? '' : mqRM.matches ? 'Reduced motion is on, so the toys stay tidy. Projects still open.' : 'The physics engine did not load, so the toys stay tidy. Projects still open.';
+  if (!ok && state === 'mess') tidy();
+  $('#hint-open').textContent = mqFine.matches && !matchMedia('(any-pointer: coarse)').matches ? 'Double-click a project token to open it.' : 'Double-tap a project token to open it.';
+}
+btn.addEventListener('click', () => { if (state === 'mess') tidy(); else startMess(true); });
+mqRM.addEventListener('change', avail);
+mqFine.addEventListener('change', avail);
+if (d.readyState === 'loading') d.addEventListener('DOMContentLoaded', avail); else avail();
+
+/* ---- resize: rebuild slots, walls and bodies ---- */
+let lastW = 0, lastH = 0, rzRaf = 0;
+function onResize() {
+  rzRaf = 0;
+  const w = box.clientWidth, h = box.clientHeight;
+  if (Math.abs(w - lastW) < 1 && Math.abs(h - lastH) < 1) return;
+  const ow = lastW || w, oh = lastH || h; lastW = w; lastH = h;
+  if (state === 'mess' && engine) {
+    const rel = pieces.map(p => [p.x / ow, p.y / oh, p.a]);
+    release(); layout();
+    pieces.forEach((p, i) => { p.x = clamp(rel[i][0] * W, p.w / 2, W - p.w / 2); p.y = clamp(rel[i][1] * H, p.h / 2, H - p.h / 2); p.a = rel[i][2]; });
+    buildWalls(); makeBodies(); render(); kick();
+  } else { layout(); tween = null; snap(); }
+}
+if ('ResizeObserver' in window) new ResizeObserver(() => { if (!rzRaf) rzRaf = requestAnimationFrame(onResize); }).observe(box);
+else addEventListener('resize', () => { if (!rzRaf) rzRaf = requestAnimationFrame(onResize); });
+
+layout(); lastW = W; lastH = H; snap(); sync(false); intro();
+})();
+</script>
+<nav class="sp-concept" aria-label="Concept navigation">
+  <a class="sp-concept__back" href="index.html">&larr; Rulebook</a>
+  <span class="sp-concept__label">Direction 03 &middot; Playground</span>
+  <span class="sp-concept__dirs">
+    <a href="field-notes.html" title="Direction 01 · Field Notes">01</a>
+    <a href="lights-off.html" title="Direction 02 · Lights Off">02</a>
+    <a href="playground.html" aria-current="page" title="Direction 03 · Playground">03</a>
+  </span>
+</nav>
+<style>
+.sp-concept{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:9999;display:flex;align-items:center;gap:10px;padding:6px 6px 6px 14px;max-width:calc(100vw - 24px);background:rgba(18,18,18,.9);color:#f4f4f2;border:1px solid rgba(255,255,255,.16);border-radius:999px;font:500 12px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.01em;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.sp-concept a{color:inherit;text-decoration:none}
+.sp-concept__back{white-space:nowrap;opacity:.85}
+.sp-concept__back:hover{opacity:1}
+.sp-concept__label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.6}
+.sp-concept__dirs{display:flex;gap:2px}
+.sp-concept__dirs a{display:grid;place-items:center;min-width:32px;height:28px;border-radius:999px;font-variant-numeric:tabular-nums}
+.sp-concept__dirs a:hover{background:rgba(255,255,255,.12)}
+.sp-concept__dirs a[aria-current="page"]{background:#f4f4f2;color:#121212}
+.sp-concept a:focus-visible{outline:2px solid #f4f4f2;outline-offset:2px}
+@media (max-width:420px){.sp-concept__label{display:none}}
+</style>
+</body>
+</html>
