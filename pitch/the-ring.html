@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Ring · Serious Play</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#F3F2EE;--bone:#E6E1D6;--concrete:#BEBDB8;--ink:#0E0E0E;--graphite:#5E5D59;--line:#D2D0CA;--cobalt:#2B3BF2;
+  --f-sans:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-serif:"Instrument Serif","Times New Roman",serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --ease:cubic-bezier(.7,0,.2,1);
+  --g:clamp(16px,2.4vw,32px);
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 13px/1.4 var(--f-sans);-webkit-font-smoothing:antialiased;overflow:hidden;overscroll-behavior:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--cobalt);outline-offset:3px}
+.up{text-transform:uppercase;letter-spacing:.02em;font-size:12px}
+.mono{font:500 10.5px/1.5 var(--f-mono);letter-spacing:.06em;text-transform:uppercase}
+.muted{color:var(--graphite)}
+
+/* ---------- chrome ---------- */
+.bar{position:fixed;left:0;right:0;z-index:40;display:flex;justify-content:space-between;align-items:flex-start;padding:var(--g);pointer-events:none}
+.bar > *{pointer-events:auto}
+.top{top:env(safe-area-inset-top,0px)}
+.bottom{bottom:env(safe-area-inset-bottom,0px);align-items:flex-end}
+.logo{font-weight:700}
+.nav{display:flex;gap:22px}
+.nav a{position:relative}
+.nav a::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:1px;background:currentColor;transform:scaleX(0);transform-origin:right;transition:transform .5s var(--ease)}
+.nav a:hover::after,.nav a[aria-current]::after{transform:scaleX(1);transform-origin:left}
+
+/* caption of the active piece */
+.cap{display:grid;gap:6px;min-height:92px;max-width:min(62vw,560px)}
+.cap .name{font:400 clamp(34px,4.4vw,64px)/.95 var(--f-serif);letter-spacing:-.01em;overflow:hidden}
+.cap .name span{display:inline-block;will-change:transform}
+.cap .facts{display:flex;gap:18px;flex-wrap:wrap;overflow:hidden}
+.cap .facts span{display:inline-block}
+.right{display:grid;gap:12px;justify-items:end;text-align:right}
+.count{font:400 clamp(28px,3vw,44px)/1 var(--f-serif);font-variant-numeric:tabular-nums}
+.count small{font-size:.45em;color:var(--graphite);vertical-align:.9em;margin-left:4px}
+.views{display:flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:999px;background:rgba(243,242,238,.8);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.views button{padding:7px 12px;border-radius:999px;transition:background .4s var(--ease),color .4s var(--ease)}
+.views button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.hint{transition:opacity .6s var(--ease)}
+
+/* ---------- stage ---------- */
+.stage{position:fixed;inset:0;overflow:hidden;touch-action:none;cursor:grab}
+.stage.drag{cursor:grabbing}
+.plate{position:absolute;left:0;top:0;width:var(--w);aspect-ratio:4/5;will-change:transform,opacity;transform-origin:50% 50%;border-radius:2px;overflow:hidden;box-shadow:0 30px 60px -40px rgba(0,0,0,.45);background:var(--bone)}
+.plate svg,.plate img{display:block;width:100%;height:100%;object-fit:cover}
+.plate::after{content:"";position:absolute;inset:0;background:var(--paper);opacity:var(--veil,0);pointer-events:none}
+.plate:focus-visible{outline-offset:6px}
+.guide{position:absolute;left:50%;border:1px solid var(--line);border-radius:50%;pointer-events:none;transform:translateX(-50%);transition:opacity .6s var(--ease)}
+body.idx .guide{opacity:0}
+
+/* ---------- index view ---------- */
+.index{position:fixed;inset:0;z-index:20;display:flex;align-items:center;padding:calc(var(--g) * 3.5) var(--g);pointer-events:none;opacity:0;transition:opacity .7s var(--ease)}
+.index.on{pointer-events:auto;opacity:1}
+.index ol{list-style:none;margin:0;padding:0;width:100%}
+.index li{border-top:1px solid var(--line);overflow:hidden}
+.index li:last-child{border-bottom:1px solid var(--line)}
+.index button{display:grid;grid-template-columns:70px 1fr auto;align-items:baseline;gap:16px;width:100%;padding:8px 0;text-align:left}
+.index .n{font:400 clamp(30px,5.2vh,62px)/1.05 var(--f-serif);transform:translateY(105%);transition:transform .9s var(--ease),color .4s}
+.index.on .n{transform:none}
+.index li:nth-child(2) .n{transition-delay:.04s}.index li:nth-child(3) .n{transition-delay:.08s}.index li:nth-child(4) .n{transition-delay:.12s}.index li:nth-child(5) .n{transition-delay:.16s}.index li:nth-child(6) .n{transition-delay:.2s}.index li:nth-child(7) .n{transition-delay:.24s}.index li:nth-child(8) .n{transition-delay:.28s}
+.index ol:hover .n{color:var(--concrete)}
+.index button:hover .n,.index button:focus-visible .n{color:var(--ink)}
+.peek{position:fixed;left:0;top:0;width:min(24vw,300px);aspect-ratio:4/5;z-index:25;pointer-events:none;opacity:0;transition:opacity .4s var(--ease);will-change:transform}
+.peek.on{opacity:1}
+.peek svg{display:block;width:100%;height:100%}
+@media (max-width:700px){.index button{grid-template-columns:44px 1fr}.index .meta{display:none}.peek{display:none}}
+
+/* ---------- case ---------- */
+.case{position:fixed;inset:0;z-index:60;background:var(--paper);overflow-y:auto;visibility:hidden;overscroll-behavior:contain}
+.case.open{visibility:visible}
+.case .hero{position:relative;height:100vh;height:100svh;overflow:hidden}
+.case .hero .img{position:absolute;inset:0;transform-origin:0 0}
+.case .hero .img svg{width:100%;height:100%;display:block}
+.case .close{position:fixed;top:calc(var(--g) + env(safe-area-inset-top,0px));right:var(--g);z-index:5;background:var(--paper);padding:9px 14px;border-radius:999px;opacity:0;transition:opacity .5s var(--ease)}
+.case.ready .close{opacity:1}
+.case .title{position:absolute;left:var(--g);bottom:var(--g);right:var(--g);display:flex;justify-content:space-between;align-items:flex-end;gap:20px;color:var(--paper);mix-blend-mode:difference}
+.case .title h2{margin:0;font:400 clamp(56px,11vw,180px)/.86 var(--f-serif);letter-spacing:-.02em}
+.case .body{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--g);padding:calc(var(--g) * 2) var(--g) calc(var(--g) * 4);opacity:0;transform:translateY(30px);transition:opacity .8s var(--ease) .2s,transform .8s var(--ease) .2s}
+.case.ready .body{opacity:1;transform:none}
+.case dl{grid-column:1 / span 12;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--g);margin:0;padding-bottom:calc(var(--g) * 2);border-bottom:1px solid var(--ink)}
+.case dt{margin-bottom:6px}
+.case dd{margin:0;font:400 22px/1.2 var(--f-serif)}
+.case figure{margin:0}
+.case figure .ph{aspect-ratio:4/5;overflow:hidden;background:var(--bone)}
+.case figure .ph.wide{aspect-ratio:16/10}
+.case figure svg{width:100%;height:100%;display:block}
+.case figcaption{margin-top:8px}
+.case .g1{grid-column:1 / span 7}.case .g2{grid-column:9 / span 4;align-self:end}.case .g3{grid-column:3 / span 4}.case .g4{grid-column:8 / span 5;margin-top:18vh}
+.case .next{grid-column:1 / span 12;display:flex;justify-content:space-between;align-items:baseline;padding-top:calc(var(--g) * 2);border-top:1px solid var(--line);margin-top:calc(var(--g) * 2)}
+.case .next button{font:400 clamp(40px,6vw,96px)/1 var(--f-serif);text-align:right}
+.case .next button span{display:inline-block;transition:transform .6s var(--ease)}
+.case .next button:hover span{transform:translateX(12px)}
+@media (max-width:800px){.case dl{grid-template-columns:repeat(2,minmax(0,1fr))}.case .g1,.case .g2,.case .g3,.case .g4{grid-column:1 / -1;margin-top:0}}
+
+.pill{position:fixed;left:50%;top:calc(var(--g) + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:45;display:flex;gap:10px;align-items:center;padding:6px 12px;background:rgba(18,18,18,.88);color:#f4f4f2;border-radius:999px;font:500 11px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;white-space:nowrap}
+.pill a{opacity:.8}.pill a:hover{opacity:1}
+@media (max-width:700px){.pill{top:calc(58px + env(safe-area-inset-top,0px))}.nav{gap:14px}.cap{max-width:58vw}}
+
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;transition-delay:0s!important}}
+</style>
+</head>
+<body>
+
+<header class="bar top">
+  <a class="logo up" href="#" id="home">Serious Play</a>
+  <nav class="nav up" aria-label="Main">
+    <a href="#" aria-current="page">Work</a><a href="#">Studio</a><a href="#">Contact</a>
+  </nav>
+</header>
+
+<div class="pill" aria-label="Concept"><span>Concept</span><span style="opacity:.6">Direction 04 &middot; The Ring &middot; placeholder work</span></div>
+
+<main class="stage" id="stage" aria-label="Selected work, arranged as a ring. Drag, scroll or use the arrow keys to turn it.">
+  <div class="guide" id="guide" aria-hidden="true"></div>
+</main>
+
+<section class="index" id="index" aria-label="Work index"><ol id="list"></ol></section>
+<div class="peek" id="peek" aria-hidden="true"></div>
+
+<footer class="bar bottom">
+  <div class="cap" id="cap" aria-live="polite"><div class="name"><span id="capName"></span></div><div class="facts mono muted" id="capFacts"></div></div>
+  <div class="right">
+    <p class="count" id="count" aria-hidden="true"></p>
+    <div class="views" role="group" aria-label="View">
+      <button type="button" class="mono" id="vRing" aria-pressed="true">Ring</button>
+      <button type="button" class="mono" id="vIndex" aria-pressed="false">Index</button>
+    </div>
+  </div>
+</footer>
+
+<section class="case" id="case" aria-modal="true" role="dialog" aria-labelledby="caseTitle">
+  <button type="button" class="close mono" id="caseClose">Close</button>
+  <div class="hero"><div class="img" id="caseImg"></div><div class="title"><h2 id="caseTitle"></h2><span class="mono" id="caseNo"></span></div></div>
+  <div class="body" id="caseBody"></div>
+</section>
+
+<script src="shared/projects.js"></script>
+<script>
+(function () {
+  "use strict";
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var work = SP.projects;
+  // One accent per project, drawn from the moodboard's rule: one colour at a time.
+  var accents = ["#2B3BF2", "#B8412B", "#2E6B3F", "#0E0E0E", "#6D2A6B", "#2B3BF2", "#8A6A2E", "#0E0E0E"];
+
+  /* ---------- placeholder plates in the moodboard's language ---------- */
+  var uid = 0;
+  function plate(p, i, variant, ratio) {
+    variant = variant || 0;
+    var W = ratio === "wide" ? 1600 : 800, H = ratio === "wide" ? 1000 : 1000, id = "g" + (uid++);
+    var r = SP.rng(SP.hash(p.id + variant)), ac = accents[i % accents.length];
+    var kind = (i + variant) % 5, m = Math.min(W, H), art = "";
+    var bg = '<linearGradient id="' + id + 'b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D9D8D3"/><stop offset=".62" stop-color="#C7C6C1"/><stop offset=".62" stop-color="#B9B8B3"/><stop offset="1" stop-color="#E8E7E2"/></linearGradient>';
+    var defs = bg + '<radialGradient id="' + id + 'o" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#FBF9F4"/><stop offset=".55" stop-color="#E4DED1"/><stop offset="1" stop-color="#A9A396"/></radialGradient>' +
+      '<filter id="' + id + 'n"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="' + (i + 3) + '"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .09 0"/></filter>' +
+      '<filter id="' + id + 's" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="' + (m * .03) + '"/></filter>';
+    var ground = '<rect width="' + W + '" height="' + H + '" fill="url(#' + id + 'b)"/>';
+    if (kind === 0) { // still life: an orb resting on a ledge
+      var cx = W * (.44 + r() * .12), cy = H * .5, rr = m * .24;
+      art = '<ellipse cx="' + cx + '" cy="' + (H * .62 + rr * .02) + '" rx="' + rr * 1.05 + '" ry="' + rr * .14 + '" fill="#000" opacity=".35" filter="url(#' + id + 's)"/>' +
+        '<circle cx="' + cx + '" cy="' + (H * .62 - rr) + '" r="' + rr + '" fill="url(#' + id + 'o)"/>' +
+        '<rect x="' + (W * .08) + '" y="' + (H * .12) + '" width="' + m * .12 + '" height="' + m * .035 + '" fill="' + ac + '"/>';
+    } else if (kind === 1) { // type poster: the name, stretched and cropped
+      var word = p.name.split(" ")[0].toUpperCase();
+      ground = '<rect width="' + W + '" height="' + H + '" fill="#EDECE7"/>';
+      art = '<text x="' + (-W * .02) + '" y="' + (H * .96) + '" font-family="Archivo, Arial Narrow, sans-serif" font-weight="800" font-size="' + H * .5 + '" letter-spacing="-4" transform="scale(1 1.9) translate(0 ' + (-H * .47) + ')" fill="#0E0E0E" style="font-stretch:62%;font-variation-settings:\'wdth\' 62">' + word + '</text>' +
+        '<rect x="' + W * .06 + '" y="' + H * .06 + '" width="' + W * .88 + '" height="' + m * .004 + '" fill="#0E0E0E"/>' +
+        '<circle cx="' + W * .84 + '" cy="' + H * .16 + '" r="' + m * .05 + '" fill="' + ac + '"/>';
+    } else if (kind === 2) { // lookbook: faceless figure from behind, abstracted
+      ground = '<rect width="' + W + '" height="' + H + '" fill="#E9E8E3"/>';
+      var fx = W * .5;
+      art = '<ellipse cx="' + fx + '" cy="' + H * .26 + '" rx="' + m * .085 + '" ry="' + m * .1 + '" fill="#2A2724"/>' +
+        '<path d="M' + (fx - m * .2) + ',' + H * .95 + ' C' + (fx - m * .22) + ',' + H * .5 + ' ' + (fx - m * .16) + ',' + H * .38 + ' ' + fx + ',' + H * .37 + ' C' + (fx + m * .16) + ',' + H * .38 + ' ' + (fx + m * .22) + ',' + H * .5 + ' ' + (fx + m * .2) + ',' + H * .95 + ' Z" fill="#F7F6F2" stroke="#CFCDC6"/>' +
+        '<rect x="' + (fx - m * .03) + '" y="' + H * .52 + '" width="' + m * .06 + '" height="' + m * .018 + '" fill="' + ac + '"/>' +
+        '<ellipse cx="' + fx + '" cy="' + H * .97 + '" rx="' + m * .3 + '" ry="' + m * .03 + '" fill="#000" opacity=".25" filter="url(#' + id + 's)"/>';
+    } else if (kind === 3) { // archive sheet: numbered index and a small image
+      ground = '<rect width="' + W + '" height="' + H + '" fill="#F4F3EF"/>';
+      art = '<rect x="' + W * .3 + '" y="' + H * .2 + '" width="' + W * .4 + '" height="' + H * .38 + '" fill="#BEBDB8"/><circle cx="' + W * .5 + '" cy="' + H * .39 + '" r="' + m * .1 + '" fill="url(#' + id + 'o)"/>';
+      for (var k = 0; k < 9; k++) art += '<rect x="' + W * .08 + '" y="' + (H * .66 + k * H * .032) + '" width="' + W * .84 + '" height="1.5" fill="#0E0E0E" opacity=".5"/><text x="' + W * .92 + '" y="' + (H * .66 + k * H * .032 - 6) + '" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="' + m * .02 + '" fill="#0E0E0E">' + ("0" + (k + 1)) + '</text>';
+      art += '<text x="' + W * .08 + '" y="' + H * .12 + '" font-family="Instrument Serif, serif" font-size="' + m * .07 + '" fill="' + ac + '">' + p.name + '</text>';
+    } else { // flash-lit macro: blurred object on dark
+      ground = '<rect width="' + W + '" height="' + H + '" fill="#141414"/>';
+      art = '<ellipse cx="' + W * .52 + '" cy="' + H * .5 + '" rx="' + m * .3 + '" ry="' + m * .22 + '" fill="#EDE6D8" filter="url(#' + id + 's)" transform="rotate(' + (-20 + r() * 40) + ' ' + W * .52 + ' ' + H * .5 + ')"/>' +
+        '<ellipse cx="' + W * .47 + '" cy="' + H * .45 + '" rx="' + m * .12 + '" ry="' + m * .08 + '" fill="#FFFFFF" opacity=".85"/>' +
+        '<text x="' + W * .5 + '" y="' + H * .9 + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="' + m * .022 + '" letter-spacing="2" fill="#F3F2EE">' + p.name.toUpperCase() + ' · ' + p.year + '</text>';
+    }
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid slice" role="img" aria-label="' + p.name + ', placeholder image"><defs>' + defs + '</defs>' + ground + art +
+      '<rect width="' + W + '" height="' + H + '" filter="url(#' + id + 'n)" opacity="1"/></svg>';
+  }
+
+  /* ---------- build ring ---------- */
+  var stage = document.getElementById("stage"), guide = document.getElementById("guide");
+  var N = work.length, els = [];
+  work.forEach(function (p, i) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "plate"; b.innerHTML = plate(p, i, 0);
+    b.setAttribute("aria-label", "Open " + p.name + ", " + p.sector + ", " + p.year);
+    b.addEventListener("click", function () { if (moved < 6) { if (i === active) openCase(i, b); else goTo(i); } });
+    stage.appendChild(b); els.push(b);
+  });
+
+  var W, H, R, cx, cy, pw, step;
+  function measure() {
+    W = innerWidth; H = innerHeight;
+    pw = Math.min(H * .4, W * (W < 700 ? .5 : .24));
+    R = Math.max(W * .9, 900);
+    step = (pw * 1.25) / R;
+    cx = W / 2; cy = H * .47 + R;
+    document.documentElement.style.setProperty("--w", pw + "px");
+    guide.style.width = guide.style.height = R * 2 + "px";
+    guide.style.top = (cy - R) + "px";
+  }
+  measure();
+  addEventListener("resize", measure);
+
+  /* ---------- motion: one loop, eased toward a target ---------- */
+  var cur = 0, target = 0, vel = 0, active = -1, mode = "ring", idle = 0;
+  function wrap(a) { var t = N * step; a = ((a % t) + t) % t; return a > t / 2 ? a - t : a; }
+  function frame() {
+    var k = reduce ? 1 : 0.085;
+    if (!dragging) { target += vel; vel *= 0.9; if (Math.abs(vel) < 0.00005) vel = 0; }
+    if (!dragging && vel === 0 && performance.now() - idle > 140) target = Math.round(target / step) * step;
+    cur += (target - cur) * k;
+    var hide = mode !== "ring";
+    for (var i = 0; i < N; i++) {
+      var a = wrap(i * step - cur), d = Math.abs(a) / step;
+      var s = 1 + Math.max(0, 1 - d) * .32 - Math.min(d, 3) * .05;
+      var x = cx + Math.sin(a) * R - pw / 2, y = cy - Math.cos(a) * R - pw * .625;
+      var o = hide ? 0 : Math.max(0, 1 - Math.max(0, d - 2.2) * .8);
+      var e = els[i];
+      e.style.transform = "translate3d(" + x.toFixed(2) + "px," + (y + (hide ? 60 : 0)).toFixed(2) + "px,0) rotate(" + (a * 57.2958).toFixed(3) + "deg) scale(" + s.toFixed(4) + ")";
+      e.style.opacity = o.toFixed(3);
+      e.style.setProperty("--veil", Math.min(.55, d * .22).toFixed(3));
+      e.style.zIndex = 100 - Math.round(d * 10);
+      e.tabIndex = hide ? -1 : 0;
+    }
+    var nowActive = ((Math.round(cur / step) % N) + N) % N;
+    if (nowActive !== active) setActive(nowActive);
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- caption with a masked text swap ---------- */
+  var capName = document.getElementById("capName"), capFacts = document.getElementById("capFacts"), count = document.getElementById("count");
+  function setActive(i) {
+    active = i;
+    var p = work[i];
+    swap(capName, p.name);
+    capFacts.innerHTML = "<span>N&deg;" + p.no + "</span><span>" + p.sector + "</span><span>" + p.year + "</span><span>" + p.services.join(", ") + "</span>";
+    count.innerHTML = String(i + 1).padStart(2, "0") + "<small>/ " + String(N).padStart(2, "0") + "</small>";
+  }
+  function swap(el, text) {
+    if (reduce || !el.animate) { el.textContent = text; return; }
+    el.animate([{ transform: "translateY(0)" }, { transform: "translateY(-105%)" }], { duration: 220, easing: "cubic-bezier(.7,0,.2,1)", fill: "forwards" }).onfinish = function () {
+      el.textContent = text;
+      el.animate([{ transform: "translateY(105%)" }, { transform: "translateY(0)" }], { duration: 420, easing: "cubic-bezier(.2,.8,.2,1)", fill: "forwards" });
+    };
+  }
+  function goTo(i) { var d = wrap(i * step - cur); target = cur + d; vel = 0; idle = 0; }
+
+  /* ---------- input: wheel, drag with momentum, keys ---------- */
+  var dragging = false, lastX = 0, lastT = 0, moved = 0;
+  stage.addEventListener("wheel", function (e) {
+    if (mode !== "ring") return;
+    e.preventDefault();
+    var d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    vel += d * 0.00011 * (1000 / R);
+    idle = performance.now();
+  }, { passive: false });
+  stage.addEventListener("pointerdown", function (e) {
+    if (mode !== "ring") return;
+    dragging = true; moved = 0; lastX = e.clientX; lastT = performance.now(); vel = 0;
+    stage.classList.add("drag");
+  });
+  addEventListener("pointermove", function (e) {
+    if (!dragging) return;
+    var dx = e.clientX - lastX, now = performance.now();
+    moved += Math.abs(dx);
+    target -= dx / R;
+    vel = -dx / R * Math.min(1, 16 / Math.max(1, now - lastT));
+    lastX = e.clientX; lastT = now;
+  });
+  addEventListener("pointerup", function () {
+    if (!dragging) return;
+    dragging = false; idle = performance.now(); stage.classList.remove("drag");
+    setTimeout(function () { moved = 0; }, 0);
+  });
+  addEventListener("keydown", function (e) {
+    if (caseEl.classList.contains("open")) { if (e.key === "Escape") closeCase(); return; }
+    if (mode !== "ring") return;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") { target = Math.round(target / step) * step + step; e.preventDefault(); }
+    if (e.key === "ArrowLeft" || e.key === "ArrowUp") { target = Math.round(target / step) * step - step; e.preventDefault(); }
+    if (e.key === "Enter" && document.activeElement === document.body) openCase(active, els[active]);
+  });
+
+  /* ---------- index view with a lerped preview ---------- */
+  var index = document.getElementById("index"), list = document.getElementById("list"), peek = document.getElementById("peek");
+  work.forEach(function (p, i) {
+    var li = document.createElement("li");
+    li.innerHTML = '<button type="button"><span class="mono muted">N&deg;' + p.no + '</span><span class="n">' + p.name + '</span><span class="mono muted meta">' + p.sector + ' &middot; ' + p.year + '</span></button>';
+    var b = li.firstChild;
+    b.addEventListener("mouseenter", function () { peek.innerHTML = plate(p, i, 0); peek.classList.add("on"); });
+    b.addEventListener("mouseleave", function () { peek.classList.remove("on"); });
+    b.addEventListener("click", function () { peek.classList.remove("on"); setMode("ring"); goTo(i); setTimeout(function () { openCase(i, els[i]); }, reduce ? 0 : 650); });
+    list.appendChild(li);
+  });
+  var px = 0, py = 0, tx = 0, ty = 0;
+  addEventListener("pointermove", function (e) { tx = e.clientX + 24; ty = e.clientY - 120; });
+  (function peekLoop() { px += (tx - px) * .12; py += (ty - py) * .12; peek.style.transform = "translate3d(" + px + "px," + py + "px,0) rotate(" + ((tx - px) * .02).toFixed(2) + "deg)"; requestAnimationFrame(peekLoop); })();
+
+  var vRing = document.getElementById("vRing"), vIndex = document.getElementById("vIndex"), cap = document.getElementById("cap"), countEl = document.getElementById("count");
+  function setMode(m) {
+    mode = m;
+    vRing.setAttribute("aria-pressed", m === "ring"); vIndex.setAttribute("aria-pressed", m === "index");
+    index.classList.toggle("on", m === "index");
+    document.body.classList.toggle("idx", m === "index");
+    cap.style.opacity = countEl.style.opacity = m === "ring" ? 1 : 0;
+    cap.style.transition = countEl.style.transition = "opacity .6s cubic-bezier(.7,0,.2,1)";
+  }
+  vRing.addEventListener("click", function () { setMode("ring"); });
+  vIndex.addEventListener("click", function () { setMode("index"); });
+
+  /* ---------- case study with a FLIP expansion from the plate ---------- */
+  var caseEl = document.getElementById("case"), caseImg = document.getElementById("caseImg"), caseBody = document.getElementById("caseBody"), lastOpener = null;
+  function fillCase(i) {
+    var p = work[i], nxt = (i + 1) % N;
+    caseImg.innerHTML = plate(p, i, 0, "wide");
+    document.getElementById("caseTitle").textContent = p.name;
+    document.getElementById("caseNo").textContent = "N°" + p.no + " · " + p.year;
+    caseBody.innerHTML =
+      '<dl><div><dt class="mono muted">Client</dt><dd>' + p.name + '</dd></div><div><dt class="mono muted">Sector</dt><dd>' + p.sector + '</dd></div><div><dt class="mono muted">Discipline</dt><dd>' + p.services.join(", ") + '</dd></div><div><dt class="mono muted">Finding</dt><dd>' + p.finding + '</dd></div></dl>' +
+      '<figure class="g1"><div class="ph wide">' + plate(p, i, 1, "wide") + '</div><figcaption class="mono muted">01 &middot; Identity system</figcaption></figure>' +
+      '<figure class="g2"><div class="ph">' + plate(p, i, 2) + '</div><figcaption class="mono muted">02 &middot; Campaign</figcaption></figure>' +
+      '<figure class="g3"><div class="ph">' + plate(p, i, 3) + '</div><figcaption class="mono muted">03 &middot; Archive sheet</figcaption></figure>' +
+      '<figure class="g4"><div class="ph">' + plate(p, i, 4) + '</div><figcaption class="mono muted">04 &middot; Still life</figcaption></figure>' +
+      '<div class="next"><span class="mono muted">Next</span><button type="button" id="nextBtn"><span>' + work[nxt].name + ' &rarr;</span></button></div>';
+    document.getElementById("nextBtn").addEventListener("click", function () {
+      caseEl.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+      caseEl.classList.remove("ready");
+      setTimeout(function () { goTo(nxt); cur = target; fillCase(nxt); caseEl.classList.add("ready"); }, reduce ? 0 : 450);
+    });
+  }
+  function openCase(i, from) {
+    lastOpener = from;
+    fillCase(i);
+    caseEl.scrollTop = 0;
+    caseEl.classList.add("open");
+    document.getElementById("caseClose").focus({ preventScroll: true });
+    var r = from.getBoundingClientRect(), hw = innerWidth, hh = caseEl.querySelector(".hero").offsetHeight;
+    if (reduce || !caseImg.animate) { caseEl.classList.add("ready"); return; }
+    caseEl.style.background = "transparent";
+    var anim = caseImg.animate([
+      { transform: "translate(" + r.left + "px," + r.top + "px) scale(" + r.width / hw + "," + r.height / hh + ")", clipPath: "inset(0 0 0 0)" },
+      { transform: "translate(0,0) scale(1,1)", clipPath: "inset(0 0 0 0)" }
+    ], { duration: 950, easing: "cubic-bezier(.7,0,.2,1)" });
+    from.style.visibility = "hidden";
+    anim.onfinish = function () { caseEl.style.background = ""; caseEl.classList.add("ready"); from.style.visibility = ""; };
+  }
+  function closeCase() {
+    var from = lastOpener;
+    caseEl.classList.remove("ready");
+    if (reduce || !caseImg.animate || !from) { caseEl.classList.remove("open"); return; }
+    caseEl.scrollTo({ top: 0 });
+    var r = from.getBoundingClientRect(), hw = innerWidth, hh = caseEl.querySelector(".hero").offsetHeight;
+    caseEl.style.background = "transparent";
+    from.style.visibility = "hidden";
+    caseImg.animate([
+      { transform: "translate(0,0) scale(1,1)" },
+      { transform: "translate(" + r.left + "px," + r.top + "px) scale(" + r.width / hw + "," + r.height / hh + ")" }
+    ], { duration: 800, easing: "cubic-bezier(.7,0,.2,1)" }).onfinish = function () {
+      caseEl.classList.remove("open"); caseEl.style.background = ""; from.style.visibility = ""; from.focus({ preventScroll: true });
+    };
+  }
+  document.getElementById("caseClose").addEventListener("click", closeCase);
+  document.getElementById("home").addEventListener("click", function (e) { e.preventDefault(); if (caseEl.classList.contains("open")) closeCase(); setMode("ring"); goTo(0); });
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

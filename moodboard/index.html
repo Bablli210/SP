@@ -42,7 +42,7 @@ ul,ol{margin:0;padding:0;list-style:none}
 .serif{font-family:var(--f-serif);font-weight:400}
 .cond{font-family:var(--f-cond);font-stretch:62%;font-variation-settings:"wdth" 62;font-weight:800;letter-spacing:-.01em;line-height:.84;text-transform:uppercase}
 
-/* ---------- header, in the manner of Gray Lab's landing ---------- */
+/* ---------- header ---------- */
 .top{display:grid;grid-template-columns:1.1fr 1.6fr 1.6fr auto;gap:24px;padding-block:28px 0;align-items:start}
 .top nav{display:grid;gap:4px}
 .top .rail{writing-mode:vertical-rl;text-align:right;display:flex;gap:40px}
@@ -80,8 +80,6 @@ ul,ol{margin:0;padding:0;list-style:none}
 .ref .take{grid-column:2;font:400 16px/1.25 var(--f-serif);color:#2a2a28}
 .r-portrait .media{aspect-ratio:4/5}
 .r-tall .media{aspect-ratio:9/16}
-.r-wide .media{aspect-ratio:1916/981}
-.r-wide .media img{transform:none}
 /* editorial scatter: widths and vertical offsets */
 .s4{grid-column:span 4}.s3{grid-column:span 3}.s5{grid-column:span 5}.s6{grid-column:span 6}.s8{grid-column:span 8}.s12{grid-column:span 12}
 .o1{margin-top:clamp(0px,6vw,90px)}.o2{margin-top:clamp(0px,12vw,180px)}.o3{margin-top:clamp(0px,3vw,40px)}
@@ -166,7 +164,7 @@ footer{border-top:1px solid var(--ink);padding-block:22px calc(28px + env(safe-a
     <a href="#principles">Principles &mdash;</a>
     <a href="#directions">What changes &mdash;</a>
   </nav>
-  <p class="up">A moodboard built from the 14 references chosen by the client: Instagram posts, reels and the Studio Gray Lab landing page. Each one is annotated with what we take from it.</p>
+  <p class="up">A moodboard built from the 13 Instagram references chosen by the client. Each one is annotated with what we take from it. The brief: the site shows the work and sells it, with smooth interaction.</p>
   <div class="rail up"><span>Moodboard</span><span>Archive N&deg;01</span></div>
 </header>
 
@@ -184,13 +182,9 @@ footer{border-top:1px solid var(--ink);padding-block:22px calc(28px + env(safe-a
 <section class="wrap sec" id="refs" aria-labelledby="refs-h">
   <div class="head">
     <h2 class="cond" id="refs-h">The&nbsp;wall</h2>
-    <p>Fourteen references, numbered in the order we received them. Reels play silently.</p>
+    <p>Thirteen references, numbered in the order we received them. Reels play silently.</p>
   </div>
   <div class="wall">
-    <figure class="ref r-wide s12">
-      <div class="media"><img src="refs/studio-gray-lab.webp" alt="Studio Gray Lab landing page" loading="lazy"></div>
-      <figcaption><span class="no">R00</span><span class="t">Studio Gray Lab, landing page</span><span class="take">Tiny uppercase grotesk against large, scattered images. Vertical text on the right rail. Services written as one long run-on line. The page reads like an exhibition wall.</span></figcaption>
-    </figure>
 
     <figure class="ref r-portrait" style="grid-column:1 / span 4">
       <div class="media"><img src="refs/arc-records.jpg" alt="A,R,C Records store report slide" loading="lazy"></div>
@@ -258,7 +252,7 @@ footer{border-top:1px solid var(--ink);padding-block:22px calc(28px + env(safe-a
     <p>Neutrals do the work. Colour arrives one at a time, like a label on skin.</p>
   </div>
   <div class="pal">
-    <div class="sw"><div class="chip" style="background:#F3F2EE;box-shadow:inset 0 0 0 1px #D2D0CA"></div><div class="meta"><b>Paper</b><span class="lbl">#F3F2EE</span><span class="role">Ground. The white seamless of R01 and R00.</span></div></div>
+    <div class="sw"><div class="chip" style="background:#F3F2EE;box-shadow:inset 0 0 0 1px #D2D0CA"></div><div class="meta"><b>Paper</b><span class="lbl">#F3F2EE</span><span class="role">Ground. The white seamless of R01.</span></div></div>
     <div class="sw"><div class="chip" style="background:#E6E1D6"></div><div class="meta"><b>Bone</b><span class="lbl">#E6E1D6</span><span class="role">Still life, shells and paper stock (R06).</span></div></div>
     <div class="sw"><div class="chip" style="background:#BEBDB8"></div><div class="meta"><b>Concrete</b><span class="lbl">#BEBDB8</span><span class="role">Grey gradients of the binder and store (R09).</span></div></div>
     <div class="sw"><div class="chip" style="background:#0E0E0E"></div><div class="meta"><b>Ink</b><span class="lbl">#0E0E0E</span><span class="role">Type, marks and night photography.</span></div></div>
@@ -280,7 +274,7 @@ footer{border-top:1px solid var(--ink);padding-block:22px calc(28px + env(safe-a
     <div class="spec"><span class="lbl">Voice &middot; Instrument Serif</span><span class="big s">Records</span><p>The overlaid &ldquo;Records&rdquo; of R05 and the repeated serif of R02. For statements, project names and quotes.</p></div>
     <div class="spec"><span class="lbl">Data &middot; IBM Plex Mono</span><span class="big m">[N&deg;014]<br>00:03:58<br>SIZE: S&ndash;M</span><p>Item numbers, timecodes, sizes and years (R05, R12, R07). The studio's research, worn as detail.</p></div>
   </div>
-  <p class="rule-note" style="margin-top:28px">Body copy and navigation use Archivo at normal width, small and uppercase, the way Studio Gray Lab sets its menu.</p>
+  <p class="rule-note" style="margin-top:28px">Body copy and navigation use Archivo at normal width, small and uppercase, so the work always has the space.</p>
 </section>
 
 <!-- ============ PRINCIPLES ============ -->
@@ -290,12 +284,12 @@ footer{border-top:1px solid var(--ink);padding-block:22px calc(28px + env(safe-a
     <p>What the references agree on, written as rules for the site.</p>
   </div>
   <div class="prin">
-    <div class="pr"><span class="from">From R05 &middot; R13 &middot; R00</span><h3 class="cond">The site is an archive</h3><p>Every project gets an article number, a year and a size. The portfolio is a record the studio keeps adding to.</p></div>
+    <div class="pr"><span class="from">From R05 &middot; R13</span><h3 class="cond">The site is an archive</h3><p>Every project gets an article number, a year and a size. The portfolio is a record the studio keeps adding to.</p></div>
     <div class="pr"><span class="from">From R09 &middot; R08 &middot; R06</span><h3 class="cond">Work is handled</h3><p>Show work as objects: pages that turn, cards with tabs, scans with tape. Nothing floats in a void.</p></div>
-    <div class="pr"><span class="from">From R03 &middot; R12 &middot; R10</span><h3 class="cond">Play is a system</h3><p>Motion follows rules: rings, grids, repetitions. It is precise and slow. It never bounces.</p></div>
+    <div class="pr"><span class="from">From R03 &middot; R12 &middot; R10</span><h3 class="cond">Smooth, always</h3><p>Every interaction eases and carries momentum: rings, grids and transitions that follow the hand. Precise and unhurried, never bouncy, never janky.</p></div>
     <div class="pr"><span class="from">From R02 &middot; R04 &middot; R11</span><h3 class="cond">Type is material</h3><p>Words are stretched, repeated, pixelated and wrapped, while staying readable where it counts.</p></div>
     <div class="pr"><span class="from">From R01 &middot; R07 &middot; R09</span><h3 class="cond">Faceless and flash-lit</h3><p>People seen from behind or cropped close. Objects lit hard with flash or soft on grey. No stock smiles.</p></div>
-    <div class="pr"><span class="from">From R00</span><h3 class="cond">Small text, big air</h3><p>Navigation and captions stay tiny and uppercase. Images and one headline take the space.</p></div>
+    <div class="pr"><span class="from">From R13 &middot; R07 &middot; R12</span><h3 class="cond">Show, don&rsquo;t tell</h3><p>The work is the first thing you see and the last thing you remember. No manifesto hero, no paragraphs about craft. Captions are facts: client, year, discipline.</p></div>
   </div>
 </section>
 
@@ -323,8 +317,8 @@ footer{border-top:1px solid var(--ink);padding-block:22px calc(28px + env(safe-a
   </div>
   <div class="impl">
     <div class="im"><span class="lbl muted">Direction 01</span><h3>Field Notes</h3><span class="verdict c">Keep and sharpen</span><p>The archive idea is right. Swap the graph paper and highlighter for paper, bone and concrete; add article numbers and store-report layouts from R05.</p></div>
-    <div class="im"><span class="lbl muted">Direction 02</span><h3>Lights Off</h3><span class="verdict">Keep</span><p>Its dark, flash-lit mood matches R07, R11 and R13. Add the Gray Lab small-caps navigation and let the serif carry the names.</p></div>
-    <div class="im"><span class="lbl muted">Direction 03</span><h3>Playground</h3><span class="verdict x">Replace</span><p>The toy colours and rounded blocks do not belong here. Replace it with <b>The Ring</b>: the archive as a slowly orbiting ring of work, from R03, R10 and R12.</p></div>
+    <div class="im"><span class="lbl muted">Direction 02</span><h3>Lights Off</h3><span class="verdict">Keep</span><p>Its dark, flash-lit mood matches R07, R11 and R13. Lead with the work, not the flashlight: images first, the light as a finishing touch.</p></div>
+    <div class="im"><span class="lbl muted">Direction 03</span><h3>Playground</h3><span class="verdict x">Replace</span><p>The toy colours and rounded blocks do not belong here. Replace it with <b>The Ring</b>: the archive as a slowly orbiting ring of work, from R03, R10 and R12. <a href="https://claude.ai/artifact/GCshqEtgHZbKgb7ck9yFXP" style="text-decoration:underline">Open the prototype &rarr;</a></p></div>
   </div>
 </section>
 

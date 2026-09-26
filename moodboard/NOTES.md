@@ -39,3 +39,9 @@ Working notes on the client's references, written while studying each one. These
 - **Circles and rings** recur: circular type, the Circa ring, the orb, monograms. A ring-shaped portfolio carousel is a strong candidate for the signature interaction.
 - **Colour:** still largely grey, bone and black, with a single accent (cobalt labels) plus one atmospheric gradient (aubergine, lavender, lime) for motion moments.
 - **Type:** condensed grotesk used huge and cropped, a clean grotesk for logos, mono for data and timecodes.
+
+## Direction from the designer (after reviewing the references)
+
+- **Drop Studio Gray Lab as an influence.** Its landing page is no longer a reference.
+- **The site must show the work and sell itself.** Show, don't tell: work first, minimal copy, captions as facts.
+- **Interaction must be smooth:** eased, momentum-based, transform-only animation that follows the hand.
