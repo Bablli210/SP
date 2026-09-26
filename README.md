@@ -2,6 +2,8 @@
 
 Concept pitch for a new Serious Play website: moodboard, art direction, three live UI directions and the project plan, presented as a game rulebook.
 
+Published pitch (private until shared from its Share menu): https://claude.ai/artifact/MjrfnuU6QSTJbQyhuqipwL
+
 ## What's here
 
 | Path | What it is |
