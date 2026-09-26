@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Serious Play Moodboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* A single, fixed visual world taken from the references: paper, concrete, ink. */
+:root{
+  --paper:#F3F2EE;
+  --bone:#E6E1D6;
+  --concrete:#BEBDB8;
+  --ink:#0E0E0E;
+  --graphite:#5E5D59;
+  --line:#D2D0CA;
+  --cobalt:#2B3BF2;
+  --aubergine:#1F0B33;
+  --lavender:#B9B6DD;
+  --lime:#D7F75B;
+  --f-cond:"Archivo","Arial Narrow",Arial,sans-serif;
+  --f-sans:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-serif:"Instrument Serif","Times New Roman",Times,serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --g:clamp(16px,3vw,40px);
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 15px/1.5 var(--f-sans);-webkit-font-smoothing:antialiased}
+img,video{display:block;max-width:100%}
+a{color:inherit}
+h1,h2,h3,p{margin:0}
+ul,ol{margin:0;padding:0;list-style:none}
+:focus-visible{outline:2px solid var(--cobalt);outline-offset:3px}
+.wrap{padding-inline:var(--g)}
+.lbl{font:500 10.5px/1.45 var(--f-mono);letter-spacing:.06em;text-transform:uppercase}
+.up{text-transform:uppercase;font-size:13px;letter-spacing:.01em;line-height:1.3}
+.muted{color:var(--graphite)}
+.serif{font-family:var(--f-serif);font-weight:400}
+.cond{font-family:var(--f-cond);font-stretch:62%;font-variation-settings:"wdth" 62;font-weight:800;letter-spacing:-.01em;line-height:.84;text-transform:uppercase}
+
+/* ---------- header, in the manner of Gray Lab's landing ---------- */
+.top{display:grid;grid-template-columns:1.1fr 1.6fr 1.6fr auto;gap:24px;padding-block:28px 0;align-items:start}
+.top nav{display:grid;gap:4px}
+.top .rail{writing-mode:vertical-rl;text-align:right;display:flex;gap:40px}
+.top .rail a{text-decoration:none}
+@media (max-width:900px){.top{grid-template-columns:1fr 1fr}.top .rail{display:none}}
+@media (max-width:560px){.top{grid-template-columns:1fr}}
+
+/* ---------- hero ---------- */
+.hero{position:relative;padding-block:clamp(40px,7vw,90px) 24px;overflow:hidden}
+.hero h1{font-size:clamp(84px,21vw,330px);margin-left:-.02em;white-space:nowrap}
+.hero h1 span{display:block}
+.hero h1 .serif{display:block;font-family:var(--f-serif);font-style:italic;text-transform:none;font-weight:400;font-stretch:100%;font-variation-settings:normal;letter-spacing:-.01em;font-size:.2em;line-height:1.1;margin:.3em 0 0 .1em;white-space:normal}
+.tape{position:absolute;right:calc(var(--g) * -1);top:clamp(70px,10vw,140px);background:#fff;padding:10px 60px 8px 18px;transform:rotate(-4deg);box-shadow:0 2px 0 rgba(0,0,0,.06),0 10px 30px -18px rgba(0,0,0,.4);font:700 clamp(16px,2vw,26px)/1 var(--f-cond);font-stretch:70%;font-variation-settings:"wdth" 70;text-transform:uppercase;letter-spacing:.01em;white-space:nowrap}
+.tape b{display:inline-grid;place-items:center;border:1.5px solid var(--ink);padding:1px 5px;font-size:.6em;margin-inline:8px;vertical-align:3px}
+.intro{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--g);padding-block:12px 40px;border-bottom:1px solid var(--ink)}
+.intro p.big{grid-column:span 2;font:400 clamp(24px,2.6vw,38px)/1.12 var(--f-serif);max-width:28ch}
+@media (max-width:800px){.intro{grid-template-columns:1fr}.intro p.big{grid-column:auto}.tape{position:relative;right:auto;top:auto;display:inline-block;margin-top:16px;white-space:normal;padding-right:18px;max-width:100%;font-size:15px}}
+
+/* ---------- section heads ---------- */
+.sec{padding-block:clamp(48px,7vw,96px)}
+.sec + .sec{border-top:1px solid var(--line)}
+.head{display:grid;grid-template-columns:1.1fr 3.2fr;gap:24px;margin-bottom:clamp(28px,4vw,48px);align-items:end}
+.head h2{font-size:clamp(44px,9vw,140px)}
+.head p{font:400 clamp(20px,1.8vw,26px)/1.2 var(--f-serif);max-width:40ch;justify-self:end;text-align:right}
+@media (max-width:800px){.head{grid-template-columns:1fr}.head p{justify-self:start;text-align:left}}
+
+/* ---------- reference wall ---------- */
+.wall{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:clamp(12px,1.6vw,22px);align-items:start}
+.ref{margin:0;display:grid;gap:10px}
+.ref .media{position:relative;overflow:hidden;background:var(--bone)}
+.ref .media img,.ref .media video{width:100%;height:100%;object-fit:cover;transform:scale(1.07)}
+.ref figcaption{display:grid;grid-template-columns:auto 1fr;gap:4px 12px}
+.ref .no{font:500 10.5px/1.6 var(--f-mono)}
+.ref .t{font-size:12.5px;line-height:1.3;text-transform:uppercase;letter-spacing:.01em;font-weight:500}
+.ref .take{grid-column:2;font:400 16px/1.25 var(--f-serif);color:#2a2a28}
+.r-portrait .media{aspect-ratio:4/5}
+.r-tall .media{aspect-ratio:9/16}
+.r-wide .media{aspect-ratio:1916/981}
+.r-wide .media img{transform:none}
+/* editorial scatter: widths and vertical offsets */
+.s4{grid-column:span 4}.s3{grid-column:span 3}.s5{grid-column:span 5}.s6{grid-column:span 6}.s8{grid-column:span 8}.s12{grid-column:span 12}
+.o1{margin-top:clamp(0px,6vw,90px)}.o2{margin-top:clamp(0px,12vw,180px)}.o3{margin-top:clamp(0px,3vw,40px)}
+@media (max-width:900px){
+  .wall{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .wall > *{grid-column:span 1 !important;margin-top:0 !important}
+  .wall > .r-wide{grid-column:1 / -1 !important}
+}
+
+/* ---------- palette ---------- */
+.pal{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border-top:1px solid var(--ink)}
+.sw{display:grid;grid-template-rows:auto 1fr;border-right:1px solid var(--line)}
+.sw:last-child{border-right:0}
+.sw .chip{height:clamp(140px,18vw,260px)}
+.sw div.meta{padding:12px 12px 16px 0;display:grid;gap:4px}
+.sw b{font:500 20px/1.1 var(--f-serif)}
+.sw .role{font-size:13px;line-height:1.35;color:var(--graphite)}
+.grad{margin-top:16px;height:120px;background:linear-gradient(90deg,#E6E1D6 0%,#B9B6DD 22%,#6D2A6B 40%,#1F0B33 56%,#3B2E63 70%,#B9B6DD 86%,#D7F75B 100%);display:flex;align-items:flex-end;justify-content:space-between;padding:12px;color:#F3F2EE}
+.rule-note{margin-top:14px;font:400 19px/1.3 var(--f-serif);max-width:60ch}
+@media (max-width:800px){.pal{grid-template-columns:repeat(2,minmax(0,1fr))}.sw{border-bottom:1px solid var(--line)}}
+
+/* ---------- type ---------- */
+.types{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:var(--g)}
+.spec{border-top:1px solid var(--ink);padding-top:14px;display:grid;gap:14px;align-content:start}
+.spec .big{line-height:.85;overflow-wrap:anywhere}
+.spec .c{font-size:clamp(96px,11vw,170px)}
+.spec .s{font:italic 400 clamp(72px,8vw,128px)/.9 var(--f-serif)}
+.spec .m{font:500 clamp(22px,2.2vw,30px)/1.3 var(--f-mono);letter-spacing:-.01em}
+.spec p{font-size:14px;line-height:1.45;max-width:44ch}
+@media (max-width:900px){.types{grid-template-columns:1fr}}
+
+/* ---------- principles ---------- */
+.prin{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1px solid var(--ink)}
+.pr{padding:18px 20px 26px 0;border-bottom:1px solid var(--line);display:grid;gap:10px;align-content:start}
+.pr:not(:nth-child(3n)){border-right:1px solid var(--line)}
+.pr:nth-child(3n+2),.pr:nth-child(3n){padding-left:20px}
+.pr h3{font-size:clamp(34px,3.4vw,52px)}
+.pr p{font-size:14.5px;line-height:1.5;max-width:40ch}
+.pr .from{font:500 10.5px/1.5 var(--f-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--graphite)}
+@media (max-width:900px){.prin{grid-template-columns:1fr}.pr{border-right:0 !important;padding-left:0 !important}}
+
+/* ---------- ring (signature study) ---------- */
+.ringwrap{display:grid;grid-template-columns:1fr 1fr;gap:var(--g);align-items:center;overflow-x:clip}
+.ring{position:relative;aspect-ratio:1;width:min(88%,620px);justify-self:center;border-radius:50%}
+.ring::before,.ring::after{content:"";position:absolute;border:1px solid var(--line);border-radius:50%}
+.ring::before{inset:12%}.ring::after{inset:30%}
+.ring .orb{position:absolute;inset:0;animation:spin 80s linear infinite}
+.ring .card{position:absolute;left:50%;top:50%;width:17%;aspect-ratio:4/5;margin:-10.6% 0 0 -8.5%;overflow:hidden;background:var(--bone);box-shadow:0 8px 24px -14px rgba(0,0,0,.5)}
+.ring .card img{width:100%;height:100%;object-fit:cover;transform:scale(1.08)}
+.ring .centre{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.ring .centre div{display:grid;gap:6px}
+.ring .centre b{font:italic 400 clamp(30px,4vw,54px)/1 var(--f-serif)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ringwrap .copy{display:grid;gap:18px;max-width:50ch}
+.ringwrap .copy p{font-size:15px}
+.ringwrap .copy .serif{font-size:clamp(24px,2.4vw,34px);line-height:1.12}
+@media (max-width:900px){.ringwrap{grid-template-columns:1fr}}
+
+/* ---------- implications ---------- */
+.impl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--g)}
+.im{border-top:1px solid var(--ink);padding-top:14px;display:grid;gap:10px;align-content:start}
+.im h3{font:400 clamp(28px,2.8vw,40px)/1 var(--f-serif)}
+.im .verdict{justify-self:start;font:500 10.5px/1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:6px 8px;border:1px solid var(--ink)}
+.im .verdict.x{background:var(--ink);color:var(--paper)}
+.im .verdict.c{background:var(--cobalt);border-color:var(--cobalt);color:#fff}
+.im p{font-size:14.5px;line-height:1.5}
+@media (max-width:900px){.impl{grid-template-columns:1fr}}
+
+footer{border-top:1px solid var(--ink);padding-block:22px calc(28px + env(safe-area-inset-bottom,0px));display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
+
+@media (prefers-reduced-motion:reduce){.ring .orb{animation:none}}
+</style>
+</head>
+<body>
+
+<header class="wrap top">
+  <p class="up"><b>Serious Play&trade;</b><br><span class="muted">Website concept</span></p>
+  <nav class="up" aria-label="Sections">
+    <a href="#refs">References &mdash;</a>
+    <a href="#palette">Palette &mdash;</a>
+    <a href="#type">Type &mdash;</a>
+    <a href="#principles">Principles &mdash;</a>
+    <a href="#directions">What changes &mdash;</a>
+  </nav>
+  <p class="up">A moodboard built from the 14 references chosen by the client: Instagram posts, reels and the Studio Gray Lab landing page. Each one is annotated with what we take from it.</p>
+  <div class="rail up"><span>Moodboard</span><span>Archive N&deg;01</span></div>
+</header>
+
+<section class="wrap hero" aria-labelledby="h">
+  <h1 class="cond" id="h"><span>Wear &amp;</span><span>Research</span><em class="serif">an archive for Serious Play</em></h1>
+  <p class="tape" aria-hidden="true">Serious &larr; Research &rarr; Play <b>N&deg;01</b> ** 2026</p>
+</section>
+
+<div class="wrap intro">
+  <p class="big">The references are fashion and editorial, never playful in the toy sense. Play shows up as <em>system</em>: type bent along rings, logos pixelated and stretched, work handled like paper in a binder.</p>
+  <p class="lbl muted">Ground: paper, bone, concrete, ink.<br>One colour at a time.<br>Type as material.<br>Research worn as style: item numbers, sizes, years, timecodes.</p>
+</div>
+
+<!-- ============ REFERENCES ============ -->
+<section class="wrap sec" id="refs" aria-labelledby="refs-h">
+  <div class="head">
+    <h2 class="cond" id="refs-h">The&nbsp;wall</h2>
+    <p>Fourteen references, numbered in the order we received them. Reels play silently.</p>
+  </div>
+  <div class="wall">
+    <figure class="ref r-wide s12">
+      <div class="media"><img src="refs/studio-gray-lab.webp" alt="Studio Gray Lab landing page" loading="lazy"></div>
+      <figcaption><span class="no">R00</span><span class="t">Studio Gray Lab, landing page</span><span class="take">Tiny uppercase grotesk against large, scattered images. Vertical text on the right rail. Services written as one long run-on line. The page reads like an exhibition wall.</span></figcaption>
+    </figure>
+
+    <figure class="ref r-portrait" style="grid-column:1 / span 4">
+      <div class="media"><img src="refs/arc-records.jpg" alt="A,R,C Records store report slide" loading="lazy"></div>
+      <figcaption><span class="no">R05</span><span class="t">A,R,C Records, &ldquo;Wear and Research&rdquo;</span><span class="take">The closest match to the studio's own line. Research framed as fashion: article numbers, sizes, years, a store report.</span></figcaption>
+    </figure>
+    <figure class="ref r-portrait o2" style="grid-column:5 / span 4">
+      <div class="media"><img src="refs/wgt-editorial.png" alt="WGT editorial spread" loading="lazy"></div>
+      <figcaption><span class="no">R01</span><span class="t">WGT editorial</span><span class="take">A brush gesture against a rigid numbered index. Photography and system on one page.</span></figcaption>
+    </figure>
+    <figure class="ref r-portrait o1" style="grid-column:10 / span 3">
+      <div class="media"><video src="refs/circular-type.mp4" poster="refs/circular-type.jpg" muted loop playsinline autoplay preload="metadata" aria-label="Circular type experiments"></video></div>
+      <figcaption><span class="no">R03</span><span class="t">Circular type systems</span><span class="take">Words broken along rings. Experiments shown as specimens.</span></figcaption>
+    </figure>
+
+    <figure class="ref r-portrait o3" style="grid-column:2 / span 3">
+      <div class="media"><img src="refs/eyes-wide-open.webp" alt="Eyes Wide Open tee" loading="lazy"></div>
+      <figcaption><span class="no">R02</span><span class="t">Kino Pavasaris, &ldquo;Eyes Wide Open&rdquo;</span><span class="take">One colour, one serif, repeated at shifting scale.</span></figcaption>
+    </figure>
+    <figure class="ref r-tall o1" style="grid-column:5 / span 3">
+      <div class="media"><video src="refs/still-life.mp4" poster="refs/still-life-shell.jpg" muted loop playsinline autoplay preload="metadata" aria-label="Still-life scrapbook reel"></video></div>
+      <figcaption><span class="no">R06</span><span class="t">Scrapbook still life</span><span class="take">Shells, a martini, a mushroom. Soft grey and bone. Paper tabs as labels.</span></figcaption>
+    </figure>
+    <figure class="ref r-portrait" style="grid-column:9 / span 4">
+      <div class="media"><video src="refs/monnt-work.mp4" poster="refs/monnt-work.jpg" muted loop playsinline autoplay preload="metadata" aria-label="MONNT WORK type poster"></video></div>
+      <figcaption><span class="no">R04</span><span class="t">MONNT WORK</span><span class="take">One word, five constructions. Cobalt and black only.</span></figcaption>
+    </figure>
+
+    <figure class="ref r-tall o1" style="grid-column:1 / span 3">
+      <div class="media"><video src="refs/ring-binder-lookbook.mp4" poster="refs/ring-binder-lookbook.jpg" muted loop playsinline autoplay preload="metadata" aria-label="Ring-binder lookbook"></video></div>
+      <figcaption><span class="no">R09</span><span class="t">Ring-binder lookbook</span><span class="take">Work presented as a physical object you page through. Tiny cobalt labels.</span></figcaption>
+    </figure>
+    <figure class="ref r-portrait o3" style="grid-column:4 / span 5">
+      <div class="media"><img src="refs/workshop-canela.webp" alt="Workshop Canela poster" loading="lazy"></div>
+      <figcaption><span class="no">R08</span><span class="t">Workshop Canela</span><span class="take">Scanned objects, tape, a paper clip. Condensed type cropped off the edge, arrows as typography.</span></figcaption>
+    </figure>
+    <figure class="ref r-portrait o2" style="grid-column:10 / span 3">
+      <div class="media"><video src="refs/crudo.mp4" poster="refs/crudo.jpg" muted loop playsinline autoplay preload="metadata" aria-label="Crudo restaurant reel"></video></div>
+      <figcaption><span class="no">R07</span><span class="t">Crudo, Barcelona</span><span class="take">Flash-lit, blurred macro photography. One wordmark, a tiny mono info block.</span></figcaption>
+    </figure>
+
+    <figure class="ref r-portrait o1" style="grid-column:1 / span 4">
+      <div class="media"><video src="refs/sauvage-artists.mp4" poster="refs/sauvage-artists.jpg" muted loop playsinline autoplay preload="metadata" aria-label="Sauvage TV Artists identity"></video></div>
+      <figcaption><span class="no">R11</span><span class="t">Sauvage TV Artists</span><span class="take">A logo that plays with itself: pixel, scan-line, stretch. Crop marks and a photo index.</span></figcaption>
+    </figure>
+    <figure class="ref r-portrait" style="grid-column:5 / span 4">
+      <div class="media"><video src="refs/circa-ring.mp4" poster="refs/circa-ring.jpg" muted loop playsinline autoplay preload="metadata" aria-label="Circa music management reel"></video></div>
+      <figcaption><span class="no">R12</span><span class="t">Circa, music management</span><span class="take">Portraits orbiting a chrome mark. Timecodes in brackets.</span></figcaption>
+    </figure>
+    <figure class="ref r-portrait o2" style="grid-column:9 / span 4">
+      <div class="media"><video src="refs/gradient-orb.mp4" poster="refs/gradient-orb.jpg" muted loop playsinline autoplay preload="metadata" aria-label="Gradient orb animation"></video></div>
+      <figcaption><span class="no">R10</span><span class="t">Gradient orb</span><span class="take">The one atmospheric moment: aubergine, lavender and a lime edge on bone.</span></figcaption>
+    </figure>
+
+    <figure class="ref r-tall o1" style="grid-column:5 / span 4">
+      <div class="media"><video src="refs/recap-archive.mp4" poster="refs/recap-archive.jpg" muted loop playsinline autoplay preload="metadata" aria-label="Recap 2024 archive reel"></video></div>
+      <figcaption><span class="no">R13</span><span class="t">Recap 2024 (Archive)</span><span class="take">A year of physical work (events, retail, packaging) cut fast under huge condensed type.</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ PALETTE ============ -->
+<section class="wrap sec" id="palette" aria-labelledby="pal-h">
+  <div class="head">
+    <h2 class="cond" id="pal-h">Palette</h2>
+    <p>Neutrals do the work. Colour arrives one at a time, like a label on skin.</p>
+  </div>
+  <div class="pal">
+    <div class="sw"><div class="chip" style="background:#F3F2EE;box-shadow:inset 0 0 0 1px #D2D0CA"></div><div class="meta"><b>Paper</b><span class="lbl">#F3F2EE</span><span class="role">Ground. The white seamless of R01 and R00.</span></div></div>
+    <div class="sw"><div class="chip" style="background:#E6E1D6"></div><div class="meta"><b>Bone</b><span class="lbl">#E6E1D6</span><span class="role">Still life, shells and paper stock (R06).</span></div></div>
+    <div class="sw"><div class="chip" style="background:#BEBDB8"></div><div class="meta"><b>Concrete</b><span class="lbl">#BEBDB8</span><span class="role">Grey gradients of the binder and store (R09).</span></div></div>
+    <div class="sw"><div class="chip" style="background:#0E0E0E"></div><div class="meta"><b>Ink</b><span class="lbl">#0E0E0E</span><span class="role">Type, marks and night photography.</span></div></div>
+    <div class="sw"><div class="chip" style="background:#2B3BF2"></div><div class="meta"><b>Cobalt</b><span class="lbl">#2B3BF2</span><span class="role">The single accent: labels, links, one poster (R04, R09).</span></div></div>
+    <div class="sw"><div class="chip" style="background:#1F0B33"></div><div class="meta"><b>Aubergine</b><span class="lbl">#1F0B33</span><span class="role">Reserved for motion moments with lavender and lime (R10).</span></div></div>
+  </div>
+  <div class="grad" aria-hidden="true"><span class="lbl" style="color:#0E0E0E">Atmosphere gradient</span><span class="lbl">Bone &rarr; lavender &rarr; aubergine &rarr; lime</span></div>
+  <p class="rule-note">Rule: one accent per screen. Green (R02) or red (R05) can replace cobalt for a single campaign or case study. They never appear together.</p>
+</section>
+
+<!-- ============ TYPE ============ -->
+<section class="wrap sec" id="type" aria-labelledby="type-h">
+  <div class="head">
+    <h2 class="cond" id="type-h">Type</h2>
+    <p>Three voices: a condensed grotesk that shouts, a serif that speaks, a mono that files.</p>
+  </div>
+  <div class="types">
+    <div class="spec"><span class="lbl">Display &middot; Archivo Condensed 800</span><span class="big cond c">Archive</span><p>Set huge, cropped at the edge and laid over images (R08, R13). Uppercase only. For section titles and one word per screen.</p></div>
+    <div class="spec"><span class="lbl">Voice &middot; Instrument Serif</span><span class="big s">Records</span><p>The overlaid &ldquo;Records&rdquo; of R05 and the repeated serif of R02. For statements, project names and quotes.</p></div>
+    <div class="spec"><span class="lbl">Data &middot; IBM Plex Mono</span><span class="big m">[N&deg;014]<br>00:03:58<br>SIZE: S&ndash;M</span><p>Item numbers, timecodes, sizes and years (R05, R12, R07). The studio's research, worn as detail.</p></div>
+  </div>
+  <p class="rule-note" style="margin-top:28px">Body copy and navigation use Archivo at normal width, small and uppercase, the way Studio Gray Lab sets its menu.</p>
+</section>
+
+<!-- ============ PRINCIPLES ============ -->
+<section class="wrap sec" id="principles" aria-labelledby="pr-h">
+  <div class="head">
+    <h2 class="cond" id="pr-h">Six&nbsp;rules</h2>
+    <p>What the references agree on, written as rules for the site.</p>
+  </div>
+  <div class="prin">
+    <div class="pr"><span class="from">From R05 &middot; R13 &middot; R00</span><h3 class="cond">The site is an archive</h3><p>Every project gets an article number, a year and a size. The portfolio is a record the studio keeps adding to.</p></div>
+    <div class="pr"><span class="from">From R09 &middot; R08 &middot; R06</span><h3 class="cond">Work is handled</h3><p>Show work as objects: pages that turn, cards with tabs, scans with tape. Nothing floats in a void.</p></div>
+    <div class="pr"><span class="from">From R03 &middot; R12 &middot; R10</span><h3 class="cond">Play is a system</h3><p>Motion follows rules: rings, grids, repetitions. It is precise and slow. It never bounces.</p></div>
+    <div class="pr"><span class="from">From R02 &middot; R04 &middot; R11</span><h3 class="cond">Type is material</h3><p>Words are stretched, repeated, pixelated and wrapped, while staying readable where it counts.</p></div>
+    <div class="pr"><span class="from">From R01 &middot; R07 &middot; R09</span><h3 class="cond">Faceless and flash-lit</h3><p>People seen from behind or cropped close. Objects lit hard with flash or soft on grey. No stock smiles.</p></div>
+    <div class="pr"><span class="from">From R00</span><h3 class="cond">Small text, big air</h3><p>Navigation and captions stay tiny and uppercase. Images and one headline take the space.</p></div>
+  </div>
+</section>
+
+<!-- ============ RING ============ -->
+<section class="wrap sec" aria-labelledby="ring-h">
+  <div class="ringwrap">
+    <div class="ring" id="ring" aria-hidden="true">
+      <div class="orb"></div>
+      <div class="centre"><div><span class="lbl">[Archive] Selected work</span><b>Serious Play</b><span class="lbl">00:14 / 00:14</span></div></div>
+    </div>
+    <div class="copy">
+      <span class="lbl muted">Signature study</span>
+      <h2 class="cond" id="ring-h" style="font-size:clamp(56px,7vw,110px)">The ring</h2>
+      <p class="serif">Rings run through the references: the circular type (R03), the Circa orbit (R12), the orb (R10). We propose one signature interaction built on it.</p>
+      <p>The homepage opens on the studio's archive arranged as a slow ring of work. Scroll or drag turns it; the piece at the top opens into its case study. It is calm enough for a luxury audience, and still something people want to play with. This sketch uses the references themselves as the ring.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DIRECTIONS ============ -->
+<section class="wrap sec" id="directions" aria-labelledby="dir-h">
+  <div class="head">
+    <h2 class="cond" id="dir-h">What&nbsp;changes</h2>
+    <p>How the references reshape the three directions in the rulebook. The rulebook itself stays as it is.</p>
+  </div>
+  <div class="impl">
+    <div class="im"><span class="lbl muted">Direction 01</span><h3>Field Notes</h3><span class="verdict c">Keep and sharpen</span><p>The archive idea is right. Swap the graph paper and highlighter for paper, bone and concrete; add article numbers and store-report layouts from R05.</p></div>
+    <div class="im"><span class="lbl muted">Direction 02</span><h3>Lights Off</h3><span class="verdict">Keep</span><p>Its dark, flash-lit mood matches R07, R11 and R13. Add the Gray Lab small-caps navigation and let the serif carry the names.</p></div>
+    <div class="im"><span class="lbl muted">Direction 03</span><h3>Playground</h3><span class="verdict x">Replace</span><p>The toy colours and rounded blocks do not belong here. Replace it with <b>The Ring</b>: the archive as a slowly orbiting ring of work, from R03, R10 and R12.</p></div>
+  </div>
+</section>
+
+<footer class="wrap up">
+  <span>Serious Play &middot; Moodboard, archive N&deg;01 &middot; September 2026</span>
+  <span class="muted">References belong to their creators. Used here for internal direction only.</span>
+</footer>
+
+<script>
+(function () {
+  // Build the ring from the reference stills.
+  var srcs = ["arc-records.jpg","wgt-editorial.png","circular-type.jpg","eyes-wide-open.webp","still-life-shell.jpg","monnt-work.jpg","ring-binder-lookbook.jpg","workshop-canela.webp","crudo.jpg","sauvage-artists.jpg","circa-ring.jpg","gradient-orb.jpg","recap-archive.jpg","still-life-mushroom.jpg"];
+  var orb = document.querySelector("#ring .orb");
+  var n = srcs.length, R = 39; // radius in % of the ring
+  srcs.forEach(function (s, i) {
+    var a = (i / n) * Math.PI * 2 - Math.PI / 2;
+    var d = document.createElement("div");
+    d.className = "card";
+    d.style.left = (50 + Math.cos(a) * R) + "%";
+    d.style.top = (50 + Math.sin(a) * R) + "%";
+    d.style.transform = "rotate(" + (a * 180 / Math.PI + 90) + "deg)";
+    var img = document.createElement("img");
+    img.src = "refs/" + s; img.alt = "";
+    d.appendChild(img);
+    orb.appendChild(d);
+  });
+  // Pause reels that are off screen.
+  var vids = document.querySelectorAll("video");
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce) vids.forEach(function (v) { v.removeAttribute("autoplay"); v.pause(); });
+  else if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { var p = e.target.play(); if (p && p.catch) p.catch(function () {}); } else e.target.pause(); });
+    }, { rootMargin: "200px" });
+    vids.forEach(function (v) { io.observe(v); });
+  }
+})();
+</script>
+</body>
+</html>
