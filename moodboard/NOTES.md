@@ -21,3 +21,21 @@ Working notes on the client's references, written while studying each one. These
 - **Archive and research language as style:** item numbers, sizes, years, measurements, indexes.
 - **Photography:** faceless fashion, sculptural still life, flash-lit macro.
 - **Motion:** systematic and generative (rings, grids), never bouncy.
+
+## Batch 2 (6 references)
+
+| File | What it is | What we take |
+|---|---|---|
+| `workshop-canela.webp` | Carousel: "Concept ← Relay → Design · Workshop Canela" poster. Condensed grotesk on a white tape strip over a scanned laptop underside, paper clip, stacked papers, paper plate. Arrows, a registered mark, a boxed "W5". | Scanned-object collage. Everyday objects as the canvas. Arrows and symbols as typography. Condensed grotesk set big and cropped off the edge. |
+| `ring-binder-lookbook.mp4` | Reel: a 3D ring-binder lookbook flipping pages on a grey gradient. Faceless fashion portraits (backs, necks, hair pinned with pens), tiny blue labels on skin, mirrored store interiors. | Physical, tactile presentation of work (binder, rings, page turns). Cool grey world. Small cobalt labels as the only colour. |
+| `gradient-orb.mp4` | Reel: slow, fluid radial gradient: bone, lavender, deep aubergine, magenta, acid lime edge, with a pale orb growing out of the dark. | Atmosphere and motion. A secondary palette for moments of play: aubergine, lavender, lime on bone. Slow, liquid transitions. |
+| `sauvage-artists.mp4` | Reel: "Sauvage TV Artists" identity. Black big-cat mark, grotesk wordmark with tiny superscript "TV", pixelated and scan-line versions, crop marks, a photo index of editorial portraits, extreme horizontal stretching of the wordmark, dark flash photography. | A logo system that plays with itself (pixel, scan, stretch, outline) while staying serious. Crop marks and grid lines. Photo index as a gallery. |
+| `circa-ring.mp4` | Reel: "Circa" music management. Portraits and album-style squares orbiting in a ring, a chrome 3D flower mark in the centre, "[AUGUST] CIRCA TRACKS SELECTION 00:03:58" in mono, bold italic wordmark bottom right. | The portfolio as a rotating ring (links to the circular type in batch 1). Timecode and bracket labels. A single 3D object as the centre of attention. |
+| `recap-archive.mp4` (probably the "Recap" reel) | Reel: "Wozere Recap 2024 (Archive)". Fast cuts of experiential and retail work (Zara Athens, Massimo Dutti, Lancôme): events, kiosks, packaging, tablescapes, installations. Huge white condensed type laid over the footage, collages of stills, night shots. | An end-of-year archive as a format. Condensed type over fast-cut footage. Real-world, physical work (events, spaces, packaging) shown with pace. |
+
+### What batch 2 adds
+- **Physical presentation of digital work:** binders, tape, scans, paper, paper clips. Work feels handled, filed and archived.
+- **"Archive" is a recurring word** (A,R,C, Wozere Recap Archive, store reports). The site can be built as an archive.
+- **Circles and rings** recur: circular type, the Circa ring, the orb, monograms. A ring-shaped portfolio carousel is a strong candidate for the signature interaction.
+- **Colour:** still largely grey, bone and black, with a single accent (cobalt labels) plus one atmospheric gradient (aubergine, lavender, lime) for motion moments.
+- **Type:** condensed grotesk used huge and cropped, a clean grotesk for logos, mono for data and timecodes.
