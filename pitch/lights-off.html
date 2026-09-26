@@ -127,7 +127,7 @@ html:not(.js) .stage__top{visibility:hidden}
 .feature__title{margin:.2em 0 .14em;font:italic 400 clamp(60px,11vw,200px)/.86 var(--serif);letter-spacing:-.035em}
 .feature__log{max-width:31em;margin:0 auto;color:var(--ash);font-size:clamp(16px,1.3vw,19px)}
 .feature__screen{position:relative;max-width:1080px;margin:clamp(64px,9vw,128px) auto clamp(48px,6vw,80px)}
-.feature__beam{position:absolute;z-index:-1;left:50%;bottom:calc(100% - 4px);width:124%;height:clamp(160px,22vw,320px);transform:translateX(-50%);background:linear-gradient(rgba(var(--light),0),rgba(var(--light),.075));clip-path:polygon(46% 0,54% 0,100% 100%,0 100%);filter:blur(22px);pointer-events:none}
+.feature__beam{position:absolute;z-index:-1;left:50%;bottom:calc(100% - 24px);width:124%;height:clamp(180px,24vw,340px);transform:translateX(-50%);filter:blur(24px);pointer-events:none}.feature__beam::before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(var(--light),0),rgba(var(--light),.09));clip-path:polygon(46% 0,54% 0,100% 100%,0 100%)}
 .feature__img{position:relative;aspect-ratio:1200/750;background:var(--soot);box-shadow:0 70px 140px -60px rgba(var(--light),.28),0 0 0 1px rgba(236,231,223,.07)}
 .feature__img svg{width:100%;height:100%}
 .feature__screen figcaption{margin-top:16px;color:var(--ash)}
@@ -488,12 +488,12 @@ html:not(.js) .stage__top{visibility:hidden}
         if (s > bs) { bs = s; best = r; }
       }
       placed.push(best);
-      it.x = best.x + dx; it.y = best.y + dy; it.dy = dy; it.w = w; it.h = h; it.rot = rot;
+      it.x = best.x + dx; it.y = best.y + dy; it.fx = best.x; it.dy = dy; it.w = w; it.h = h; it.rot = rot;
       it.cx = it.x + w / 2; it.cy = it.y + h / 2; it.cos = Math.cos(t); it.sin = Math.sin(t);
       it.el.style.cssText = 'width:' + f1(w) + 'px;height:' + f1(h) + 'px;transform:translate3d(' + f1(it.x) + 'px,' + f1(it.y) + 'px,0) rotate(' + rot.toFixed(2) + 'deg)';
     });
     items.forEach(function (it) {
-      var cx = it.x - it.dy + 4, cy = it.y + it.h + it.dy + 6;
+      var cx = it.fx + 2, cy = it.y + it.h + it.dy + 6;
       it.cap.style.transform = 'translate3d(' + f1(cx) + 'px,' + f1(cy) + 'px,0)';
     });
     // the light rests on the cover nearest the upper right third, then drifts from there
@@ -573,7 +573,7 @@ html:not(.js) .stage__top{visibility:hidden}
           it.cap.classList.toggle('is-lit', lit);
           if (lit && !found[it.p.id]) {
             found[it.p.id] = 1; nFound++;
-            if (nFound === items.length) { countEl.textContent = 'All ' + two(nFound) + ' found · Try the lights'; root.classList.add('all-found'); }
+            if (nFound === items.length) { countEl.textContent = 'All found · Hit the lights'; root.classList.add('all-found'); }
             else countB.textContent = two(nFound);
           }
         }
