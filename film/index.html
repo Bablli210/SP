@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Serious Play Motion Pitch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--paper:#F3F2EE;--bone:#E6E1D6;--concrete:#BEBDB8;--ink:#0E0E0E;--graphite:#5E5D59;--cobalt:#2B3BF2;--aub:#1F0B33;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;background:#0B0B0B;overflow:hidden}
+#stage{position:fixed;left:50%;top:50%;overflow:hidden;background:var(--paper);transform-origin:0 0;font-family:"Archivo","Helvetica Neue",Arial,sans-serif;color:var(--ink)}
+.abs{position:absolute;left:0;top:0;will-change:transform,opacity}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-weight:500;letter-spacing:.06em;text-transform:uppercase}
+.serif{font-family:"Instrument Serif","Times New Roman",serif;font-weight:400}
+.cond{font-family:"Archivo","Arial Narrow",sans-serif;font-weight:800;font-stretch:62%;font-variation-settings:"wdth" 62;text-transform:uppercase;line-height:.8;white-space:nowrap}
+.card{overflow:hidden;background:var(--bone);box-shadow:0 30px 60px -30px rgba(0,0,0,.45)}
+.card img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.08)}
+.scene{position:absolute;inset:0;display:none}
+#grain{position:absolute;left:0;top:0;pointer-events:none;opacity:.045;mix-blend-mode:multiply;z-index:50}
+#hud{position:absolute;inset:0;z-index:40;pointer-events:none}
+#hud div{position:absolute}
+.frame{background:#fff;overflow:hidden;box-shadow:0 40px 80px -40px rgba(0,0,0,.8)}
+.frame img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+#play{position:fixed;inset:0;display:grid;place-items:center;z-index:100;background:rgba(11,11,11,.72);color:#F3F2EE;border:0;cursor:pointer;font:500 13px/1.4 "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;width:100%}
+#play span{display:grid;gap:14px;justify-items:center}
+#play b{font:italic 400 64px/1 "Instrument Serif",serif;letter-spacing:0;text-transform:none}
+#play:focus-visible{outline:2px solid #2B3BF2;outline-offset:-6px}
+</style>
+</head>
+<body>
+<div id="stage" role="img" aria-label="Serious Play website direction, a 72 second motion pitch">
+  <canvas id="grain"></canvas>
+  <div class="scene" id="s1"></div>
+  <div class="scene" id="s2"></div>
+  <div class="scene" id="s3"></div>
+  <div class="scene" id="s4"></div>
+  <div class="scene" id="s5"></div>
+  <div class="scene" id="s6"></div>
+  <div class="scene" id="s7"></div>
+  <div id="hud"><div class="mono" id="hudL">Serious Play</div><div class="mono" id="hudR"></div><div class="mono" id="hudB"></div></div>
+</div>
+<button type="button" id="play" hidden><span><b>Serious Play</b>Play the film · 72 s · sound on</span></button>
+<audio id="score" src="assets/score.m4a" preload="auto"></audio>
+
+<script>
+(function () {
+  "use strict";
+  var RENDER = !!window.__RENDER;
+  var W = window.__W || 1920, H = window.__H || 1080, V = H > W; // vertical cut
+  var M = Math.min(W, H);
+  var stage = document.getElementById("stage");
+  stage.style.width = W + "px"; stage.style.height = H + "px";
+  function fit() {
+    var s = RENDER ? 1 : Math.min(innerWidth / W, innerHeight / H);
+    stage.style.transform = RENDER ? "none" : "scale(" + s + ") translate(-50%,-50%)";
+    if (RENDER) { stage.style.left = "0"; stage.style.top = "0"; }
+  }
+  fit(); addEventListener("resize", fit);
+
+  var BEAT = 0.6, BAR = 2.4, DUR = 72;
+  var S = { s1: [0, 4.8], s2: [4.8, 14.4], s3: [14.4, 26.4], s4: [26.4, 36], s5: [36, 50.4], s6: [50.4, 62.4], s7: [62.4, 72] };
+  var names = { s1: "Cold open", s2: "Tension", s3: "References", s4: "System", s5: "The ring", s6: "The site", s7: "End" };
+  var C = { paper: "#F3F2EE", bone: "#E6E1D6", concrete: "#BEBDB8", ink: "#0E0E0E", cobalt: "#2B3BF2", aub: "#1F0B33", black: "#0B0B0B" };
+
+  /* ---------- helpers ---------- */
+  function cl(x, a, b) { return Math.max(a, Math.min(b, x)); }
+  function p(t, a, b) { return cl((t - a) / (b - a), 0, 1); }
+  function io(x) { return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
+  function ox(x) { return x === 1 ? 1 : 1 - Math.pow(2, -10 * x); }
+  function oq(x) { return 1 - Math.pow(1 - x, 4); }
+  function lerp(a, b, x) { return a + (b - a) * x; }
+  function el(tag, cls, parent, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; (parent || stage).appendChild(e); return e; }
+  function tf(e, x, y, r, s, o) { e.style.transform = "translate3d(" + x.toFixed(2) + "px," + y.toFixed(2) + "px,0) rotate(" + (r || 0).toFixed(3) + "deg) scale(" + (s == null ? 1 : s).toFixed(4) + ")"; if (o != null) e.style.opacity = o.toFixed(3); }
+  function rnd(i) { var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+
+  var refs = ["arc-records.jpg", "wgt-editorial.png", "circular-type.jpg", "eyes-wide-open.webp", "still-life-shell.jpg", "monnt-work.jpg", "ring-binder-lookbook.jpg", "workshop-canela.webp", "crudo.jpg", "sauvage-artists.jpg", "circa-ring.jpg", "recap-archive.jpg"];
+  var refNames = ["A,R,C Records", "WGT", "Circular type", "Eyes Wide Open", "Scrapbook", "MONNT Work", "Lookbook", "Workshop Canela", "Crudo", "Sauvage TV", "Circa", "Recap 2024"];
+  function card(src, parent, w) { var c = el("div", "card abs", parent); c.style.width = w + "px"; c.style.height = w * 1.25 + "px"; var i = el("img", "", c); i.src = "assets/" + src; i.alt = ""; return c; }
+
+  /* ---------- grain ---------- */
+  var g = document.getElementById("grain"); g.width = W + 256; g.height = H + 256;
+  (function () { var x = g.getContext("2d"), d = x.createImageData(g.width, g.height); for (var i = 0; i < d.data.length; i += 4) { var v = rnd(i) * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; } x.putImageData(d, 0, 0); g.style.width = g.width + "px"; g.style.height = g.height + "px"; })();
+
+  /* ---------- HUD ---------- */
+  var hudL = document.getElementById("hudL"), hudR = document.getElementById("hudR"), hudB = document.getElementById("hudB");
+  var hs = Math.round(M * 0.013);
+  [hudL, hudR, hudB].forEach(function (h) { h.style.fontSize = hs + "px"; });
+  hudL.style.left = hudB.style.left = Math.round(M * 0.035) + "px"; hudL.style.top = hudR.style.top = Math.round(M * 0.035) + "px";
+  hudR.style.right = Math.round(M * 0.035) + "px"; hudB.style.bottom = Math.round(M * 0.035) + "px";
+
+  /* ---------- S1 cold open ---------- */
+  var s1 = document.getElementById("s1");
+  var typed = "[ARCHIVE N°01]  SERIOUS PLAY · WEBSITE DIRECTION";
+  var s1t = el("div", "mono abs", s1); s1t.style.fontSize = Math.round(M * (V ? .026 : .03)) + "px"; s1t.style.color = C.paper; s1t.style.whiteSpace = V ? "normal" : "nowrap"; s1t.style.width = V ? W * .8 + "px" : "auto";
+
+  /* ---------- S2 tension: letters to a ring ---------- */
+  var s2 = document.getElementById("s2");
+  var word = "SERIOUSPLAY".split(""), Fs = M * (V ? .3 : .36), letters = [];
+  word.forEach(function (ch, i) { var e = el("div", "cond abs", s2, ch); e.style.fontSize = Fs + "px"; e.style.color = i >= 7 ? C.cobalt : C.ink; letters.push(e); });
+  var marks = [];
+  for (var k = 0; k < 4; k++) { var m = el("div", "abs", s2); m.style.width = M * .04 + "px"; m.style.height = M * .04 + "px"; m.style.borderColor = C.ink; m.style.borderStyle = "solid"; m.style.borderWidth = (k < 2 ? "1.5px 0 0 0" : "0 0 1.5px 0"); m.style.borderLeftWidth = (k % 2 ? 0 : 1.5) + "px"; m.style.borderRightWidth = (k % 2 ? 1.5 : 0) + "px"; marks.push(m); }
+  var s2cap = el("div", "mono abs", s2, "Serious research · playful imagination"); s2cap.style.fontSize = Math.round(M * .016) + "px";
+  var ringLine = el("div", "abs", s2); ringLine.style.border = "1px solid " + C.concrete; ringLine.style.borderRadius = "50%";
+  var lw = [];
+
+  /* ---------- S3 references ---------- */
+  var s3 = document.getElementById("s3");
+  var cols = V ? 4 : 6, rows = V ? 3 : 2, gap = M * .018;
+  var gridW = V ? W * .88 : W * .84, cw = (gridW - gap * (cols - 1)) / cols;
+  var gridH = rows * cw * 1.25 + (rows - 1) * gap, gx0 = (W - gridW) / 2, gy0 = (H - gridH) / 2 + M * .03;
+  var s3wrap = el("div", "abs", s3); s3wrap.style.width = W + "px"; s3wrap.style.height = H + "px"; s3wrap.style.transformOrigin = "50% 50%";
+  var s3cards = refs.map(function (r) { return card(r, s3wrap, cw); });
+  var s3title = el("div", "mono abs", s3, "[01] Her references — 13 pieces"); s3title.style.fontSize = Math.round(M * .016) + "px";
+  var tapes = ["Type is material", "Work is handled", "One colour at a time"].map(function (t) { var e = el("div", "cond abs", s3wrap, t); e.style.fontSize = M * .075 + "px"; e.style.background = "#fff"; e.style.padding = M * .012 + "px " + M * .03 + "px " + M * .006 + "px"; e.style.boxShadow = "0 10px 30px -12px rgba(0,0,0,.5)"; return e; });
+
+  /* ---------- S4 system ---------- */
+  var s4 = document.getElementById("s4");
+  var pal = [["Paper", "#F3F2EE"], ["Bone", "#E6E1D6"], ["Concrete", "#BEBDB8"], ["Ink", "#0E0E0E"], ["Cobalt", "#2B3BF2"], ["Aubergine", "#1F0B33"]];
+  var bars = pal.map(function (c, i) { var b = el("div", "abs", s4); b.style.background = c[1]; b.style.width = W / 6 + 1 + "px"; b.style.height = H + "px"; if (i === 0) b.style.boxShadow = "inset -1px 0 0 #D2D0CA"; var l = el("div", "mono", b, c[0] + "<br>" + c[1]); l.style.position = "absolute"; l.style.left = M * .015 + "px"; l.style.bottom = M * .06 + "px"; l.style.fontSize = Math.round(M * .014) + "px"; l.style.color = i >= 3 ? C.paper : C.ink; l.style.lineHeight = "1.5"; return b; });
+  var spA = el("div", "cond abs", s4, "Archive"); spA.style.fontSize = M * (V ? .24 : .3) + "px";
+  var spR = el("div", "serif abs", s4, "<i>Records</i>"); spR.style.fontSize = M * .2 + "px"; spR.style.lineHeight = "1";
+  var spT = el("div", "mono abs", s4); spT.style.fontSize = M * .07 + "px"; spT.style.letterSpacing = "-.01em";
+  var s4lab = el("div", "mono abs", s4, "[02] The system — one colour at a time"); s4lab.style.fontSize = Math.round(M * .016) + "px";
+  var wipe = el("div", "abs", s4); wipe.style.width = W + "px"; wipe.style.height = H + "px"; wipe.style.background = C.cobalt;
+  var wipeT = el("div", "cond abs", wipe, "Show, don’t tell"); wipeT.style.fontSize = M * .16 + "px"; wipeT.style.color = C.paper;
+
+  /* ---------- S5 the ring ---------- */
+  var s5 = document.getElementById("s5");
+  var pw = V ? W * .48 : H * .38, R5 = Math.max(W * .95, H * .9), step5 = pw * 1.22 / R5, cx5 = W / 2, cy5 = H * .42 + R5;
+  var ringGuide = el("div", "abs", s5); ringGuide.style.width = ringGuide.style.height = R5 * 2 + "px"; ringGuide.style.border = "1px solid #D2D0CA"; ringGuide.style.borderRadius = "50%";
+  var r5 = [10, 1, 0, 2, 3, 4, 5, 6, 7, 8, 9, 11];
+  var s5cards = r5.map(function (k) { return card(refs[k], s5, pw); });
+  var capN = el("div", "serif abs", s5); capN.style.zIndex = 150; capN.style.fontSize = M * .07 + "px"; capN.style.lineHeight = "1";
+  var capF = el("div", "mono abs", s5); capF.style.zIndex = 150; capF.style.fontSize = Math.round(M * .014) + "px"; capF.style.color = C.graphite;
+  var cnt = el("div", "serif abs", s5); cnt.style.zIndex = 150; cnt.style.fontSize = M * .05 + "px";
+  var s5lab = el("div", "mono abs", s5, "[03] The ring — drag, scroll, settle"); s5lab.style.fontSize = Math.round(M * .016) + "px";
+  // case study overlay
+  var cs = el("div", "abs", s5); cs.style.width = W + "px"; cs.style.height = H + "px"; cs.style.overflow = "hidden"; cs.style.zIndex = 200;
+  var csHero = el("div", "abs", cs); csHero.style.width = W + "px"; csHero.style.height = H + "px"; csHero.style.overflow = "hidden";
+  var csImg = el("img", "", csHero); csImg.src = "assets/" + refs[0]; csImg.style.width = "100%"; csImg.style.height = "100%"; csImg.style.objectFit = "cover"; csImg.alt = "";
+  var csTitle = el("div", "serif abs", cs, "Project<br>N°014"); csTitle.style.fontSize = M * .15 + "px"; csTitle.style.color = C.ink; csTitle.style.lineHeight = ".9";
+  var csBody = el("div", "abs", cs); csBody.style.width = W + "px"; csBody.style.background = C.paper; csBody.style.padding = M * .04 + "px";
+  var fs = Math.round(M * .014), fv = Math.round(M * .026);
+  csBody.innerHTML = '<div style="display:grid;grid-template-columns:repeat(' + (V ? 2 : 4) + ',1fr);gap:' + M * .03 + 'px;padding-bottom:' + M * .03 + 'px;border-bottom:1.5px solid #0E0E0E">' +
+    ["Client|[Client]", "Sector|[Sector]", "Discipline|[Identity, Packaging]", "Finding|[One sentence. The only prose.]"].map(function (x, i) { var a = x.split("|"); return '<div><div class="mono" style="font-size:' + fs + 'px;color:' + (i === 3 ? C.cobalt : C.graphite) + '">' + a[0] + '</div><div class="serif" style="font-size:' + fv + 'px;margin-top:6px">' + a[1] + '</div></div>'; }).join("") + '</div>' +
+    '<div style="display:grid;grid-template-columns:1.4fr 1fr;gap:' + M * .025 + 'px;margin-top:' + M * .04 + 'px"><div class="card" style="aspect-ratio:16/10"><img src="assets/' + refs[6] + '" alt=""></div><div class="card" style="aspect-ratio:4/5;align-self:end"><img src="assets/' + refs[4] + '" alt=""></div></div>';
+  var csClose = el("div", "mono abs", cs, "Close ✕"); csClose.style.fontSize = Math.round(M * .013) + "px"; csClose.style.background = C.paper; csClose.style.padding = M * .01 + "px " + M * .016 + "px"; csClose.style.borderRadius = "999px";
+
+  /* ---------- S6 the site ---------- */
+  var s6 = document.getElementById("s6");
+  var screens = [["screen-ring-d1.jpg", "01 · Home · the ring"], ["screen-ring-d3.jpg", "02 · Work index"], ["screen-ring-d4.jpg", "03 · Case study"], ["screen-ring-d5.jpg", "04 · Case study · facts"], ["screen-moodboard.jpg", "05 · Art direction"]];
+  var dW = V ? W * .88 : W * .62, dH = dW * .625, dX = V ? (W - dW) / 2 : W * .08, dY = V ? H * .2 : (H - dH) / 2 + M * .02;
+  var desk = el("div", "frame abs", s6); desk.style.width = dW + "px"; desk.style.height = dH + "px";
+  var deskImgs = screens.map(function (s) { var i = el("img", "abs", desk); i.src = "assets/" + s[0]; i.alt = ""; i.style.width = dW + "px"; i.style.height = dH + "px"; return i; });
+  var phW = V ? W * .34 : W * .15, phH = phW * 2.05;
+  var phone = el("div", "frame abs", s6); phone.style.width = phW + "px"; phone.style.height = phH + "px"; phone.style.borderRadius = phW * .12 + "px"; phone.style.border = phW * .03 + "px solid #0E0E0E";
+  var phImg = el("img", "", phone); phImg.src = "assets/screen-ring-m1.jpg"; phImg.alt = "";
+  var s6lab = el("div", "mono abs", s6, "[04] The site — show, don’t tell"); s6lab.style.fontSize = Math.round(M * .016) + "px"; s6lab.style.color = C.paper;
+  var s6cap = el("div", "mono abs", s6); s6cap.style.fontSize = Math.round(M * .016) + "px"; s6cap.style.color = C.paper;
+  var s6big = el("div", "cond abs", s6, "Work first"); s6big.style.fontSize = M * (V ? .16 : .2) + "px"; s6big.style.color = C.paper;
+
+  /* ---------- S7 end ---------- */
+  var s7 = document.getElementById("s7");
+  var endL = el("div", "cond abs", s7, "Seri"), endR = el("div", "cond abs", s7, "us Play");
+  var eFs = M * (V ? .155 : .24); endL.style.fontSize = endR.style.fontSize = eFs + "px";
+  var oR = eFs * .28, oCards = refs.map(function (r) { return card(r, s7, eFs * .13); });
+  var endT = el("div", "serif abs", s7, "<i>Show, don’t tell.</i>"); endT.style.fontSize = M * .06 + "px";
+  var endM = el("div", "mono abs", s7, "Website direction · seriousplaystudio.com · 2026"); endM.style.fontSize = Math.round(M * .015) + "px"; endM.style.color = C.graphite;
+  var fadeBlack = el("div", "abs", stage); fadeBlack.style.width = W + "px"; fadeBlack.style.height = H + "px"; fadeBlack.style.background = C.black; fadeBlack.style.zIndex = 60;
+
+  function measure() { lw = letters.map(function (e) { return [e.offsetWidth, e.offsetHeight]; }); }
+
+  /* ---------- render(t) ---------- */
+  function show(id, t) { var r = S[id], on = t >= r[0] && t < r[1]; document.getElementById(id).style.display = on ? "block" : "none"; return on; }
+  function wc(e) { return [e.offsetWidth, e.offsetHeight]; }
+
+  window.render = function (t) {
+    var bg = C.paper, dark = false;
+    // HUD
+    var sec = Math.floor(t), fr = Math.floor((t - sec) * 25);
+    hudR.textContent = "00:00:" + String(sec).padStart(2, "0") + ":" + String(fr).padStart(2, "0");
+    var cur = "s1"; for (var k in S) if (t >= S[k][0]) cur = k;
+    hudB.textContent = "[" + cur.slice(1) + "/7] " + names[cur];
+
+    /* S1 */
+    if (show("s1", t)) {
+      bg = C.black; dark = true;
+      var n = Math.floor(p(t, .5, 4.0) * typed.length), blink = Math.floor(t / .3) % 2 === 0 || n < typed.length;
+      s1t.textContent = typed.slice(0, n) + (blink ? "█" : " ");
+      var w = s1t.offsetWidth, h = s1t.offsetHeight;
+      tf(s1t, (W - w) / 2, (H - h) / 2, 0, 1, 1);
+    }
+
+    /* S2 */
+    if (show("s2", t)) {
+      if (!lw.length || !lw[0][0]) measure();
+      var cx = W / 2, cy = H / 2;
+      var line1 = 0, line2 = 0; for (var i = 0; i < 7; i++) line1 += lw[i][0]; for (i = 7; i < 11; i++) line2 += lw[i][0];
+      var toRing = io(p(t, 10.8, 12.9)), spin = p(t, 10.8, 14.4) * 50 + io(p(t, 10.8, 12.9)) * 20;
+      var R2 = M * .34, sR = .36;
+      var x1 = cx - line1 / 2, x2 = cx - line2 / 2;
+      for (i = 0; i < 11; i++) {
+        var e = letters[i], lwid = lw[i][0], lh = lw[i][1];
+        var sx, sy, appear;
+        if (i < 7) { sx = x1 + lwid / 2; x1 += lwid; sy = cy - Fs * .38; appear = ox(p(t, 4.9 + i * .15, 5.9 + i * .15)); }
+        else { sx = x2 + lwid / 2; x2 += lwid; sy = cy + Fs * .44; appear = ox(p(t, 8.4 + (i - 7) * .3, 9.2 + (i - 7) * .3)); }
+        sy += (1 - appear) * Fs * .9;
+        var a = (i / 11) * Math.PI * 2 - Math.PI / 2 + spin * Math.PI / 180;
+        var rx = cx + Math.cos(a) * R2, ry = cy + Math.sin(a) * R2;
+        var x = lerp(sx, rx, toRing), y = lerp(sy, ry, toRing), rot = lerp(0, a * 180 / Math.PI + 90, toRing), sc = lerp(1, sR, toRing);
+        tf(e, x - lwid / 2, y - lh / 2, rot, sc, Math.min(1, appear * 1.4));
+        e.style.clipPath = toRing > 0 ? "none" : "inset(-20% -5% " + ((1 - appear) * 100).toFixed(1) + "% -5%)";
+      }
+      var mo = p(t, 5.2, 6), inset = M * .06;
+      marks.forEach(function (m, k) { var mx = k % 2 ? W - inset - M * .04 : inset, my = k < 2 ? inset + M * .03 : H - inset - M * .07; tf(m, mx, my, 0, 1, mo * (1 - toRing)); });
+      ringLine.style.width = ringLine.style.height = R2 * 2 + "px"; tf(ringLine, cx - R2, cy - R2, 0, lerp(.6, 1, toRing), toRing * .9);
+      var cw2 = s2cap.offsetWidth; tf(s2cap, (W - cw2) / 2, H - M * .12, 0, 1, p(t, 12, 12.8));
+    }
+
+    /* S3 */
+    if (show("s3", t)) {
+      tf(s3title, M * .035, M * .08, 0, 1, p(t, 14.5, 15));
+      var zoom = 1 + p(t, 14.4, 26.4) * .06; s3wrap.style.transform = "scale(" + zoom + ")";
+      s3cards.forEach(function (c, i) {
+        var t0 = 14.6 + i * BEAT, q = ox(p(t, t0, t0 + 1.0));
+        var col = i % cols, row = Math.floor(i / cols);
+        var tx = gx0 + col * (cw + gap), ty = gy0 + row * (cw * 1.25 + gap);
+        var fx = W * rnd(i + 3), fy = H + cw * 1.4, fr0 = (rnd(i + 9) - .5) * 50;
+        var drift = (rnd(i + 20) - .5) * 3;
+        tf(c, lerp(fx, tx, q), lerp(fy, ty, q), lerp(fr0, drift, q), 1, t < t0 ? 0 : 1);
+      });
+      tapes.forEach(function (e, k) {
+        var t0 = 22.2 + k * 1.2, q = ox(p(t, t0, t0 + .7)), w = e.offsetWidth, h = e.offsetHeight;
+        var ty = gy0 + gridH * (V ? [.18, .5, .82][k] : [.2, .52, .84][k]) - h / 2, tx = (W - w) / 2 + (k - 1) * M * .08;
+        tf(e, tx, ty - (1 - q) * M * .1, [-4, 3, -2][k], lerp(1.3, 1, q), q);
+      });
+    }
+
+    /* S4 */
+    if (show("s4", t)) {
+      var collapse = io(p(t, 30.0, 31.2));
+      bars.forEach(function (b, i) {
+        var t0 = 26.5 + i * BEAT, q = ox(p(t, t0, t0 + .7));
+        var bw = lerp(W / 6, (V ? W : W * .34) / 6, collapse), bx = i * bw, bh = lerp(H, V ? H * .3 : H, collapse);
+        b.style.width = bw + 1 + "px"; b.style.height = bh + "px";
+        tf(b, bx, -(1 - q) * H + (V ? 0 : 0), 0, 1, 1);
+        b.firstChild.style.opacity = 1 - collapse;
+      });
+      var ax = V ? W * .06 : W * .4, ay = V ? H * .36 : H * .16;
+      var qa = ox(p(t, 30.6, 31.6)), qr = ox(p(t, 31.2, 32.2)), qt = ox(p(t, 31.8, 32.8));
+      tf(spA, ax + (1 - qa) * M * .2, ay, 0, 1, qa);
+      tf(spR, ax + (1 - qr) * M * .2, ay + M * .28, 0, 1, qr);
+      var secs = Math.floor(lerp(0, 238, p(t, 31.8, 33.6)));
+      spT.textContent = "00:0" + Math.floor(secs / 60) + ":" + String(secs % 60).padStart(2, "0") + "  [N°014]";
+      tf(spT, ax + (1 - qt) * M * .2, ay + M * .52, 0, 1, qt);
+      tf(s4lab, V ? M * .035 : W * .4, H - M * .1, 0, 1, p(t, 30.6, 31.2));
+      var wq = io(p(t, 34.2, 35.9));
+      tf(wipe, 0, H * (1 - wq), 0, 1, 1);
+      var ww = wipeT.offsetWidth, wh = wipeT.offsetHeight; tf(wipeT, (W - ww) / 2, (H - wh) / 2 - H * (1 - wq) * .3, 0, 1, p(t, 35, 35.8));
+    }
+
+    /* S5 */
+    if (show("s5", t)) {
+      var flash = 1 - p(t, 36, 36.35);
+      bg = flash > 0 ? mix(C.cobalt, C.paper, 1 - flash) : C.paper;
+      // ring angle: fast spin that settles, then two steps
+      var ang;
+      if (t < 38.4) ang = lerp(-step5 * 14, 0, oq(p(t, 36, 38.4)));
+      else if (t < 40.8) ang = lerp(0, step5, io(p(t, 39.4, 40.4)));
+      else ang = lerp(step5, step5 * 2, io(p(t, 41.2, 42.2)));
+      var cxr = cx5, cyr = cy5;
+      ringGuide.style.transform = "translate3d(" + (cxr - R5) + "px," + (cyr - R5) + "px,0)";
+      var N5 = s5cards.length, activeIdx = ((Math.round(ang / step5) % N5) + N5) % N5;
+      var grow = io(p(t, 43.2, 44.6));
+      s5cards.forEach(function (c, i) {
+        var a = i * step5 - ang, tot = N5 * step5; a = ((a % tot) + tot) % tot; if (a > tot / 2) a -= tot;
+        var d = Math.abs(a) / step5, s = 1 + Math.max(0, 1 - d) * .3 - Math.min(d, 3) * .05;
+        var x = cxr + Math.sin(a) * R5 - pw / 2, y = cyr - Math.cos(a) * R5 - pw * .625;
+        var o = Math.max(0, 1 - Math.max(0, d - 2.2) * .8) * (i === activeIdx ? (grow > 0 ? 0 : 1) : 1 - grow);
+        tf(c, x, y + (i === activeIdx ? 0 : grow * M * .1), a * 57.3, s, o);
+        c.style.zIndex = 100 - Math.round(d * 10);
+      });
+      capN.textContent = refNames[r5[activeIdx]];
+      tf(capN, M * .035, H - M * .16, 0, 1, 1 - grow);
+      capF.textContent = "N°" + String(14 - activeIdx).padStart(3, "0") + "  ·  [Sector]  ·  2025";
+      tf(capF, M * .035, H - M * .07, 0, 1, 1 - grow);
+      cnt.innerHTML = String(activeIdx + 1).padStart(2, "0") + '<span style="font-size:.45em;color:#5E5D59"> / 12</span>';
+      tf(cnt, W - M * .035 - cnt.offsetWidth, H - M * .12, 0, 1, 1 - grow);
+      tf(s5lab, M * .035, M * .08, 0, 1, p(t, 36.4, 37) * (1 - grow));
+      // case study
+      cs.style.display = grow > 0 ? "block" : "none";
+      if (grow > 0) {
+        var fx0 = cxr - pw / 2, fy0 = cyr - R5 - pw * .625, fw = pw * 1.3, fh = pw * 1.25 * 1.3;
+        fx0 = W / 2 - fw / 2; fy0 = (cyr - R5) - fh / 2;
+        csImg.src = "assets/" + refs[r5[activeIdx]];
+        var HW = V ? W : H * .8, HX = V ? 0 : W - HW, HH = V ? H * .62 : H;
+        var hx = lerp(fx0, HX, grow), hy = lerp(fy0, 0, grow), hw = lerp(fw, HW, grow), hh = lerp(fh, HH, grow);
+        csHero.style.width = hw + "px"; csHero.style.height = hh + "px";
+        var scroll = io(p(t, 46.6, 49.2)) * H * (V ? .75 : .72);
+        tf(csHero, hx, hy - scroll, 0, 1, 1);
+        tf(csTitle, M * .04, (V ? H * .64 : H - M * .34) - scroll, 0, 1, p(t, 44.4, 45.2));
+        tf(csBody, 0, H - scroll, 0, 1, 1);
+        tf(csClose, W - M * .04 - csClose.offsetWidth, M * .03, 0, 1, p(t, 44.6, 45.2));
+        var cBg = grow;
+        bg = C.paper;
+      }
+    }
+
+    /* S6 */
+    if (show("s6", t)) {
+      bg = C.ink; dark = true;
+      var local = t - 50.4, idx = Math.min(screens.length - 1, Math.floor(local / 1.2)), within = local - idx * 1.2;
+      var intro = ox(p(t, 50.4, 51.4)), outro = io(p(t, 60.6, 62.2));
+      deskImgs.forEach(function (im, i) {
+        var q = i === idx ? ox(cl(within / .45, 0, 1)) : (i < idx ? 1 : 0);
+        if (i === 0) q = 1;
+        im.style.zIndex = i; tf(im, (1 - q) * dW, 0, 0, 1, i <= idx ? 1 : 0);
+      });
+      var dsc = lerp(1, .8, outro);
+      tf(desk, dX + (1 - intro) * W * .1, dY + (1 - intro) * M * .05, 0, dsc, intro);
+      var phx = V ? W * .58 : W * .74, phy = V ? H * .5 : (H - phH) / 2 + M * .06;
+      tf(phone, phx + (1 - ox(p(t, 51.0, 52))) * M * .3, phy, 0, dsc, ox(p(t, 51.0, 52)));
+      phImg.style.transform = "translateY(" + (-io(p(t, 55, 58)) * phH * .2) + "px)"; phImg.style.width = "100%"; phImg.style.height = "120%"; phImg.style.objectFit = "cover";
+      tf(s6lab, M * .035, M * .08, 0, 1, p(t, 50.6, 51.2));
+      s6cap.textContent = screens[idx][1];
+      tf(s6cap, dX, V ? dY + dH + M * .03 : dY + dH + M * .025, 0, 1, intro * (1 - outro));
+      var bw6 = s6big.offsetWidth;
+      tf(s6big, (W - bw6) / 2, V ? H * .76 : H * .5 - s6big.offsetHeight / 2, 0, 1, p(t, 60.8, 61.6));
+      desk.style.opacity = (intro * (1 - outro)).toFixed(3); phone.style.opacity = (ox(p(t, 51.0, 52)) * (1 - outro)).toFixed(3);
+    }
+
+    /* S7 */
+    if (show("s7", t)) {
+      bg = C.paper;
+      var q7 = io(p(t, 62.4, 64.2));
+      var cwid = eFs * .13, lW = endL.offsetWidth, rW = endR.offsetWidth, oW = oR * 2 + cwid * 1.5, total = lW + oW + rW;
+      var ex = (W - total) / 2, ey = H / 2 - endL.offsetHeight / 2 - (V ? M * .05 : M * .04);
+      var lq = ox(p(t, 63.0, 64.2));
+      tf(endL, ex - (1 - lq) * M * .15, ey, 0, 1, lq);
+      tf(endR, ex + lW + oW + (1 - lq) * M * .15, ey, 0, 1, lq);
+      var ocx = ex + lW + oW / 2, ocy = ey + endL.offsetHeight * .52, spin7 = t * 24;
+      var Rbig = M * .6, Rnow = lerp(Rbig, oR, q7);
+      oCards.forEach(function (c, i) {
+        var a = (i / 12) * Math.PI * 2 + spin7 * Math.PI / 180;
+        var x = ocx + Math.cos(a) * Rnow - cwid / 2, y = ocy + Math.sin(a) * Rnow - cwid * .625;
+        tf(c, x, y, a * 57.3 + 90, lerp(2.2, 1, q7), 1);
+      });
+      var tw = endT.offsetWidth; tf(endT, (W - tw) / 2, ey + endL.offsetHeight + M * .05, 0, 1, p(t, 64.8, 65.8));
+      var mw = endM.offsetWidth; tf(endM, (W - mw) / 2, ey + endL.offsetHeight + M * .15, 0, 1, p(t, 66, 66.8));
+    }
+
+    fadeBlack.style.opacity = (Math.max(1 - p(t, 0, .3) * 0, 0) * 0 + p(t, 70.2, 72)).toFixed(3);
+    stage.style.background = bg;
+    var ink = dark ? C.paper : C.ink;
+    hudL.style.color = hudR.style.color = hudB.style.color = ink;
+    hudL.style.opacity = hudR.style.opacity = hudB.style.opacity = (t < 1 ? p(t, .2, 1) : 1) * (1 - p(t, 62.4, 63)) * .75;
+    g.style.transform = "translate(" + (-(rnd(Math.floor(t * 12)) * 256)).toFixed(0) + "px," + (-(rnd(Math.floor(t * 12) + 5) * 256)).toFixed(0) + "px)";
+  };
+
+  function hex(c) { return [1, 3, 5].map(function (i) { return parseInt(c.slice(i, i + 2), 16); }); }
+  function mix(a, b, x) { var A = hex(a), B = hex(b); return "rgb(" + A.map(function (v, i) { return Math.round(lerp(v, B[i], x)); }).join(",") + ")"; }
+
+  window.__ready = Promise.all(['normal 800 100px Archivo', 'normal 400 100px Archivo', '400 100px "Instrument Serif"', 'italic 400 100px "Instrument Serif"', '500 20px "IBM Plex Mono"'].map(function (f) { return document.fonts.load(f, 'SERIOUSPLAY Records 0123'); })).then(function () { return document.fonts.ready; }).then(function () {
+    return Promise.all([].map.call(document.images, function (i) { return i.complete ? 0 : new Promise(function (r) { i.onload = i.onerror = r; }); }));
+  }).then(function () { render(0); return true; });
+
+  /* ---------- live playback ---------- */
+  if (!RENDER) {
+    var btn = document.getElementById("play"), audio = document.getElementById("score"), start = null;
+    window.__ready.then(function () { render(0); btn.hidden = false; });
+    btn.addEventListener("click", function () {
+      btn.hidden = true;
+      var pr = audio.play(); if (pr && pr.catch) pr.catch(function () {});
+      start = performance.now() - (audio.currentTime || 0) * 1000;
+      (function loop() {
+        var t = !audio.paused && audio.currentTime > 0 ? audio.currentTime : (performance.now() - start) / 1000;
+        if (t >= DUR) { render(DUR - .01); btn.hidden = false; audio.pause(); audio.currentTime = 0; return; }
+        render(t); requestAnimationFrame(loop);
+      })();
+    });
+  }
+})();
+</script>
+</body>
+</html>
