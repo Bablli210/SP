@@ -1,0 +1,1075 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Serious Play Rulebook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,100..900,0..100,0..1&family=Schibsted+Grotesk:ital,wght@0,400..800;1,400..800&family=Martian+Mono:wdth,wght@75..112.5,300..600&display=swap">
+<!-- Specimen faces for the three directions, subset to the few glyphs the page shows -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&text=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.%2C%20&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@1,6..96,400..900&text=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.%2C%20&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400..900&text=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.%2C%20&display=swap">
+<style>
+:root{
+  --paper:#F4F5F8;
+  --surface:#FFFFFF;
+  --ink:#15161C;
+  --muted:#5A5C68;
+  --line:#DADCE3;
+  --cobalt:#2B3FE6;
+  --on-cobalt:#FFFFFF;
+  --tint:#E5E8FD;
+  --hatch:rgba(21,22,28,.06);
+  --shadow:0 1px 0 rgba(21,22,28,.04),0 10px 30px -12px rgba(21,22,28,.18);
+  --f-display:"Fraunces","Iowan Old Style","Palatino Linotype",Georgia,serif;
+  --f-body:"Schibsted Grotesk","Helvetica Neue",Arial,system-ui,sans-serif;
+  --f-mono:"Martian Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --gutter:clamp(16px,4vw,48px);
+  --max:1240px;
+  --p:.5;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1015;--surface:#171820;--ink:#ECEDF2;--muted:#A0A2B0;--line:#2A2C37;
+    --cobalt:#8C98FF;--on-cobalt:#0F1015;--tint:#1C2045;--hatch:rgba(236,237,242,.06);
+    --shadow:0 1px 0 rgba(0,0,0,.3),0 12px 30px -12px rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1015;--surface:#171820;--ink:#ECEDF2;--muted:#A0A2B0;--line:#2A2C37;
+  --cobalt:#8C98FF;--on-cobalt:#0F1015;--tint:#1C2045;--hatch:rgba(236,237,242,.06);
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 12px 30px -12px rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.6 var(--f-body);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+img,svg{max-width:100%;display:block}
+a{color:inherit}
+h1,h2,h3,h4{margin:0;font-weight:inherit;text-wrap:balance}
+p{margin:0}
+ul,ol{margin:0;padding:0;list-style:none}
+:focus-visible{outline:2px solid var(--cobalt);outline-offset:3px;border-radius:4px}
+[hidden]{display:none!important}
+.skip{position:absolute;left:-9999px;top:0}
+.skip:focus{left:16px;top:16px;z-index:100;background:var(--surface);padding:8px 12px}
+.wrap{max-width:var(--max);margin-inline:auto;padding-inline:var(--gutter)}
+.mono{font-family:var(--f-mono);font-size:11px;line-height:1.5;letter-spacing:.06em;text-transform:uppercase;font-variation-settings:"wdth" 90}
+.muted{color:var(--muted)}
+.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- top bar ---------- */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar__in{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:56px}
+.brand{display:flex;align-items:baseline;gap:12px;text-decoration:none}
+.brand b{font:600 20px/1 var(--f-display);font-variation-settings:"opsz" 30,"SOFT" 50,"WONK" 1;letter-spacing:-.01em}
+.rulenav{display:flex;gap:4px;align-items:center}
+.rulenav a{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;text-decoration:none;font:500 12px/1 var(--f-mono);color:var(--muted);border:1px solid transparent;transition:color .2s,border-color .2s,background .2s}
+.rulenav a:hover{color:var(--ink);border-color:var(--line)}
+.rulenav a.is-active{background:var(--ink);color:var(--paper)}
+.rulenav__label{margin-right:8px}
+.progress{position:absolute;left:0;bottom:-1px;height:2px;width:100%;background:var(--cobalt);transform-origin:0 50%;transform:scaleX(0)}
+@media (max-width:720px){.rulenav__label,.brand .mono{display:none}.rulenav a{width:26px;height:26px;font-size:11px}}
+
+/* ---------- cover ---------- */
+.cover{padding-block:clamp(40px,7vw,96px) clamp(40px,6vw,80px);border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+.cover__grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:clamp(32px,5vw,72px);align-items:end}
+.cover__eyebrow{display:flex;flex-wrap:wrap;gap:8px 18px;margin-bottom:28px}
+.cover__grid > div:first-child,.finale{container-type:inline-size}
+.morph{font-family:var(--f-display);font-size:clamp(60px,12vw,200px);font-size:clamp(60px,23cqi,200px);line-height:.86;letter-spacing:-.035em;font-weight:500;user-select:none}
+.morph__line{display:block;white-space:nowrap}
+.morph__line + .morph__line{margin-top:.02em;color:var(--cobalt)}
+.ch{display:inline-block;transition:rotate .35s cubic-bezier(.3,1.6,.5,1),translate .35s cubic-bezier(.3,1.6,.5,1);rotate:calc(var(--r,0) * var(--p) * 11deg);translate:0 calc(var(--y,0) * var(--p) * .09em)}
+.play-bob .ch{animation:bob 2.4s ease-in-out infinite;animation-delay:calc(var(--i) * -.21s)}
+@keyframes bob{50%{translate:0 calc((var(--y,0) * var(--p) * .09em) - (var(--p) * .05em))}}
+.cover__sub{font:400 clamp(19px,1.9vw,24px)/1.45 var(--f-body);max-width:30ch;margin-top:28px;text-wrap:pretty}
+.cover__side{display:grid;gap:28px;padding-bottom:10px}
+.boxfacts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1.5px solid var(--ink);border-radius:14px;overflow:hidden}
+.boxfacts div{padding:12px 14px;display:grid;gap:4px}
+.boxfacts div + div{border-left:1.5px solid var(--ink)}
+.boxfacts b{font:600 15px/1.25 var(--f-body)}
+
+/* dial */
+.dial{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px 20px 16px;box-shadow:var(--shadow)}
+.dial__top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:6px}
+.dial__top label{font:600 15px/1.3 var(--f-body)}
+.dial__val{font:500 12px/1 var(--f-mono);font-variant-numeric:tabular-nums;color:var(--muted)}
+.dial__track{position:relative;padding-bottom:30px}
+.dial input{-webkit-appearance:none;appearance:none;width:100%;height:44px;margin:0;background:transparent;cursor:grab;position:relative;z-index:2}
+.dial input:active{cursor:grabbing}
+.dial input::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--ink),var(--cobalt));border-radius:2px}
+.dial input::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--ink),var(--cobalt));border-radius:2px}
+.dial input::-webkit-slider-thumb{-webkit-appearance:none;width:34px;height:34px;margin-top:-16px;border-radius:50%;background:var(--cobalt);border:4px solid var(--surface);box-shadow:0 0 0 1.5px var(--cobalt),0 6px 16px -4px rgba(43,63,230,.6)}
+.dial input::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--cobalt);border:4px solid var(--surface);box-shadow:0 0 0 1.5px var(--cobalt)}
+.dial input:focus-visible{outline:none}
+.dial input:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 1.5px var(--cobalt),0 0 0 6px var(--tint)}
+.tick{position:absolute;top:36px;left:calc(17px + (100% - 34px) * var(--at) / 100);transform:translateX(-50%);display:grid;justify-items:center;gap:2px;text-decoration:none;z-index:1}
+.tick::before{content:"";width:1.5px;height:8px;background:var(--muted);margin-top:-8px}
+.tick span{font:500 10px/1.2 var(--f-mono);letter-spacing:.04em;white-space:nowrap;color:var(--muted)}
+.tick.is-near span{color:var(--cobalt)}
+.dial__ends{display:flex;justify-content:space-between;font-family:var(--f-display);font-size:22px;line-height:1}
+.dial__ends span:first-child{font-variation-settings:"opsz" 144,"SOFT" 0,"WONK" 0;font-weight:400}
+.dial__ends span:last-child{font-variation-settings:"opsz" 30,"SOFT" 100,"WONK" 1;font-weight:850;color:var(--cobalt)}
+.dial__out{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);font-size:15px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;justify-content:space-between}
+.dial__out a{font-weight:600;text-decoration-color:var(--cobalt);text-underline-offset:3px}
+@media (max-width:900px){.cover__grid{grid-template-columns:1fr}.cover__side{max-width:560px}}
+@media (max-width:520px){.tick span b{display:none}.boxfacts{grid-template-columns:1fr}.boxfacts div + div{border-left:0;border-top:1.5px solid var(--ink)}}
+
+/* ---------- in the box ---------- */
+.inbox{padding-block:clamp(40px,6vw,72px);border-bottom:1px solid var(--line)}
+.inbox__head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:16px;margin-bottom:24px}
+.inbox__head h2{font:500 clamp(28px,3.4vw,40px)/1.05 var(--f-display);font-variation-settings:"opsz" 72,"SOFT" 40}
+.pieces{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.piece{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:6px;align-content:start;text-decoration:none;transition:transform .25s cubic-bezier(.3,1.4,.5,1),border-color .2s}
+.piece:hover{transform:translateY(-3px) rotate(-.6deg);border-color:var(--ink)}
+.piece b{font:600 40px/1 var(--f-display);font-variation-settings:"opsz" 96,"SOFT" 100,"WONK" 1;color:var(--cobalt);font-variant-numeric:tabular-nums}
+.piece span{font-size:15px;line-height:1.35}
+@media (max-width:900px){.pieces{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ---------- rules ---------- */
+.rule{padding-block:clamp(56px,8vw,112px);border-bottom:1px solid var(--line);scroll-margin-top:56px}
+.rule__head{display:grid;grid-template-columns:minmax(0,170px) minmax(0,1fr);gap:clamp(16px,3vw,40px);margin-bottom:clamp(32px,4vw,56px);align-items:start}
+.rule__no{display:grid;gap:4px}
+.rule__no b{font-family:var(--f-display);font-size:clamp(88px,11vw,150px);line-height:.8;font-weight:800;font-variation-settings:"opsz" 144,"SOFT" 100,"WONK" 1;color:var(--cobalt);letter-spacing:-.04em}
+.rule__title{font:500 clamp(40px,5.4vw,76px)/.98 var(--f-display);font-variation-settings:"opsz" 144,"SOFT" 20;letter-spacing:-.025em}
+.rule__short{margin-top:16px;font-size:clamp(18px,1.6vw,21px);line-height:1.5;max-width:52ch;color:var(--muted);text-wrap:pretty}
+.rule__body{display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(32px,4vw,56px)}
+.rule__body > *,.two > *,.cover__grid > *,.dir > *,.reco > *{min-width:0}
+.sub{display:flex;align-items:baseline;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.sub h3{font:600 22px/1.2 var(--f-body);letter-spacing:-.01em}
+.lead{font:400 clamp(22px,2.3vw,30px)/1.35 var(--f-display);font-variation-settings:"opsz" 40,"SOFT" 30;max-width:34ch;text-wrap:pretty}
+.prose{max-width:66ch;display:grid;gap:14px}
+@media (max-width:720px){.rule__head{grid-template-columns:1fr}.rule__no{grid-auto-flow:column;justify-content:start;align-items:end;gap:12px}.rule__no b{font-size:72px}}
+
+/* example box with a tab label (rulebook convention) */
+.example{position:relative;border:1.5px solid var(--ink);border-radius:4px 16px 16px 16px;padding:28px 22px 22px;background:var(--surface);margin-top:14px}
+.example__tab{position:absolute;top:-13px;left:-1.5px;background:var(--ink);color:var(--paper);padding:5px 10px 4px;border-radius:4px 4px 0 0}
+
+/* rule 1 */
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(20px,3vw,40px)}
+.checks{display:grid;gap:12px}
+.checks li{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;line-height:1.45}
+.checks li::before{content:"";width:22px;height:22px;margin-top:1px;border:1.5px solid var(--ink);border-radius:6px;background:linear-gradient(var(--cobalt),var(--cobalt)) center/10px 10px no-repeat}
+.heard li{padding-block:12px;border-bottom:1px solid var(--line);line-height:1.45}
+.heard li:first-child{border-top:1px solid var(--line)}
+@media (max-width:800px){.two{grid-template-columns:1fr}}
+
+/* rule 2 players */
+.players{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.player{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;display:grid;gap:14px;align-content:start}
+.player svg{width:34px;height:34px;color:var(--cobalt)}
+.player h3{font:600 20px/1.2 var(--f-body)}
+.player q{font:italic 400 19px/1.4 var(--f-display);font-variation-settings:"opsz" 30,"SOFT" 60;quotes:"\201C" "\201D"}
+.player ul{display:grid;gap:6px;font-size:15px;line-height:1.45;padding-top:12px;border-top:1px dashed var(--line)}
+.player li{padding-left:16px;position:relative}
+.player li::before{content:"";position:absolute;left:0;top:.6em;width:6px;height:6px;border-radius:50%;background:var(--cobalt)}
+@media (max-width:900px){.players{grid-template-columns:1fr}}
+
+/* rule 3 board */
+.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.ref{position:relative;display:block;aspect-ratio:4/5;border-radius:12px;overflow:hidden;text-decoration:none;background:var(--surface);border:1px solid var(--line);isolation:isolate;transition:transform .25s cubic-bezier(.3,1.4,.5,1)}
+.ref:hover{transform:rotate(-1.2deg) scale(1.02)}
+.ref:nth-child(3n):hover{transform:rotate(1.2deg) scale(1.02)}
+.ref--wide{grid-column:span 2;aspect-ratio:auto}
+.ref__ph{position:absolute;inset:0;display:grid;grid-template-rows:auto 1fr auto;padding:12px;background:repeating-linear-gradient(135deg,var(--hatch) 0 1px,transparent 1px 9px)}
+.ref__no{font:700 44px/1 var(--f-display);font-variation-settings:"opsz" 96,"SOFT" 100,"WONK" 1;letter-spacing:-.03em}
+.ref__kind{align-self:end;display:grid;gap:2px}
+.ref__open{font-size:13px;font-weight:600;color:var(--cobalt)}
+.ref__img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s;z-index:1}
+.ref.has-img .ref__img{opacity:1}
+.ref.has-img .ref__ph{background:none;z-index:2;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+.ref.has-img .ref__open{color:#fff}
+.ref__take{font-size:13px;line-height:1.35;margin-top:6px}
+.ref--site{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ref--site .ref__ph{background:none;gap:10px}
+.ref--site .ref__open{color:var(--paper)}
+.ref--site p{font-size:14px;line-height:1.45;max-width:38ch}
+.board-note{margin-top:14px;font-size:14px;color:var(--muted)}
+.mood{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.tile{border-radius:14px;overflow:hidden;position:relative;min-height:220px;display:flex;flex-direction:column;justify-content:space-between;padding:14px;isolation:isolate}
+.tile .mono{position:relative;z-index:2}
+.tile__tag{display:flex;justify-content:space-between;gap:8px}
+.tile--paper{background:#EEF0EC;color:#121412;background-image:linear-gradient(#D5DAD3 1px,transparent 1px),linear-gradient(90deg,#D5DAD3 1px,transparent 1px);background-size:20px 20px}
+.tile--paper p{font:800 34px/1 "Archivo",Arial Narrow,sans-serif;font-stretch:65%;font-variation-settings:"wdth" 65;letter-spacing:-.01em}
+.hl{background:linear-gradient(#F4EE5A,#F4EE5A) 0 88%/100% 42% no-repeat;padding-inline:2px}
+.tile--dark{background:#0B0B0C;color:#ECE7DF}
+.tile--dark::before{content:"";position:absolute;inset:-40%;background:radial-gradient(circle at 50% 50%,rgba(255,233,196,.55),rgba(255,233,196,.1) 18%,transparent 34%);animation:roam 9s ease-in-out infinite alternate;z-index:0}
+@keyframes roam{0%{transform:translate(-18%,-10%)}50%{transform:translate(12%,14%)}100%{transform:translate(20%,-16%)}}
+.tile--dark p{position:relative;z-index:1;font:italic 700 40px/1 "Bodoni Moda",Didot,Georgia,serif}
+.tile--toys{background:#F3F2EF;color:#151515}
+.toys{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;flex:1;padding-block:14px}
+.toys i{display:block;width:40px;height:40px;border-radius:50%}
+.toys i:nth-child(2){border-radius:10px}
+.toys i:nth-child(4){border-radius:40px 40px 6px 6px}
+.toys i:nth-child(5){width:64px;border-radius:40px}
+.ball{width:34px;height:34px;border-radius:50%;background:#FF4A3D;animation:bounce 1.1s cubic-bezier(.5,0,.5,1) infinite;transform-origin:50% 100%}
+@keyframes bounce{0%,100%{transform:translateY(0) scale(1.25,.8)}8%{transform:translateY(-6px) scale(.9,1.1)}50%{transform:translateY(-110px) scale(1,1)}92%{transform:translateY(-6px) scale(.92,1.08)}}
+.tile--motion{background:#2D4BFF;color:#fff;justify-content:space-between}
+.tile--motion .stage{flex:1;display:flex;align-items:flex-end;justify-content:center;border-bottom:2px solid rgba(255,255,255,.7);margin-bottom:10px;min-height:140px}
+.tile--type{background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+.specs{display:grid;grid-template-columns:repeat(3,1fr);align-items:end;gap:6px;flex:1;padding-block:16px}
+.specs span{font-size:54px;line-height:1;text-align:center}
+.s-archivo{font-family:"Archivo",Arial Narrow,sans-serif;font-weight:900;font-stretch:62%;font-variation-settings:"wdth" 62}
+.s-bodoni{font-family:"Bodoni Moda",Didot,Georgia,serif;font-style:italic;font-weight:700;font-variation-settings:"opsz" 11}
+.s-unbounded{font-family:"Unbounded",Arial Black,sans-serif;font-weight:900;font-size:44px!important}
+.specs small{display:block;margin-top:6px}
+.tile--grid{background:#151515;color:#F3F2EF;background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.14) 0 1px,transparent 1px calc(100% / 12))}
+.tile--grid .breaker{position:absolute;left:30%;top:38%;width:46%;height:26%;background:#FFC631;transform:rotate(-8deg);border-radius:6px;z-index:1}
+.tile--credits{background:#151517;color:#ECE7DF;text-align:center;align-items:center;justify-content:center;gap:10px}
+.tile--credits p{font:italic 500 26px/1.1 "Bodoni Moda",Didot,Georgia,serif}
+.tile--card{background:#FBFBF8;color:#121412;background-image:repeating-linear-gradient(transparent 0 27px,#C9D4E6 27px 28px);border:1px solid #D5DAD3;transform:rotate(-1.5deg)}
+.tile--card::before{content:"";position:absolute;left:50%;top:10px;width:14px;height:14px;border-radius:50%;background:var(--paper);box-shadow:inset 0 1px 2px rgba(0,0,0,.25);transform:translateX(-50%)}
+.tile--card p{font:italic 400 20px/1.4 Georgia,serif;margin-top:34px}
+.words{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1px solid var(--line)}
+.word{padding:18px 18px 18px 0;border-bottom:1px solid var(--line);display:grid;gap:4px}
+.word b{font:500 30px/1.05 var(--f-display);font-variation-settings:"opsz" 96,"SOFT" 50}
+.word span{font-size:15px;color:var(--muted);line-height:1.45}
+.avoid{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:15px}
+.avoid s{padding:4px 10px;border:1px dashed var(--muted);border-radius:999px;color:var(--muted);text-decoration-thickness:1.5px}
+@media (max-width:1000px){.mood{grid-template-columns:repeat(2,minmax(0,1fr))}.words{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.words{grid-template-columns:1fr}.board{grid-template-columns:repeat(2,minmax(0,1fr))}.ref__no{font-size:36px}}
+
+/* rule 4 art direction */
+.ad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.adc{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:grid;grid-template-rows:170px auto}
+.adc__vis{position:relative;overflow:hidden;border-bottom:1px solid var(--line);background:var(--paper)}
+.adc__txt{padding:18px 20px 20px;display:grid;gap:10px;align-content:start}
+.adc h3{font:600 20px/1.2 var(--f-body)}
+.adc p{font-size:15.5px;line-height:1.5}
+.dodont{display:grid;gap:6px;font-size:14px;line-height:1.4;padding-top:10px;border-top:1px dashed var(--line)}
+.dodont span{display:grid;grid-template-columns:44px 1fr;gap:6px}
+.dodont em{font-style:normal;font:600 10px/1.9 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--cobalt)}
+.dodont span + span em{color:var(--muted)}
+/* visuals */
+.v-layers{display:grid;place-items:center}
+.v-layers .a,.v-layers .b{position:absolute;width:44%;height:58%;border-radius:10px}
+.v-layers .a{left:18%;top:16%;background:repeating-linear-gradient(0deg,var(--line) 0 1px,transparent 1px 12px),var(--surface);border:1px solid var(--line)}
+.v-layers .b{left:40%;top:28%;background:var(--cobalt);transform:rotate(7deg);display:grid;place-items:center;color:var(--on-cobalt);font:italic 700 26px/1 var(--f-display);font-variation-settings:"SOFT" 100,"WONK" 1}
+.v-type{display:flex;align-items:center;justify-content:center;gap:14px;padding:16px}
+.v-type b{font:800 64px/1 var(--f-display);font-variation-settings:"opsz" 144,"SOFT" 100,"WONK" 1}
+.v-type i{font:400 13px/1.35 var(--f-body);font-style:normal;max-width:14ch;color:var(--muted)}
+.v-colour{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:16px;align-items:center}
+.v-colour .ui{height:100%;display:grid;gap:6px;align-content:center}
+.v-colour .ui i{display:block;height:6px;border-radius:3px;background:var(--line)}
+.v-colour .ui i:nth-child(2){width:70%}.v-colour .ui i:nth-child(3){width:40%}
+.v-colour .cov{border-radius:8px;overflow:hidden;aspect-ratio:4/5}
+.v-grid{background-image:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px calc(100% / 12));}
+.v-grid .blk{position:absolute;height:26%;border-radius:4px;background:var(--ink)}
+.v-grid .b1{left:calc(100%/12);width:calc(100%/12*5);top:18%}
+.v-grid .b2{left:calc(100%/12*7);width:calc(100%/12*4);top:18%;opacity:.25}
+.v-grid .b3{left:calc(100%/12*3);width:calc(100%/12*5);top:56%;background:var(--cobalt);transform:rotate(-6deg)}
+.v-motion{display:flex;align-items:flex-end;justify-content:center;padding-bottom:22px}
+.v-motion::after{content:"";position:absolute;left:20%;right:20%;bottom:22px;height:1.5px;background:var(--ink)}
+.v-motion .ball{background:var(--cobalt);width:30px;height:30px;animation-duration:1.3s}
+.v-voice{padding:18px;display:grid;gap:8px;align-content:center}
+.v-voice span{font-size:15px;line-height:1.35;padding:8px 12px;border-radius:14px 14px 14px 4px;background:var(--tint);justify-self:start;max-width:90%}
+.v-voice span:last-child{justify-self:end;background:var(--ink);color:var(--paper);border-radius:14px 14px 4px 14px}
+@media (max-width:1000px){.ad{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.ad{grid-template-columns:1fr}}
+
+/* rule 5 directions */
+.scale{position:relative;height:84px;margin-block:8px 8px}
+.scale__line{position:absolute;left:0;right:0;top:40px;height:2px;background:linear-gradient(90deg,var(--ink),var(--cobalt))}
+.scale__end{position:absolute;top:56px;font:600 13px/1 var(--f-body)}
+.scale__end--r{right:0;color:var(--cobalt)}
+.scale__pt{position:absolute;top:0;left:calc(var(--at) * 1%);transform:translateX(-50%);display:grid;justify-items:center;gap:6px;text-decoration:none}
+.scale__pt span{font:500 11px/1.2 var(--f-mono);white-space:nowrap;padding:5px 9px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
+.scale__pt i{width:14px;height:14px;border-radius:50%;background:var(--paper);border:2.5px solid var(--ink);margin-top:4px}
+.scale__you{position:absolute;top:33px;left:calc(var(--p) * 100%);transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:var(--cobalt);box-shadow:0 0 0 4px var(--tint);transition:left .3s}
+.scale__you::after{content:"You";position:absolute;top:22px;left:50%;transform:translateX(-50%);font:600 11px/1 var(--f-body);color:var(--cobalt)}
+@media (max-width:560px){.scale__pt span b{display:none}}
+
+.dir{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(24px,4vw,56px);align-items:start;padding-block:clamp(28px,4vw,48px);border-top:1px solid var(--line);scroll-margin-top:72px}
+.dir:nth-of-type(even) .dir__shots{order:2}
+.dir.is-near .dir__badge{background:var(--cobalt);color:var(--on-cobalt);border-color:var(--cobalt)}
+.dir__shots{position:relative;padding-bottom:36px;padding-right:9%}
+.frame{border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow)}
+.frame__bar{height:26px;display:flex;align-items:center;gap:6px;padding-inline:10px;border-bottom:1px solid var(--line)}
+.frame__bar i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.frame__bar span{margin-left:8px;font:400 10px/1 var(--f-mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frame__img{aspect-ratio:16/10;background:var(--paper);position:relative}
+.frame__img img{width:100%;height:100%;object-fit:cover;object-position:top}
+.phone{position:absolute;right:0;bottom:0;width:26%;border-radius:18px;overflow:hidden;border:5px solid var(--ink);background:var(--ink);box-shadow:var(--shadow);aspect-ratio:390/760}
+.phone img{width:100%;height:100%;object-fit:cover;object-position:top}
+.shot-missing{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:12px;font-size:13px;color:var(--muted)}
+.dir__info{display:grid;gap:18px}
+.dir__top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.dir__badge{font:500 11px/1 var(--f-mono);letter-spacing:.05em;padding:6px 10px;border-radius:999px;border:1px solid var(--ink)}
+.dir__name{font-size:clamp(44px,5vw,68px);line-height:.95;letter-spacing:-.02em}
+.dn-1{font-family:"Archivo",Arial Narrow,sans-serif;font-weight:900;font-stretch:65%;font-variation-settings:"wdth" 65;text-transform:none}
+.dn-2{font-family:"Bodoni Moda",Didot,Georgia,serif;font-style:italic;font-weight:600}
+.dn-3{font-family:"Unbounded",Arial Black,sans-serif;font-weight:900;font-size:clamp(34px,4vw,54px)}
+.dir__concept{font:400 20px/1.45 var(--f-display);font-variation-settings:"opsz" 30,"SOFT" 30;max-width:40ch}
+.meter{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font:500 11px/1 var(--f-mono);letter-spacing:.04em}
+.meter__bar{height:8px;border-radius:999px;background:var(--cobalt);position:relative;overflow:hidden}
+.meter__bar::before{content:"";position:absolute;inset:0;right:auto;width:calc(var(--s) * 1%);background:var(--ink)}
+.facts{display:grid;gap:0;border-top:1px solid var(--line)}
+.facts div{display:grid;grid-template-columns:110px 1fr;gap:12px;padding-block:10px;border-bottom:1px solid var(--line);font-size:15px;line-height:1.45}
+.facts dt{padding-top:3px}
+.facts dd{margin:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{width:22px;height:22px;border-radius:50%;border:1px solid rgba(128,128,128,.35)}
+.play-btn{display:inline-flex;align-items:center;gap:10px;justify-self:start;background:var(--ink);color:var(--paper);text-decoration:none;font:600 16px/1 var(--f-body);padding:14px 20px;border-radius:999px;transition:transform .2s cubic-bezier(.3,1.6,.5,1),background .2s}
+.play-btn:hover{transform:translateY(-2px) rotate(-1deg);background:var(--cobalt);color:var(--on-cobalt)}
+.play-btn svg{width:16px;height:16px}
+.row-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+@media (max-width:900px){.dir{grid-template-columns:1fr}.dir:nth-of-type(even) .dir__shots{order:0}}
+
+.compare{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+.compare table{width:100%;min-width:720px;border-collapse:collapse;font-size:15px}
+.compare th,.compare td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.45}
+.compare thead th{font:600 16px/1.2 var(--f-body)}
+.compare tbody th{font-weight:500;color:var(--muted);width:22%}
+.compare tr:last-child th,.compare tr:last-child td{border-bottom:0}
+.dots{display:inline-flex;gap:3px;vertical-align:middle;margin-right:8px}
+.dots i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--ink)}
+.dots i.on{background:var(--ink)}
+
+.reco{background:var(--cobalt);color:var(--on-cobalt);border-radius:24px;padding:clamp(24px,4vw,48px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(24px,4vw,56px)}
+.reco h3{font:500 clamp(30px,3.6vw,48px)/1.02 var(--f-display);font-variation-settings:"opsz" 144,"SOFT" 60,"WONK" 1;letter-spacing:-.02em}
+.reco p{font-size:17px;line-height:1.55}
+.reco ol{display:grid;gap:12px;counter-reset:r}
+.reco li{display:grid;grid-template-columns:34px 1fr;gap:10px;line-height:1.45;counter-increment:r}
+.reco li::before{content:counter(r);display:grid;place-items:center;width:28px;height:28px;border-radius:50%;border:1.5px solid currentColor;font:600 13px/1 var(--f-mono)}
+.reco b{font-weight:700}
+.reco .note-btn{border-color:currentColor;color:inherit}
+@media (max-width:900px){.reco{grid-template-columns:1fr}}
+
+/* rule 6 plan */
+.gantt{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+.gantt__in{min-width:760px;display:grid;grid-template-columns:190px repeat(10,minmax(0,1fr));font-size:14px}
+.gantt__wk{padding:10px 0;text-align:center;border-bottom:1px solid var(--line);border-left:1px dashed var(--line);font:500 10px/1 var(--f-mono);color:var(--muted)}
+.gantt__corner{border-bottom:1px solid var(--line);padding:10px 16px}
+.gantt__name{padding:12px 16px;border-bottom:1px solid var(--line);display:grid;gap:2px;line-height:1.25}
+.gantt__name small{color:var(--muted);font-size:12.5px}
+.gantt__lane{grid-column:2 / -1;border-bottom:1px solid var(--line);position:relative;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));align-items:center;background-image:repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),var(--line) calc(10% - 1px) 10%)}
+.bar{grid-row:1;height:26px;border-radius:999px;background:var(--ink);color:var(--paper);font:600 12px/26px var(--f-body);padding-inline:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-inline:3px}
+.bar--c{background:var(--cobalt);color:var(--on-cobalt)}
+.bar--soft{background:var(--tint);color:var(--ink)}
+.gantt__gates{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px 18px;padding:12px 16px;font-size:13.5px}
+.gate{display:inline-flex;align-items:center;gap:8px}
+.gate i{width:10px;height:10px;transform:rotate(45deg);background:var(--cobalt)}
+.plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;display:grid;gap:14px;align-content:start}
+.card h3{font:600 20px/1.2 var(--f-body)}
+.tree{font-size:15px;line-height:1.4}
+.tree ul{padding-left:18px;margin-top:6px;border-left:1.5px solid var(--line);display:grid;gap:6px}
+.tree > li + li{margin-top:8px}
+.tree li{position:relative}
+.tree ul li::before{content:"";position:absolute;left:-18px;top:.7em;width:12px;height:1.5px;background:var(--line)}
+.tree b{font-weight:600}
+.tree .tag{font:500 10px/1 var(--f-mono);letter-spacing:.04em;padding:3px 6px;border-radius:999px;background:var(--tint);color:var(--ink);margin-left:6px;vertical-align:2px;white-space:nowrap}
+.steps{display:grid;gap:0;counter-reset:s}
+.steps li{display:grid;grid-template-columns:30px 1fr;gap:10px;padding-block:9px;border-bottom:1px dashed var(--line);font-size:15px;line-height:1.4;counter-increment:s}
+.steps li:last-child{border-bottom:0}
+.steps li::before{content:counter(s,decimal-leading-zero);font:500 11px/1.9 var(--f-mono);color:var(--cobalt)}
+.bul{display:grid;gap:8px;font-size:15px;line-height:1.45}
+.bul li{padding-left:18px;position:relative}
+.bul li::before{content:"";position:absolute;left:0;top:.55em;width:8px;height:8px;border:1.5px solid var(--ink);border-radius:2px}
+.stack{display:grid;gap:10px}
+.stack div{display:grid;grid-template-columns:120px 1fr;gap:10px;font-size:15px;line-height:1.4;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.stack div:last-child{border-bottom:0;padding-bottom:0}
+@media (max-width:860px){.plan-grid{grid-template-columns:1fr}}
+
+/* rule 7 */
+.decide{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.decide .card b{font:700 44px/1 var(--f-display);font-variation-settings:"opsz" 96,"SOFT" 100,"WONK" 1;color:var(--cobalt)}
+.qs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 32px;counter-reset:q}
+.qs li{display:grid;grid-template-columns:40px 1fr;gap:8px;padding-block:16px;border-top:1px solid var(--line);counter-increment:q;line-height:1.45}
+.qs li::before{content:"Q" counter(q);font:500 12px/1.9 var(--f-mono);color:var(--cobalt)}
+.qs li b{display:block;font-weight:600;margin-bottom:2px}
+.qs li span{color:var(--muted);font-size:15px}
+@media (max-width:860px){.decide,.qs{grid-template-columns:1fr}}
+.note-btn{display:inline-flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--line);color:var(--ink);font:600 14px/1 var(--f-body);padding:10px 14px;border-radius:999px;cursor:pointer}
+.note-btn:hover{border-color:var(--ink)}
+.note-btn svg{width:16px;height:16px}
+
+.finale{padding-block:clamp(64px,10vw,140px);text-align:center;display:grid;justify-items:center;gap:20px}
+.finale .morph{font-size:clamp(60px,12vw,180px);font-size:clamp(60px,20cqi,180px)}
+.finale p{max-width:48ch;color:var(--muted)}
+.finale .morph{color:var(--ink);max-width:none}
+footer{border-top:1px solid var(--line);padding-block:28px calc(28px + env(safe-area-inset-bottom,0px))}
+footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;font-size:14px;color:var(--muted)}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#rule-1">Skip to the rules</a>
+
+<header class="topbar">
+  <div class="wrap topbar__in">
+    <a class="brand" href="#top"><b>Serious Play</b><span class="mono muted">Website concept &middot; Rulebook, ed. 01</span></a>
+    <nav class="rulenav" aria-label="Rules">
+      <span class="mono muted rulenav__label">Rules</span>
+      <a href="#rule-1" title="The object of the game">1</a>
+      <a href="#rule-2" title="The players">2</a>
+      <a href="#rule-3" title="The board">3</a>
+      <a href="#rule-4" title="The pieces">4</a>
+      <a href="#rule-5" title="Three ways to play">5</a>
+      <a href="#rule-6" title="Setup">6</a>
+      <a href="#rule-7" title="Your move">7</a>
+    </nav>
+  </div>
+  <div class="progress" aria-hidden="true"></div>
+</header>
+
+<main id="top">
+  <!-- ============ COVER ============ -->
+  <section class="cover">
+    <div class="wrap cover__grid">
+      <div>
+        <div class="cover__eyebrow mono muted">
+          <span>A website concept</span><span>Edition 01</span><span>September 2026</span>
+        </div>
+        <h1 class="morph" id="morph">
+          <span class="visually-hidden">Serious Play</span>
+          <span class="morph__line" aria-hidden="true">Serious</span>
+          <span class="morph__line" aria-hidden="true">Play</span>
+        </h1>
+        <p class="cover__sub">The rulebook for your new website. Seven rules, three ways to play, and one decision to make together.</p>
+      </div>
+      <div class="cover__side">
+        <div class="dial" role="group" aria-labelledby="dial-label">
+          <div class="dial__top">
+            <label id="dial-label" for="dial">Where should Serious Play sit?</label>
+            <span class="dial__val" id="dial-val">50 / 50</span>
+          </div>
+          <div class="dial__track">
+            <input type="range" id="dial" min="0" max="100" step="1" value="50" aria-valuetext="Balanced: 50 serious, 50 play. Closest to Direction 02, Lights Off">
+            <a class="tick" href="#dir-1" style="--at:30" data-at="30"><span>01</span></a>
+            <a class="tick" href="#dir-2" style="--at:50" data-at="50"><span>02</span></a>
+            <a class="tick" href="#dir-3" style="--at:75" data-at="75"><span>03</span></a>
+          </div>
+          <div class="dial__ends" aria-hidden="true"><span>Serious</span><span>Play</span></div>
+          <p class="dial__out"><span>Closest direction</span><a id="dial-near" href="#dir-2">02 &middot; Lights Off &rarr;</a></p>
+        </div>
+        <div class="boxfacts">
+          <div><span class="mono muted">Players</span><b>One studio and its future clients</b></div>
+          <div><span class="mono muted">Playtime</span><b>About 20 minutes</b></div>
+          <div><span class="mono muted">Ages</span><b>All</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ IN THE BOX ============ -->
+  <section class="inbox" aria-labelledby="inbox-h">
+    <div class="wrap">
+      <div class="inbox__head">
+        <h2 id="inbox-h">In the box</h2>
+        <p class="mono muted">Check the contents before play</p>
+      </div>
+      <ul class="pieces">
+        <li><a class="piece" href="#rule-1"><b>1</b><span>Brief, restated so we agree on the goal</span></a></li>
+        <li><a class="piece" href="#rule-2"><b>3</b><span>Players the site has to win over</span></a></li>
+        <li><a class="piece" href="#rule-3"><b>16</b><span>References: your 15 Instagram picks and Studio Gray Lab</span></a></li>
+        <li><a class="piece" href="#rule-4"><b>6</b><span>Art direction pieces every direction shares</span></a></li>
+        <li><a class="piece" href="#rule-5"><b>3</b><span>Live prototypes you can click through</span></a></li>
+        <li><a class="piece" href="#reco"><b>1</b><span>Recommended route that combines the best of the three</span></a></li>
+        <li><a class="piece" href="#rule-6"><b>10</b><span>Weeks from kickoff to launch</span></a></li>
+        <li><a class="piece" href="#rule-7"><b>8</b><span>Questions for you before design starts</span></a></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ RULE 1 ============ -->
+  <section class="rule" id="rule-1" aria-labelledby="r1">
+    <div class="wrap">
+      <header class="rule__head">
+        <p class="rule__no"><span class="mono muted">Rule</span><b>1</b></p>
+        <div>
+          <h2 class="rule__title" id="r1">The object of the game</h2>
+          <p class="rule__short">Build a website that proves the studio's method within ten seconds. The portfolio is the proof.</p>
+        </div>
+      </header>
+      <div class="rule__body">
+        <p class="lead">Serious Play already has its thesis: <em>&ldquo;We create brands rooted by serious research and driven by playful imagination.&rdquo;</em> The new site should behave like that sentence.</p>
+        <div class="two">
+          <div>
+            <div class="sub"><h3>What we heard</h3></div>
+            <ul class="heard">
+              <li>A concept website that revolves around the portfolio.</li>
+              <li>Inspired by Studio Gray Lab and a set of Instagram references you chose.</li>
+              <li>Room to be experimental, with the craft level of a fashion or luxury studio.</li>
+              <li>The current site is minimal. The next one should carry the studio's personality.</li>
+            </ul>
+          </div>
+          <div>
+            <div class="sub"><h3>Win conditions</h3></div>
+            <ul class="checks">
+              <li>A new visitor can say what Serious Play does after one screen.</li>
+              <li>Every case study shows the research behind the result, as well as the result.</li>
+              <li>The site feels like a Serious Play project, with one interaction people remember and share.</li>
+              <li>Browsing the work stays fast and clear, on a phone as much as on a desktop.</li>
+              <li>The team can add a new project without calling a developer.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RULE 2 ============ -->
+  <section class="rule" id="rule-2" aria-labelledby="r2">
+    <div class="wrap">
+      <header class="rule__head">
+        <p class="rule__no"><span class="mono muted">Rule</span><b>2</b></p>
+        <div>
+          <h2 class="rule__title" id="r2">The players</h2>
+          <p class="rule__short">Three kinds of visitor, each arriving with one question. The site answers all three without making anyone dig.</p>
+        </div>
+      </header>
+      <div class="players">
+        <article class="player">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 2a5 5 0 0 1 5 5c0 1.6-.8 3-2 4l7.6 3.3c2.3 1 1.7 4.4-.8 4.4h-3.3l3.9 9.3c.4 1-.3 2-1.4 2H19l-3-6-3 6H7c-1.1 0-1.8-1-1.4-2l3.9-9.3H6.2c-2.5 0-3.1-3.4-.8-4.4L13 11a5 5 0 0 1 3-9z"/></svg>
+          <h3>Future clients</h3>
+          <q>Can they do this for my brand? Show me work like mine, and show me how you think.</q>
+          <ul><li>Work filtered by sector and service</li><li>Case studies that lead with the finding</li><li>Clear services and one obvious way to get in touch</li></ul>
+        </article>
+        <article class="player">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 2a5 5 0 0 1 5 5c0 1.6-.8 3-2 4l7.6 3.3c2.3 1 1.7 4.4-.8 4.4h-3.3l3.9 9.3c.4 1-.3 2-1.4 2H19l-3-6-3 6H7c-1.1 0-1.8-1-1.4-2l3.9-9.3H6.2c-2.5 0-3.1-3.4-.8-4.4L13 11a5 5 0 0 1 3-9z" transform="rotate(-8 16 16)"/></svg>
+          <h3>Future team</h3>
+          <q>Is this a place where I would do my best work?</q>
+          <ul><li>The method, told honestly</li><li>The people and the studio space</li><li>Open roles and how to apply</li></ul>
+        </article>
+        <article class="player">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 2a5 5 0 0 1 5 5c0 1.6-.8 3-2 4l7.6 3.3c2.3 1 1.7 4.4-.8 4.4h-3.3l3.9 9.3c.4 1-.3 2-1.4 2H19l-3-6-3 6H7c-1.1 0-1.8-1-1.4-2l3.9-9.3H6.2c-2.5 0-3.1-3.4-.8-4.4L13 11a5 5 0 0 1 3-9z" transform="rotate(8 16 16)"/></svg>
+          <h3>Press, juries and partners</h3>
+          <q>What's the story here, and who made it?</q>
+          <ul><li>Studio facts in one paragraph</li><li>Full credits on every project</li><li>A press kit with logos and portraits</li></ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RULE 3 ============ -->
+  <section class="rule" id="rule-3" aria-labelledby="r3">
+    <div class="wrap">
+      <header class="rule__head">
+        <p class="rule__no"><span class="mono muted">Rule</span><b>3</b></p>
+        <div>
+          <h2 class="rule__title" id="r3">The board</h2>
+          <p class="rule__short">Your references and our mood on one board. Everything in the directions traces back to something here.</p>
+        </div>
+      </header>
+      <div class="rule__body">
+        <div id="board-refs">
+          <div class="sub"><h3>Your references</h3><span class="mono muted">16 pieces &middot; numbered as you sent them</span></div>
+          <div class="board">
+            <a class="ref" href="https://www.instagram.com/p/DORP0w-jGV7/" target="_blank" rel="noopener"><img class="ref__img" src="refs/01.jpg" alt="Reference 01" loading="lazy"><div class="ref__ph"><span class="ref__no">01</span><span></span><span class="ref__kind"><span class="mono">Instagram post</span><span class="ref__open">Open &nearr;</span></span></div></a>
+            <a class="ref" href="https://www.instagram.com/p/DJ-PkjCuB6Q/?img_index=3" target="_blank" rel="noopener"><img class="ref__img" src="refs/02.jpg" alt="Reference 02" loading="lazy"><div class="ref__ph"><span class="ref__no">02</span><span></span><span class="ref__kind"><span class="mono">Carousel</span><span class="mono muted">Slide 3</span><span class="ref__open">Open &nearr;</span></span></div></a>
+            <a class="ref" href="https://www.instagram.com/reel/DObCiVKExIV/" target="_blank" rel="noopener"><img class="ref__img" src="refs/03.jpg" alt="Reference 03" loading="lazy"><div class="ref__ph"><span class="ref__no">03</span><span></span><span class="ref__kind"><span class="mono">Reel</span><span class="ref__open">Open &nearr;</span></span></div></a>
+            <a class="ref" href="https://www.instagram.com/p/DPEI6tzDStB/" target="_blank" rel="noopener"><img class="ref__img" src="refs/04.jpg" alt="Reference 04" loading="lazy"><div class="ref__ph"><span class="ref__no">04</span><span></span><span class="ref__kind"><span class="mono">Instagram post</span><span class="ref__open">Open &nearr;</span></span></div></a>
+            <a class="ref" href="https://www.instagram.com/reel/DO_GpU0jShK/" target="_blank" rel="noopener"><img class="ref__img" src="refs/04b.jpg" alt="Reference 04b" loading="lazy"><div class="ref__ph"><span class="ref__no">04b</span><span></span><span class="ref__kind"><span class="mono">Reel</span><span class="ref__open">Open &nearr;</span></span></div></a>
+            <a class="ref" href="https://www.instagram.com/p/DOu2FrJDEAp/" target="_blank" rel="noopener"><img class="ref__img" src="refs/05.jpg" alt="Reference 05" loading="lazy"><div class="ref__ph"><span class="ref__no">05</span><span></span><span class="ref__kind"><span class="mono">Instagram post</span><span class="ref__open">Open &nearr;</span></span></div></a>
+            <a class="ref" href="https://www.instagram.com/p/DM-jbi2JjWn/?img_index=5" target="_blank" rel="noopener"><img class="ref__img" src="refs/06.jpg" alt="Reference 06" loading="lazy"><div class="ref__ph"><span class="ref__no">06</span><span></span><span class="ref__kind"><span class="mono">Carousel</span><span class="mono muted">Slide 5</span><span class="ref__open">Open &nearr;</span></span></div></a>
+            <a class="ref" href="https://www.instagram.com/p/DJ6ixToIM3z/?img_index=4" target="_blank" rel="noopener"><img class="ref__img" src="refs/07.jpg" alt="Reference 07" loading="lazy"><div class="ref__ph"><span class="ref__no">07</span><span></span><span class="ref__kind"><span class="mono">Carousel</span><span class="mono muted">Slide 4</span><span class="ref__open">Open &nearr;</span></span></div></a>
+            <a class="ref" href="https://www.instagram.com/reel/DHMjOTPua34/" target="_blank" rel="noopener"><img class="ref__img" src="refs/08.jpg" alt="Reference 08" loading="lazy"><div class="ref__ph"><span class="ref__no">08</span><span></span><span class="ref__kind"><span class="mono">Reel</span><span class="ref__open">Open &nearr;</span></span></div></a>
+            <a class="ref" href="https://www.instagram.com/p/DJHeIwWinrd/?img_index=2" target="_blank" rel="noopener"><img class="ref__img" src="refs/09.jpg" alt="Reference 09" loading="lazy"><div class="ref__ph"><span class="ref__no">09</span><span></span><span class="ref__kind"><span class="mono">Carousel</span><span class="mono muted">Slide 2</span><span class="ref__open">Open &nearr;</span></span></div></a>
+            <a class="ref" href="https://www.instagram.com/p/DId48UJR3eO/?img_index=5" target="_blank" rel="noopener"><img class="ref__img" src="refs/10.jpg" alt="Reference 10" loading="lazy"><div class="ref__ph"><span class="ref__no">10</span><span></span><span class="ref__kind"><span class="mono">Carousel</span><span class="mono muted">Slide 5</span><span class="ref__open">Open &nearr;</span></span></div></a>
+            <a class="ref" href="https://www.instagram.com/p/DJEsOVuiQdP/" target="_blank" rel="noopener"><img class="ref__img" src="refs/11.jpg" alt="Reference 11" loading="lazy"><div class="ref__ph"><span class="ref__no">11</span><span></span><span class="ref__kind"><span class="mono">Instagram post</span><span class="ref__open">Open &nearr;</span></span></div></a>
+            <a class="ref" href="https://www.instagram.com/p/DDIU0WXsBw1/?img_index=2" target="_blank" rel="noopener"><img class="ref__img" src="refs/12.jpg" alt="Reference 12" loading="lazy"><div class="ref__ph"><span class="ref__no">12</span><span></span><span class="ref__kind"><span class="mono">Carousel</span><span class="mono muted">Slide 2</span><span class="ref__open">Open &nearr;</span></span></div></a>
+            <a class="ref" href="https://www.instagram.com/reel/DUm2DQCkxWy/" target="_blank" rel="noopener"><img class="ref__img" src="refs/13.jpg" alt="Reference 13" loading="lazy"><div class="ref__ph"><span class="ref__no">13</span><span></span><span class="ref__kind"><span class="mono">Reel</span><span class="ref__open">Open &nearr;</span></span></div></a>
+            <a class="ref" href="https://www.instagram.com/reel/DDyoBhWtfb3/" target="_blank" rel="noopener"><img class="ref__img" src="refs/recap.jpg" alt="Recap reference" loading="lazy"><div class="ref__ph"><span class="ref__no">Recap</span><span></span><span class="ref__kind"><span class="mono">Reel</span><span class="mono muted">The summary</span><span class="ref__open">Open &nearr;</span></span></div></a>
+            <a class="ref ref--wide ref--site" href="https://www.studiograylab.com/" target="_blank" rel="noopener"><div class="ref__ph"><span class="mono">Website reference</span><span class="ref__no" style="font-size:34px;align-self:center">Studio Gray Lab</span><span class="ref__kind"><p>An independent art and design studio for fashion, luxury, music and art. We take its posture: a studio that behaves like an art practice, with luxury-level pacing and craft.</p><span class="ref__open">studiograylab.com &nearr;</span></span></div></a>
+          </div>
+          <p class="board-note" id="board-note">Each tile opens the original post. Notes on what we take from each one are added after our reference review together.</p>
+          <div class="row-actions" style="margin-top:14px"><button class="note-btn" type="button" data-note="board-refs" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2h12v9H6l-4 3z"/></svg>Leave a note on the references</button></div>
+        </div>
+
+        <div>
+          <div class="sub"><h3>Our mood</h3><span class="mono muted">Textures, type and motion the directions draw from</span></div>
+          <div class="mood">
+            <div class="tile tile--paper"><span class="tile__tag mono"><span>Lab paper</span><span>01</span></span><p>Serious <span class="hl">research</span>, made visible.</p></div>
+            <div class="tile tile--dark"><span class="tile__tag mono"><span>Light in the dark</span><span>02</span></span><p>Play is a way of looking.</p></div>
+            <div class="tile tile--toys"><span class="tile__tag mono"><span>Toy colours</span><span>03</span></span><div class="toys" aria-hidden="true"><i style="background:#FF4A3D"></i><i style="background:#FFC631"></i><i style="background:#2D4BFF"></i><i style="background:#2FC79A"></i><i style="background:#FF8BD1"></i><i style="background:#151515"></i></div></div>
+            <div class="tile tile--type"><span class="tile__tag mono"><span>Three voices</span><span>All</span></span><div class="specs"><span class="s-archivo">Aa<small class="mono muted">Archivo</small></span><span class="s-bodoni">Aa<small class="mono muted" style="font-style:normal">Bodoni</small></span><span class="s-unbounded">Aa<small class="mono muted" style="font-size:11px">Unbounded</small></span></div></div>
+            <div class="tile tile--motion"><span class="tile__tag mono"><span>Things have weight</span><span>03</span></span><div class="stage"><div class="ball" aria-hidden="true"></div></div></div>
+            <div class="tile tile--grid"><span class="tile__tag mono"><span>A grid you can break</span><span>All</span></span><div class="breaker" aria-hidden="true"></div><span class="mono">12 columns &middot; 8px rhythm</span></div>
+            <div class="tile tile--credits"><span class="mono" style="opacity:.7">A Serious Play production</span><p>Directed by research. Played by instinct.</p><span class="mono" style="opacity:.7">02</span></div>
+            <div class="tile tile--card"><span class="tile__tag mono"><span>Study N&deg;014</span><span>01</span></span><p>Finding: the gift matters more than the sweet.</p><span class="mono" style="color:#5F6660">Filed under: F&amp;B</span></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="sub"><h3>Words we play with</h3></div>
+          <div class="words">
+            <div class="word"><b>Rigorous</b><span>Every claim on the site is backed by a project.</span></div>
+            <div class="word"><b>Curious</b><span>Reward people who poke around.</span></div>
+            <div class="word"><b>Tactile</b><span>Things respond to the hand: weight, friction, light.</span></div>
+            <div class="word"><b>Witty</b><span>One smile per page. Never at the expense of clarity.</span></div>
+            <div class="word"><b>Precise</b><span>Tight grids, exact type, nothing accidental.</span></div>
+            <div class="word"><b>Generous</b><span>Show the process, share the thinking.</span></div>
+          </div>
+          <p class="avoid"><span class="muted">Words we avoid:</span><s>Quirky</s><s>Zany</s><s>Corporate</s><s>Minimal for its own sake</s></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RULE 4 ============ -->
+  <section class="rule" id="rule-4" aria-labelledby="r4">
+    <div class="wrap">
+      <header class="rule__head">
+        <p class="rule__no"><span class="mono muted">Rule</span><b>4</b></p>
+        <div>
+          <h2 class="rule__title" id="r4">The pieces</h2>
+          <p class="rule__short">Six art direction principles. They hold in every direction, so whichever one you choose, the brand stays the same.</p>
+        </div>
+      </header>
+      <div class="ad" id="art-direction">
+        <article class="adc">
+          <div class="adc__vis v-layers" aria-hidden="true"><div class="a"></div><div class="b">play</div></div>
+          <div class="adc__txt"><h3>Two layers, always</h3><p>Every page has a serious layer (the grid, the facts, the research) and a play layer (one interaction, one surprise).</p><div class="dodont"><span><em>Do</em>Pair each finding with the finished work.</span><span><em>Don't</em>Add play that has no idea behind it.</span></div></div>
+        </article>
+        <article class="adc">
+          <div class="adc__vis v-type" aria-hidden="true"><b>Aa</b><i>A rigorous face for information. A characterful face for the voice.</i></div>
+          <div class="adc__txt"><h3>Type does the talking</h3><p>Two families, big sizes, few weights. Headlines carry the personality so the layout can stay calm.</p><div class="dodont"><span><em>Do</em>Set headlines large enough to feel like objects.</span><span><em>Don't</em>Mix more than two families on a page.</span></div></div>
+        </article>
+        <article class="adc">
+          <div class="adc__vis v-colour" aria-hidden="true"><div class="ui"><i></i><i></i><i></i></div><div class="cov" data-cover="halwa-house"></div><div class="cov" data-cover="palm-swim"></div></div>
+          <div class="adc__txt"><h3>The work carries the colour</h3><p>The interface stays neutral so the portfolio can be as loud as each client needs.</p><div class="dodont"><span><em>Do</em>Let one project take over the screen.</span><span><em>Don't</em>Brand the frame louder than the work.</span></div></div>
+        </article>
+        <article class="adc">
+          <div class="adc__vis v-grid" aria-hidden="true"><div class="blk b1"></div><div class="blk b2"></div><div class="blk b3"></div></div>
+          <div class="adc__txt"><h3>A strict grid you can break</h3><p>Twelve columns and an 8px rhythm. A play moment may break the grid, once per screen.</p><div class="dodont"><span><em>Do</em>Break the grid on purpose, with one element.</span><span><em>Don't</em>Let everything float.</span></div></div>
+        </article>
+        <article class="adc">
+          <div class="adc__vis v-motion" aria-hidden="true"><div class="ball"></div></div>
+          <div class="adc__txt"><h3>Motion with weight</h3><p>Things ease, settle and respond to the hand. Every effect has a calm version for people who turn motion off.</p><div class="dodont"><span><em>Do</em>Animate in answer to what the visitor does.</span><span><em>Don't</em>Fade everything in on scroll.</span></div></div>
+        </article>
+        <article class="adc">
+          <div class="adc__vis v-voice" aria-hidden="true"><span>What do you do?</span><span>We research brands, then play with them until they work.</span></div>
+          <div class="adc__txt"><h3>Talk like a smart friend</h3><p>Plain words, short sentences, specific claims. Wit is welcome once the point is clear.</p><div class="dodont"><span><em>Do</em>Write &ldquo;We found 72% of buyers were gifting.&rdquo;</span><span><em>Don't</em>Write &ldquo;We craft meaningful experiences.&rdquo;</span></div></div>
+        </article>
+      </div>
+      <div class="row-actions" style="margin-top:18px"><button class="note-btn" type="button" data-note="art-direction" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2h12v9H6l-4 3z"/></svg>Leave a note on the art direction</button></div>
+    </div>
+  </section>
+
+  <!-- ============ RULE 5 ============ -->
+  <section class="rule" id="rule-5" aria-labelledby="r5">
+    <div class="wrap">
+      <header class="rule__head">
+        <p class="rule__no"><span class="mono muted">Rule</span><b>5</b></p>
+        <div>
+          <h2 class="rule__title" id="r5">Three ways to play</h2>
+          <p class="rule__short">Three directions, each a different setting on the dial. All three are live prototypes. Open them, click everything, then tell us where the dial should sit.</p>
+        </div>
+      </header>
+
+      <div class="scale" aria-hidden="true">
+        <div class="scale__line"></div>
+        <span class="scale__end">Serious</span><span class="scale__end scale__end--r">Play</span>
+        <a class="scale__pt" href="#dir-1" style="--at:30" tabindex="-1"><span>01<b> Field Notes</b></span><i></i></a>
+        <a class="scale__pt" href="#dir-2" style="--at:50" tabindex="-1"><span>02<b> Lights Off</b></span><i></i></a>
+        <a class="scale__pt" href="#dir-3" style="--at:75" tabindex="-1"><span>03<b> Playground</b></span><i></i></a>
+        <div class="scale__you"></div>
+      </div>
+
+      <article class="dir" id="dir-1" data-at="30">
+        <div class="dir__shots">
+          <div class="frame"><div class="frame__bar"><i></i><i></i><i></i><span>seriousplaystudio.com</span></div><div class="frame__img"><img src="shots/field-notes-desktop.jpg" alt="Field Notes homepage on desktop" loading="lazy"></div></div>
+          <div class="phone"><img src="shots/field-notes-mobile.jpg" alt="Field Notes homepage on a phone" loading="lazy"></div>
+        </div>
+        <div class="dir__info">
+          <div class="dir__top"><span class="dir__badge">Direction 01</span><span class="mono muted">Serious 70 &middot; Play 30</span></div>
+          <h3 class="dir__name dn-1">Field Notes</h3>
+          <p class="dir__concept">The studio as a research lab. The work is catalogued like an archive of studies, and footnotes and margin notes show the thinking behind each one.</p>
+          <div class="meter" style="--s:70"><span>Serious</span><div class="meter__bar"></div><span>Play</span></div>
+          <dl class="facts">
+            <div><dt class="mono muted">Look</dt><dd><span class="chips" aria-label="Palette"><i class="chip" style="background:#EEF0EC"></i><i class="chip" style="background:#121412"></i><i class="chip" style="background:#5F6660"></i><i class="chip" style="background:#F4EE5A"></i><i class="chip" style="background:#2F49D1"></i></span>Lab-paper grey, ink, highlighter. Archivo Condensed, Newsreader italic, DM Mono.</dd></div>
+            <div><dt class="mono muted">Signature</dt><dd>A measuring crosshair follows the cursor, and a highlighter sweeps across each study in the index.</dd></div>
+            <div><dt class="mono muted">Best if</dt><dd>You want to lead with strategy and win larger, research-heavy briefs.</dd></div>
+            <div><dt class="mono muted">Watch for</dt><dd>It can feel reserved. It depends on strong case-study writing.</dd></div>
+          </dl>
+          <div class="row-actions"><a class="play-btn" href="field-notes.html">Play Field Notes <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M4 2l10 6-10 6z"/></svg></a><button class="note-btn" type="button" data-note="dir-1" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2h12v9H6l-4 3z"/></svg>Leave a note</button></div>
+        </div>
+      </article>
+
+      <article class="dir" id="dir-2" data-at="50">
+        <div class="dir__shots">
+          <div class="frame"><div class="frame__bar"><i></i><i></i><i></i><span>seriousplaystudio.com</span></div><div class="frame__img"><img src="shots/lights-off-desktop.jpg" alt="Lights Off homepage on desktop" loading="lazy"></div></div>
+          <div class="phone"><img src="shots/lights-off-mobile.jpg" alt="Lights Off homepage on a phone" loading="lazy"></div>
+        </div>
+        <div class="dir__info">
+          <div class="dir__top"><span class="dir__badge">Direction 02</span><span class="mono muted">Serious 50 &middot; Play 50</span></div>
+          <h3 class="dir__name dn-2">Lights Off</h3>
+          <p class="dir__concept">A dark, cinematic studio. Your cursor is a flashlight, and the work waits in the dark until you find it. The work is the only colour on the page.</p>
+          <div class="meter" style="--s:50"><span>Serious</span><div class="meter__bar"></div><span>Play</span></div>
+          <dl class="facts">
+            <div><dt class="mono muted">Look</dt><dd><span class="chips" aria-label="Palette"><i class="chip" style="background:#0B0B0C"></i><i class="chip" style="background:#151517"></i><i class="chip" style="background:#ECE7DF"></i><i class="chip" style="background:#8C877F"></i><i class="chip" style="background:#FFE9C4"></i></span>Blackout, bone and warm light. Bodoni Moda, Geist, Geist Mono.</dd></div>
+            <div><dt class="mono muted">Signature</dt><dd>A flashlight cursor that reveals the portfolio, and a real light switch that turns the whole site on.</dd></div>
+            <div><dt class="mono muted">Best if</dt><dd>You want a first impression at the level of a fashion or luxury house, close to Studio Gray Lab's world.</dd></div>
+            <div><dt class="mono muted">Watch for</dt><dd>Dark sites need excellent imagery. The reveal must never hide the work from people who don't play.</dd></div>
+          </dl>
+          <div class="row-actions"><a class="play-btn" href="lights-off.html">Play Lights Off <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M4 2l10 6-10 6z"/></svg></a><button class="note-btn" type="button" data-note="dir-2" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2h12v9H6l-4 3z"/></svg>Leave a note</button></div>
+        </div>
+      </article>
+
+      <article class="dir" id="dir-3" data-at="75">
+        <div class="dir__shots">
+          <div class="frame"><div class="frame__bar"><i></i><i></i><i></i><span>seriousplaystudio.com</span></div><div class="frame__img"><img src="shots/playground-desktop.jpg" alt="Playground homepage on desktop" loading="lazy"></div></div>
+          <div class="phone"><img src="shots/playground-mobile.jpg" alt="Playground homepage on a phone" loading="lazy"></div>
+        </div>
+        <div class="dir__info">
+          <div class="dir__top"><span class="dir__badge">Direction 03</span><span class="mono muted">Serious 25 &middot; Play 75</span></div>
+          <h3 class="dir__name dn-3">Playground</h3>
+          <p class="dir__concept">The studio as a toybox. One button throws the homepage into physics. Another tidies every piece back into a perfect grid.</p>
+          <div class="meter" style="--s:25"><span>Serious</span><div class="meter__bar"></div><span>Play</span></div>
+          <dl class="facts">
+            <div><dt class="mono muted">Look</dt><dd><span class="chips" aria-label="Palette"><i class="chip" style="background:#F3F2EF"></i><i class="chip" style="background:#151515"></i><i class="chip" style="background:#FF4A3D"></i><i class="chip" style="background:#FFC631"></i><i class="chip" style="background:#2D4BFF"></i><i class="chip" style="background:#2FC79A"></i><i class="chip" style="background:#FF8BD1"></i></span>Chalk, ink and toy colours. Unbounded, Figtree.</dd></div>
+            <div><dt class="mono muted">Signature</dt><dd>&ldquo;Make a mess&rdquo; drops every letter and project into physics. &ldquo;Tidy up&rdquo; snaps them back into order.</dd></div>
+            <div><dt class="mono muted">Best if</dt><dd>You want to be remembered and shared, and you mostly work with consumer and culture brands.</dd></div>
+            <div><dt class="mono muted">Watch for</dt><dd>The novelty fades on repeat visits, so the work index has to stay fast and plain.</dd></div>
+          </dl>
+          <div class="row-actions"><a class="play-btn" href="playground.html">Play Playground <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M4 2l10 6-10 6z"/></svg></a><button class="note-btn" type="button" data-note="dir-3" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2h12v9H6l-4 3z"/></svg>Leave a note</button></div>
+        </div>
+      </article>
+
+      <div class="rule__body" style="margin-top:clamp(24px,4vw,48px)">
+        <div>
+          <div class="sub"><h3>Side by side</h3></div>
+          <div class="compare" role="region" aria-label="Comparison of the three directions" tabindex="0">
+            <table>
+              <thead><tr><th scope="col"><span class="visually-hidden">Criterion</span></th><th scope="col">01 Field Notes</th><th scope="col">02 Lights Off</th><th scope="col">03 Playground</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">First impression</th><td>Considered, expert, calm</td><td>Cinematic, premium, intriguing</td><td>Loud, joyful, memorable</td></tr>
+                <tr><th scope="row">Browsing the work</th><td><span class="dots" aria-label="3 of 3"><i class="on"></i><i class="on"></i><i class="on"></i></span>Index, filters, specimens</td><td><span class="dots" aria-label="2 of 3"><i class="on"></i><i class="on"></i><i></i></span>Lit list, one project at a time</td><td><span class="dots" aria-label="2 of 3"><i class="on"></i><i class="on"></i><i></i></span>Toybox grid and previews</td></tr>
+                <tr><th scope="row">Case-study depth</th><td><span class="dots" aria-label="3 of 3"><i class="on"></i><i class="on"></i><i class="on"></i></span>Dossiers with findings</td><td><span class="dots" aria-label="2 of 3"><i class="on"></i><i class="on"></i><i></i></span>Film-style credits</td><td><span class="dots" aria-label="1 of 3"><i class="on"></i><i></i><i></i></span>Short previews</td></tr>
+                <tr><th scope="row">On a phone</th><td>Cards replace the table, notes go inline</td><td>The light drifts on its own, drag to steer</td><td>Fewer, larger pieces, simple drag</td></tr>
+                <tr><th scope="row">Build effort</th><td><span class="dots" aria-label="Medium"><i class="on"></i><i class="on"></i><i></i></span>Medium</td><td><span class="dots" aria-label="Medium to high"><i class="on"></i><i class="on"></i><i></i></span>Medium to high</td><td><span class="dots" aria-label="High"><i class="on"></i><i class="on"></i><i class="on"></i></span>High</td></tr>
+                <tr><th scope="row">Content it needs</th><td>Research artefacts and good writing</td><td>Striking imagery and video</td><td>Bold covers and short copy</td></tr>
+                <tr><th scope="row">Main risk</th><td>Too quiet to stand out</td><td>Style over clarity if overdone</td><td>Gimmick fatigue</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="reco" id="reco">
+          <div>
+            <p class="mono" style="opacity:.8;margin-bottom:14px">Our recommendation</p>
+            <h3>Lead with Lights Off. Keep the depth of Field Notes. Hide a Playground inside.</h3>
+          </div>
+          <div style="display:grid;gap:18px;align-content:start">
+            <ol>
+              <li><span><b>Home and Work use Lights Off.</b> The flashlight and the light switch give the luxury first impression your references point to, and the dial sits in the middle, where the studio's name does.</span></li>
+              <li><span><b>Case studies use the Field Notes dossier.</b> Each one opens with its finding, so the research is always on show.</span></li>
+              <li><span><b>The Playground becomes the Lab and the 404 page.</b> A place for experiments, and a reward for the curious.</span></li>
+            </ol>
+            <p>Prefer one pure direction? Each prototype stands on its own, and the plan works for any of them.</p>
+            <div class="row-actions"><button class="note-btn" type="button" data-note="reco" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2h12v9H6l-4 3z"/></svg>Leave a note on this</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RULE 6 ============ -->
+  <section class="rule" id="rule-6" aria-labelledby="r6">
+    <div class="wrap">
+      <header class="rule__head">
+        <p class="rule__no"><span class="mono muted">Rule</span><b>6</b></p>
+        <div>
+          <h2 class="rule__title" id="r6">Setup</h2>
+          <p class="rule__short">Ten weeks from kickoff to launch, with four moments where you sign off before we move on. Dates shift with content readiness.</p>
+        </div>
+      </header>
+      <div class="rule__body">
+        <div>
+          <div class="sub"><h3>Timeline</h3><span class="mono muted">Weeks 1&ndash;10</span></div>
+          <div class="gantt" role="region" aria-label="Project timeline" tabindex="0">
+            <div class="gantt__in">
+              <div class="gantt__corner mono muted">Phase</div>
+              <div class="gantt__wk">W1</div><div class="gantt__wk">W2</div><div class="gantt__wk">W3</div><div class="gantt__wk">W4</div><div class="gantt__wk">W5</div><div class="gantt__wk">W6</div><div class="gantt__wk">W7</div><div class="gantt__wk">W8</div><div class="gantt__wk">W9</div><div class="gantt__wk">W10</div>
+
+              <div class="gantt__name"><b>Discovery</b><small>Workshop, reference review, content audit</small></div>
+              <div class="gantt__lane"><span class="bar" style="grid-column:1 / 2">Kickoff</span></div>
+
+              <div class="gantt__name"><b>Concept</b><small>This rulebook, direction choice</small></div>
+              <div class="gantt__lane"><span class="bar bar--c" style="grid-column:2 / 4">Directions &amp; pitch</span></div>
+
+              <div class="gantt__name"><b>Design</b><small>Sitemap, wireframes, UI, motion</small></div>
+              <div class="gantt__lane"><span class="bar" style="grid-column:3 / 6">Key pages, desktop &amp; mobile</span></div>
+
+              <div class="gantt__name"><b>Content</b><small>Case studies, photos, copy</small></div>
+              <div class="gantt__lane"><span class="bar bar--soft" style="grid-column:3 / 8">Writing &amp; assets, in parallel</span></div>
+
+              <div class="gantt__name"><b>Build</b><small>Front end, CMS, interactions</small></div>
+              <div class="gantt__lane"><span class="bar" style="grid-column:6 / 10">Development &amp; content entry</span></div>
+
+              <div class="gantt__name"><b>QA &amp; launch</b><small>Devices, accessibility, speed</small></div>
+              <div class="gantt__lane"><span class="bar bar--c" style="grid-column:9 / 11">Test &amp; go live</span></div>
+
+              <div class="gantt__gates">
+                <span class="gate"><i></i>End of W1: brief signed off</span>
+                <span class="gate"><i></i>End of W3: direction chosen</span>
+                <span class="gate"><i></i>End of W5: designs approved</span>
+                <span class="gate"><i></i>W9: launch approval</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="plan-grid">
+          <div class="card">
+            <h3>Sitemap</h3>
+            <ul class="tree">
+              <li><b>Home</b><span class="tag">signature moment</span></li>
+              <li><b>Work</b><span class="tag">filters</span>
+                <ul><li>Case study template, 8&ndash;12 at launch</li></ul>
+              </li>
+              <li><b>Studio</b>
+                <ul><li>Method: Serious / Play</li><li>People</li><li>Careers</li></ul>
+              </li>
+              <li><b>Services</b></li>
+              <li><b>Lab</b><span class="tag">experiments</span></li>
+              <li><b>Contact</b></li>
+              <li class="muted">404, Privacy, Press kit</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>The case study, in order</h3>
+            <ol class="steps">
+              <li><span><b>Title and finding.</b> The one insight that unlocked the project.</span></li>
+              <li><span><b>The brief.</b> What the client asked for, in two sentences.</span></li>
+              <li><span><b>The research.</b> Interviews, audits, sketches, rejected routes.</span></li>
+              <li><span><b>The idea.</b> How the finding became a brand.</span></li>
+              <li><span><b>The work.</b> Full-bleed images and video.</span></li>
+              <li><span><b>The result.</b> Numbers or quotes, when the client allows.</span></li>
+              <li><span><b>Credits and next study.</b></span></li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>How we'd build it</h3>
+            <div class="stack">
+              <div><span class="mono muted">Front end</span><span>Astro, with GSAP and Lenis for motion and Matter.js only where physics is needed</span></div>
+              <div><span class="mono muted">Content</span><span>Sanity CMS, so the team adds projects, images and credits themselves</span></div>
+              <div><span class="mono muted">Hosting</span><span>Vercel, with preview links for every change</span></div>
+              <div><span class="mono muted">Alternative</span><span>Framer or Webflow for a faster, designer-edited build, with simpler interactions</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>What we need from you</h3>
+            <ul class="bul">
+              <li>8&ndash;12 projects, each with one finding, research material, 8&ndash;15 images and credits</li>
+              <li>Studio and team photography, or a shoot we plan together</li>
+              <li>Services, client list and any press</li>
+              <li>Logo files, brand fonts and social handles</li>
+              <li>One person who signs off each gate</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="example">
+          <span class="example__tab mono">Quality bar</span>
+          <ul class="checks">
+            <li>Every interaction has a calm version for reduced motion, and a keyboard way through.</li>
+            <li>Accessible to WCAG 2.2 AA: contrast, focus, alt text and captions.</li>
+            <li>Fast on a mid-range phone: a Lighthouse performance score of 90 or more on key pages.</li>
+            <li>Search basics built in: titles, descriptions, social cards and structured data for projects.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RULE 7 ============ -->
+  <section class="rule" id="rule-7" aria-labelledby="r7">
+    <div class="wrap">
+      <header class="rule__head">
+        <p class="rule__no"><span class="mono muted">Rule</span><b>7</b></p>
+        <div>
+          <h2 class="rule__title" id="r7">Your move</h2>
+          <p class="rule__short">Three decisions and eight questions. Answer them and design starts the following week.</p>
+        </div>
+      </header>
+      <div class="rule__body">
+        <div class="decide">
+          <div class="card"><b>A</b><h3>Pick a direction</h3><p>One of the three, or the recommended mix. Set the dial at the top of this page to show us where you lean.</p></div>
+          <div class="card"><b>B</b><h3>Choose the launch work</h3><p>8&ndash;12 projects that best show the range you want to be hired for.</p></div>
+          <div class="card"><b>C</b><h3>Approve the plan</h3><p>The ten-week timeline, the sitemap and who signs off each gate.</p></div>
+        </div>
+        <div id="questions">
+          <div class="sub"><h3>Questions for you</h3></div>
+          <ol class="qs">
+            <li><div><b>Which reference matters most, and why?</b><span>Tell us what you love in it: type, colour, motion, layout or attitude.</span></div></li>
+            <li><div><b>Who is the client you most want to win next?</b><span>Sector, size and region. The site should speak to them first.</span></div></li>
+            <li><div><b>Which projects must be on the site at launch?</b><span>And do you still have their research material: interviews, sketches, rejected routes?</span></div></li>
+            <li><div><b>Does the site need a second language?</b><span>A right-to-left language such as Arabic changes type and layout choices, so we plan for it from the start.</span></div></li>
+            <li><div><b>Where is the studio based, and should the site say so?</b><span>City, local time and address can all become part of the design.</span></div></li>
+            <li><div><b>Who updates the site after launch, and how often?</b><span>This decides the CMS and how much we automate.</span></div></li>
+            <li><div><b>Do you have photography and video of the team and the work?</b><span>If not, we plan a shoot during the design phase.</span></div></li>
+            <li><div><b>Is there a launch date or event we're aiming for?</b><span>And a budget range for the build, so we can size the interactions to match.</span></div></li>
+          </ol>
+          <div class="row-actions" style="margin-top:18px"><button class="note-btn" type="button" data-note="questions" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2h12v9H6l-4 3z"/></svg>Answer as a note</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="finale wrap" aria-label="Closing">
+    <p class="mono muted">End of rules</p>
+    <p class="morph" id="morph-2"><span class="visually-hidden">Your move</span><span class="morph__line" aria-hidden="true">Your</span><span class="morph__line" aria-hidden="true">move</span></p>
+    <p>Set the dial, open the prototypes, and leave your notes. We'll bring the refined direction to our next meeting.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Serious Play &middot; Website concept, edition 01</span>
+    <span>Projects in the prototypes are placeholders. References belong to their owners.</span>
+  </div>
+</footer>
+
+<script src="shared/projects.js"></script>
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- covers used as art-direction examples ---------- */
+  if (window.SP) {
+    document.querySelectorAll("[data-cover]").forEach(function (el) {
+      var p = SP.projects.filter(function (x) { return x.id === el.dataset.cover; })[0];
+      if (p) el.innerHTML = SP.cover(p, { font: "Fraunces, Georgia, serif", mono: "Martian Mono, monospace" });
+    });
+  }
+
+  /* ---------- split morph headlines into letters ---------- */
+  function split(el) {
+    var i = 0;
+    el.querySelectorAll(".morph__line").forEach(function (line) {
+      var text = line.textContent.trim();
+      line.textContent = "";
+      Array.prototype.forEach.call(text, function (ch) {
+        var s = document.createElement("span");
+        s.className = "ch";
+        s.textContent = ch;
+        var r = window.SP ? SP.rng(SP.hash(ch + i)) : Math.random;
+        s.style.setProperty("--r", (r() * 2 - 1).toFixed(3));
+        s.style.setProperty("--y", (r() * 2 - 1).toFixed(3));
+        s.style.setProperty("--i", i++);
+        line.appendChild(s);
+      });
+    });
+  }
+  var morphs = [document.getElementById("morph"), document.getElementById("morph-2")];
+  morphs.forEach(function (m) { if (m) split(m); });
+
+  /* ---------- the dial ---------- */
+  var dial = document.getElementById("dial");
+  var val = document.getElementById("dial-val");
+  var near = document.getElementById("dial-near");
+  var ticks = document.querySelectorAll(".tick");
+  var dirs = [
+    { at: 30, id: "dir-1", name: "01 · Field Notes", file: "field-notes.html" },
+    { at: 50, id: "dir-2", name: "02 · Lights Off", file: "lights-off.html" },
+    { at: 75, id: "dir-3", name: "03 · Playground", file: "playground.html" }
+  ];
+
+  function apply(v) {
+    var p = v / 100;
+    root.style.setProperty("--p", p.toFixed(3));
+    var wght = Math.round(360 + p * 540);
+    var soft = Math.round(p * 100);
+    var wonk = p > 0.45 ? 1 : 0;
+    var opsz = Math.round(144 - p * 104);
+    morphs.forEach(function (m) {
+      if (!m) return;
+      m.style.fontVariationSettings = '"opsz" ' + opsz + ', "SOFT" ' + soft + ', "WONK" ' + wonk;
+      m.style.fontWeight = wght;
+      m.style.letterSpacing = (-0.045 + p * 0.03).toFixed(3) + "em";
+      m.classList.toggle("play-bob", p > 0.6 && !reduce);
+    });
+    var best = dirs.reduce(function (a, b) { return Math.abs(b.at - v) < Math.abs(a.at - v) ? b : a; });
+    val.textContent = (100 - v) + " / " + v;
+    near.textContent = best.name + " →";
+    near.href = "#" + best.id;
+    ticks.forEach(function (t) { t.classList.toggle("is-near", +t.dataset.at === best.at); });
+    document.querySelectorAll(".dir").forEach(function (d) { d.classList.toggle("is-near", d.id === best.id); });
+    var mood = v < 40 ? "Leaning serious" : v > 60 ? "Leaning play" : "Balanced";
+    dial.setAttribute("aria-valuetext", mood + ": " + (100 - v) + " serious, " + v + " play. Closest to Direction " + best.name.replace(" · ", ", "));
+  }
+
+  var start = 50;
+  try { var saved = localStorage.getItem("sp-dial"); if (saved !== null && !isNaN(+saved)) start = +saved; } catch (e) {}
+  dial.value = start;
+  apply(start);
+  dial.addEventListener("input", function () {
+    apply(+dial.value);
+    try { localStorage.setItem("sp-dial", dial.value); } catch (e) {}
+  });
+
+  /* ---------- reference screenshots: show when present ---------- */
+  var missing = 0;
+  document.querySelectorAll(".ref__img").forEach(function (img) {
+    function ok() { img.closest(".ref").classList.add("has-img"); }
+    function bad() { missing++; img.remove(); }
+    if (img.complete) { img.naturalWidth ? ok() : bad(); }
+    else { img.addEventListener("load", ok); img.addEventListener("error", bad); }
+  });
+
+  /* ---------- direction screenshots fallback ---------- */
+  document.querySelectorAll(".frame__img img, .phone img").forEach(function (img) {
+    function bad() {
+      var d = document.createElement("div");
+      d.className = "shot-missing";
+      d.textContent = "Open the prototype to see it live";
+      img.replaceWith(d);
+    }
+    if (img.complete && !img.naturalWidth) bad(); else img.addEventListener("error", bad);
+  });
+
+  /* ---------- progress bar + active rule ---------- */
+  var bar = document.querySelector(".progress");
+  var links = document.querySelectorAll(".rulenav a");
+  var rules = Array.prototype.map.call(links, function (a) { return document.querySelector(a.getAttribute("href")); });
+  var ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      var h = document.documentElement.scrollHeight - innerHeight;
+      bar.style.transform = "scaleX(" + (h > 0 ? scrollY / h : 0).toFixed(4) + ")";
+      var active = -1;
+      rules.forEach(function (r, i) { if (r && r.getBoundingClientRect().top < innerHeight * 0.4) active = i; });
+      links.forEach(function (a, i) { a.classList.toggle("is-active", i === active); });
+      ticking = false;
+    });
+  }
+  addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------- notes: open the claude.ai comment composer when available ---------- */
+  if (window.claude && typeof window.claude.use === "function") {
+    window.claude.use("comments").then(function (c) {
+      if (!c) return;
+      document.querySelectorAll("[data-note]").forEach(function (btn) {
+        btn.hidden = false;
+        btn.addEventListener("click", function () {
+          var target = document.getElementById(btn.dataset.note);
+          if (!target) return;
+          c.openComposer({ element: target }).catch(function (err) {
+            if (err && (err.code === "forbidden" || err.code === "not_granted" || err.code === "capability_disabled")) {
+              document.querySelectorAll("[data-note]").forEach(function (b) { b.hidden = true; });
+            }
+          });
+        });
+      });
+    }).catch(function () {});
+  }
+})();
+</script>
+</body>
+</html>
