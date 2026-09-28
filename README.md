@@ -1,6 +1,6 @@
-# Serious Play: website concept
+# Serious Play: website
 
-Concept pitch for a new Serious Play website: moodboard, art direction, three live UI directions and the project plan, presented as a game rulebook.
+The new Serious Play website and everything that led to it: the concept pitch (moodboard, art direction, three live UI directions and the plan, presented as a game rulebook), wireframes, a motion pitch, and the production site in `site/`.
 
 Published pitch (private until shared from its Share menu): https://claude.ai/artifact/MjrfnuU6QSTJbQyhuqipwL
 
@@ -17,6 +17,10 @@ Published pitch (private until shared from its Share menu): https://claude.ai/ar
 | `pitch/shots/` | Screenshots of each direction used on the rulebook page |
 | `PLAN.md` | The working plan: research, directions, pitch run-sheet, 10-week project plan, open questions, build roadmap |
 | `tools/shoot.cjs` | Screenshot helper (Playwright) for desktop and phone captures |
+| `moodboard/` | The moodboard and art direction notes (`NOTES.md`), built from the client's references |
+| `wireframes/` | Sitemap and wireframes for every page, desktop and phone |
+| `film/` | The motion pitch: a scripted film with an original score (`render.cjs` records it to video) |
+| `site/` | **The real website.** Astro static site; see `site/README.md` to run it, swap in real work and launch |
 
 ## Viewing locally
 
