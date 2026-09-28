@@ -1,0 +1,254 @@
+---
+/**
+ * Home, Index view: every project as a line of facts, names set large.
+ * On desktop a cover preview follows the cursor (driven by src/scripts/ring.ts).
+ * Hidden and inert until the Ring | Index toggle opens it.
+ */
+import Media from '../Media.astro';
+import { projectUrl, plateName, type Project } from '../../lib/work';
+
+interface Props {
+  projects: Project[];
+}
+
+const { projects } = Astro.props;
+---
+
+<section class="index" id="ring-index" aria-label="Index of all projects" inert data-index data-lenis-prevent>
+  <ol class="rows" data-rows>
+    {
+      projects.map((p, i) => (
+        <li class="row" style={`--i:${i}`}>
+          <a class="row-link" href={projectUrl(p)} data-row data-slug={p.id} data-vt={plateName(p)}>
+            <span class="row-in">
+              <span class="label no">N°{p.data.no}</span>
+              <span class="serif name">{p.data.title}</span>
+              <span class="label sector">{p.data.sector}</span>
+              <span class="label year">{p.data.year}</span>
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</section>
+
+<div class="peek" aria-hidden="true" data-peek>
+  <div class="peek-in">
+    {
+      projects.map((p) => (
+        <div class="peek-item" data-peek-item={p.id}>
+          <Media src={p.data.cover} alt="" ratio="4 / 5" sizes="300px" widths={[480, 800]} />
+        </div>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .index {
+    position: absolute;
+    inset: calc(var(--header-h) + 8px) 0 calc(var(--bottom) + 64px);
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    padding-inline: var(--g);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    visibility: hidden;
+    transition: visibility 0s linear 0.9s;
+  }
+
+  .index::-webkit-scrollbar {
+    display: none;
+  }
+
+  :global(.ring[data-view='index']) .index {
+    visibility: visible;
+    transition-delay: 0s;
+  }
+
+  /* auto margins centre the list and still let a long list scroll from its top */
+  .rows {
+    margin-block: auto;
+  }
+
+  .row {
+    position: relative;
+    overflow: clip;
+  }
+
+  /* hairlines draw in from the left, one after another */
+  .row::before,
+  .row:last-child::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--rule);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform 0.5s var(--ease);
+  }
+
+  .row::before {
+    top: 0;
+  }
+
+  .row:last-child::after {
+    bottom: 0;
+  }
+
+  :global(.ring[data-view='index']) .row::before,
+  :global(.ring[data-view='index']) .row:last-child::after {
+    transform: none;
+    transition: transform 1.1s var(--ease) calc(var(--i) * 45ms + 120ms);
+  }
+
+  .row-link {
+    display: block;
+    outline-offset: -2px;
+  }
+
+  .row-in {
+    display: grid;
+    grid-template-columns: 9ch minmax(0, 1fr) minmax(0, 18em) 6ch;
+    align-items: baseline;
+    column-gap: var(--g);
+    padding-block: 12px 9px;
+    transform: translate3d(0, 105%, 0);
+    transition: transform 0.5s var(--ease);
+  }
+
+  :global(.ring[data-view='index']) .row-in {
+    transform: none;
+    transition: transform 1s var(--ease-out) calc(var(--i) * 50ms + 200ms);
+  }
+
+  .name {
+    font-size: clamp(30px, 5.2svh, 60px);
+    line-height: 1.05;
+    transition:
+      transform 0.7s var(--ease),
+      opacity 0.45s var(--ease);
+  }
+
+  .no,
+  .sector,
+  .year {
+    color: var(--muted);
+  }
+
+  .year {
+    text-align: right;
+  }
+
+  /*
+   * Hovering (or keyboard-focusing) a row dims the other names. Only the large
+   * names: the small facts keep their full contrast. Ink at 50% on paper still
+   * clears 3:1 for text this size.
+   */
+  .rows:has(.row-link:focus-visible) .row-link:not(:focus-visible) .name {
+    opacity: 0.5;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .rows:hover .row-link:not(:hover) .name {
+      opacity: 0.5;
+    }
+
+    .row-link:hover .name {
+      transform: translate3d(14px, 0, 0);
+    }
+  }
+
+  /* cursor-following cover preview (desktop only) */
+  .peek {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 3;
+    display: none;
+    width: clamp(220px, 18vw, 320px);
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    :global(.ring[data-peek-ready]) .peek {
+      display: block;
+    }
+  }
+
+  .peek-in {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    opacity: 0;
+    transform: scale(0.92);
+    transition:
+      opacity 0.4s var(--ease),
+      transform 0.8s var(--ease-out);
+  }
+
+  .peek.is-on .peek-in {
+    opacity: 1;
+    transform: none;
+  }
+
+  .peek-item {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.35s var(--ease);
+  }
+
+  /*
+   * Media gives every unnamed image an auto transition name, and other pages
+   * reuse the same auto names, so a hidden preview would fly in over them.
+   * Previews never travel, except the one ring.ts names (on its wrapper) when
+   * its row is clicked.
+   */
+  .peek-item :global(.media) {
+    view-transition-name: none;
+  }
+
+  .peek-item.is-on {
+    z-index: 1;
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .index,
+    .row::before,
+    .row:last-child::after,
+    .row-in,
+    :global(.ring[data-view='index']) .row::before,
+    :global(.ring[data-view='index']) .row:last-child::after,
+    :global(.ring[data-view='index']) .row-in {
+      transition-delay: 0s !important;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .index {
+      inset: calc(var(--header-h) + 4px) 0 calc(var(--bottom) + 72px);
+    }
+
+    .row-in {
+      grid-template-columns: 6.5ch minmax(0, 1fr) auto;
+      column-gap: 12px;
+      padding-block: 10px 7px;
+    }
+
+    .sector {
+      display: none;
+    }
+
+    .name {
+      font-size: clamp(26px, 4.4svh, 38px);
+    }
+  }
+</style>

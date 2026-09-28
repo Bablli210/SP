@@ -1,0 +1,253 @@
+---
+/**
+ * Work index: the full archive. Title with a live count, filters by
+ * discipline and sector (combinable, kept in the URL), and two views:
+ * List (fact rows, cover follows the cursor) and Grid (4:5 covers that morph
+ * into the case hero). Filtering and view switches never reload the page.
+ */
+import { disciplines as allDisciplines, sectors as sectorOrder } from '../../data/site';
+import { disciplineLabel, disciplineList, plateName, projectUrl, type Project } from '../../lib/work';
+import Filters from './Filters.astro';
+import ViewToggle from './ViewToggle.astro';
+import WorkList from './WorkList.astro';
+import WorkGrid from './WorkGrid.astro';
+import Peek from './Peek.astro';
+import { VIEW_KEY, PHONE } from './state';
+import type { Chip, Entry } from './types';
+
+interface Props {
+  projects: Project[];
+}
+const { projects } = Astro.props;
+
+const entries: Entry[] = projects.map((p) => ({
+  id: p.id,
+  no: p.data.no,
+  title: p.data.title,
+  client: p.data.client,
+  sector: p.data.sector,
+  year: p.data.year,
+  d: p.data.disciplines.join(' '),
+  disc: disciplineList(p),
+  url: projectUrl(p),
+  plate: plateName(p),
+  cover: p.data.cover,
+  coverAlt: p.data.coverAlt,
+}));
+
+// Only disciplines and sectors that have work behind them, in the studio's order.
+const disciplineChips: Chip[] = allDisciplines
+  .map((d) => ({
+    value: d.key,
+    label: disciplineLabel(d.key),
+    count: projects.filter((p) => p.data.disciplines.includes(d.key)).length,
+  }))
+  .filter((c) => c.count > 0);
+
+const known: readonly string[] = sectorOrder;
+const rank = (s: string) => (known.includes(s) ? known.indexOf(s) : known.length);
+const sectorChips: Chip[] = [...new Set(projects.map((p) => p.data.sector))]
+  .sort((a, b) => rank(a) - rank(b) || a.localeCompare(b))
+  .map((s) => ({ value: s, label: s, count: projects.filter((p) => p.data.sector === s).length }));
+---
+
+{/*
+  Runs before the index below is parsed, so no frame shows the wrong view: flags the
+  remembered view (or the screen's default), and whether the URL carries a filter, on
+  <html>. The styles below read them until applyInitial() (state.ts) takes over.
+*/}
+<script is:inline data-astro-rerun define:vars={{ key: VIEW_KEY, phone: PHONE }}>
+  var view = null;
+  try {
+    view = localStorage.getItem(key);
+  } catch (e) {}
+  if (view !== 'list' && view !== 'grid') view = matchMedia(phone).matches ? 'grid' : 'list';
+  document.documentElement.setAttribute('data-work-view', view);
+  // A filter in the URL: the items wait for it (briefly) rather than show everything first.
+  document.documentElement.toggleAttribute('data-work-query', /[?&][ds]=/.test(location.search));
+</script>
+
+<section class="work" data-work aria-labelledby="work-title">
+  <header class="head">
+    <h1 class="display title" id="work-title">
+      Work<sup class="count" aria-hidden="true">(<span class="count-n" data-count>{entries.length}</span>)</sup>
+    </h1>
+    <div class="tools">
+      <ViewToggle />
+    </div>
+  </header>
+
+  <div class="bar" data-js-only>
+    <Filters total={entries.length} disciplines={disciplineChips} sectors={sectorChips} />
+  </div>
+
+  <p class="visually-hidden" role="status" data-status></p>
+
+  <div class="stage" data-stage>
+    <WorkList entries={entries} />
+    <WorkGrid entries={entries} />
+    <div class="empty" data-empty hidden>
+      <p class="serif empty-line">Nothing here yet</p>
+      <button class="label empty-reset link-line" type="button" data-reset>All work</button>
+    </div>
+  </div>
+
+  <Peek entries={entries} />
+</section>
+
+<script>
+  import './controller';
+</script>
+
+<style>
+  .work {
+    /* List columns, shared by the filter rows so they line up. */
+    --c-no: clamp(40px, 6.25vw, 90px);
+    --c-gap: clamp(12px, 1.4vw, 20px);
+    --c-sector: clamp(140px, 13.5vw, 200px);
+    --c-disc: clamp(200px, 22vw, 320px);
+    --c-year: clamp(44px, 5.5vw, 80px);
+    padding-top: calc(var(--header-h) + clamp(28px, 4.2vw, 60px));
+  }
+
+  .head {
+    --title: var(--t-display);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    padding: 0 var(--g) clamp(22px, 2.4vw, 32px);
+  }
+
+  .title {
+    font-size: var(--title);
+    white-space: nowrap;
+  }
+
+  /* Sit the toggle on the title's baseline, not the bottom of its line box. */
+  .tools {
+    flex: none;
+    margin-bottom: calc(var(--title) * 0.066);
+  }
+
+  .count {
+    position: relative;
+    top: calc(var(--title) * 0.03);
+    display: inline-block;
+    margin-left: 0.3em;
+    font: 500 clamp(14px, 1.4vw, 20px) / 1 var(--f-mono);
+    font-stretch: 100%;
+    letter-spacing: 0.02em;
+    vertical-align: top;
+  }
+
+  .count-n {
+    display: inline-block;
+  }
+
+  /*
+   * Until applyInitial() sets data-view (and hidden) on the index: the view the
+   * script above flagged on <html>, or without script the screen's default.
+   */
+  .work:not([data-view]) :global([data-panel='grid']) {
+    display: none;
+  }
+
+  @media (max-width: 760px) {
+    .work:not([data-view]) :global([data-panel='grid']) {
+      display: block;
+    }
+
+    .work:not([data-view]) :global([data-panel='list']) {
+      display: none;
+    }
+  }
+
+  :global(:root[data-work-view='grid']) .work:not([data-view]) :global([data-panel='grid']),
+  :global(:root[data-work-view='list']) .work:not([data-view]) :global([data-panel='list']) {
+    display: block;
+  }
+
+  :global(:root[data-work-view='grid']) .work:not([data-view]) :global([data-panel='list']),
+  :global(:root[data-work-view='list']) .work:not([data-view]) :global([data-panel='grid']) {
+    display: none;
+  }
+
+  :global(:root[data-work-query]) .work:not([data-view]) :global([data-items]),
+  :global(:root[data-work-query]) .work:not([data-view]) .count {
+    visibility: hidden;
+    /* Never wait on script for long. */
+    animation: work-query-failsafe 0s 1.2s forwards;
+  }
+
+  @keyframes work-query-failsafe {
+    to {
+      visibility: visible;
+    }
+  }
+
+  /* The controls only work with script; the toggle shows once it reflects the view. */
+  @media (scripting: none) {
+    .work :global([data-js-only]) {
+      display: none;
+    }
+  }
+
+  .tools {
+    transition: opacity 0.5s var(--ease);
+  }
+
+  .work:not([data-view]) .tools {
+    opacity: 0;
+  }
+
+  .bar {
+    padding: 0 var(--g) clamp(20px, 2vw, 28px);
+    border-bottom: 1px solid var(--fg);
+  }
+
+  .stage {
+    position: relative;
+    padding-bottom: clamp(72px, 10vw, 160px);
+  }
+
+  /* The view on its way out overlays the one coming in while it fades. */
+  .stage > :global(.is-out) {
+    position: absolute;
+    inset: 0 0 auto;
+    pointer-events: none;
+  }
+
+  .empty {
+    display: grid;
+    justify-items: start;
+    gap: 20px;
+    /* Starts on the client column, like the names it stands in for. */
+    padding: clamp(48px, 7vw, 110px) var(--g) 0 calc(var(--g) + var(--c-no) + var(--c-gap));
+  }
+
+  .empty-line {
+    font-size: var(--t-name);
+    line-height: 1;
+  }
+
+  .empty-reset {
+    padding: 6px 0;
+  }
+
+  @media (max-width: 760px) {
+    .head {
+      --title: clamp(76px, 22vw, 110px);
+      gap: 8px;
+      padding-bottom: 20px;
+    }
+
+    .bar {
+      padding-bottom: 16px;
+    }
+
+    .empty {
+      padding-left: var(--g);
+    }
+  }
+</style>

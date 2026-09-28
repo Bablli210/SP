@@ -1,0 +1,187 @@
+---
+/**
+ * Filter chips: All, then one row per group (Discipline, Sector).
+ * One choice per group; the two combine. Counts are facets: what a chip
+ * would show given the other group's choice (the script keeps them current);
+ * the visible number is decorative, screen readers hear it in the chip's name.
+ * Desktop: labelled rows that wrap. Phone: rows that scroll sideways.
+ */
+import type { Chip } from './types';
+
+interface Props {
+  total: number;
+  disciplines: Chip[];
+  sectors: Chip[];
+}
+const { total, disciplines, sectors } = Astro.props;
+
+const groups = [
+  { id: 'work-filter-d', kind: 'd', label: 'Discipline', chips: disciplines },
+  { id: 'work-filter-s', kind: 's', label: 'Sector', chips: sectors },
+];
+---
+
+<div class="filters" role="group" aria-label="Filter work" data-filters>
+  <button class="chip all" type="button" data-filter="all" data-label="All" aria-pressed="true">
+    All<span class="n" data-n aria-hidden="true">{total}</span><span class="visually-hidden" data-n-sr>, {total} projects</span>
+  </button>
+  {
+    groups.map((g) => (
+      <div class="group" role="group" aria-labelledby={g.id} data-scroller>
+        <span class="group-label label" id={g.id}>
+          {g.label}
+        </span>
+        <div class="chips">
+          {g.chips.map((c) => (
+            <button
+              class="chip"
+              type="button"
+              data-filter={g.kind}
+              data-value={c.value}
+              data-label={c.label}
+              aria-pressed="false"
+            >
+              {c.label}<span class="n" data-n aria-hidden="true">{c.count}</span><span class="visually-hidden" data-n-sr>, {c.count} {c.count === 1 ? 'project' : 'projects'}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    ))
+  }
+</div>
+
+<style>
+  .filters {
+    --chip-h: 34px;
+    display: grid;
+    grid-template-columns: minmax(var(--c-no), auto) auto minmax(0, 1fr);
+    column-gap: var(--c-gap);
+    row-gap: 8px;
+    align-items: start;
+  }
+
+  .all {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+  }
+
+  .group {
+    grid-column: 2 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    align-items: start;
+  }
+
+  .group-label {
+    display: flex;
+    align-items: center;
+    height: var(--chip-h);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .chip {
+    /* Holds its visually hidden count, so it scrolls and clips with the chip. */
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    height: var(--chip-h);
+    padding: 0 12px;
+    border: 1px solid var(--concrete);
+    border-radius: var(--radius);
+    font: 500 var(--t-label) / 1 var(--f-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition:
+      background-color 0.35s var(--ease),
+      border-color 0.35s var(--ease),
+      color 0.35s var(--ease);
+  }
+
+  .n {
+    margin-left: 0.7em;
+    font-size: var(--t-label);
+    letter-spacing: 0.02em;
+    color: var(--muted);
+    transition: color 0.35s var(--ease);
+  }
+
+  @media (hover: hover) {
+    .chip:hover {
+      border-color: var(--fg);
+    }
+  }
+
+  .chip[data-zero] {
+    border-color: var(--rule);
+    color: var(--muted);
+  }
+
+  .chip[aria-pressed='true'] {
+    background: var(--fg);
+    border-color: var(--fg);
+    color: var(--bg);
+  }
+
+  .chip[aria-pressed='true'] .n {
+    color: var(--concrete);
+  }
+
+  /* Phone: two rows that scroll sideways, bleeding to the screen edge. */
+  @media (max-width: 760px) {
+    .filters {
+      --chip-h: 36px;
+      grid-template-columns: auto minmax(0, 1fr);
+      column-gap: 6px;
+    }
+
+    .group {
+      grid-column: 2;
+      grid-row: 1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-right: calc(-1 * var(--g));
+      padding: 0 40px 0 16px;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scrollbar-width: none;
+      /* Soft edges: chips slide out of view instead of being cut. */
+      -webkit-mask-image: linear-gradient(to right, transparent, var(--ink) 16px, var(--ink) calc(100% - 36px), transparent);
+      mask-image: linear-gradient(to right, transparent, var(--ink) 16px, var(--ink) calc(100% - 36px), transparent);
+    }
+
+    .group::-webkit-scrollbar {
+      display: none;
+    }
+
+    .group + .group {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      margin-left: calc(-1 * var(--g));
+      padding-left: var(--g);
+    }
+
+    .filters {
+      column-gap: 4px;
+    }
+
+    .group-label {
+      flex: none;
+      padding-right: 4px;
+    }
+
+    .chips {
+      flex-wrap: nowrap;
+    }
+  }
+</style>

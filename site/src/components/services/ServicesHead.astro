@@ -1,0 +1,117 @@
+---
+/**
+ * Services opener: the page title set huge, and two facts on its baseline
+ * (how many disciplines, how many projects stand behind them).
+ */
+interface Props {
+  disciplines: number;
+  projects: number;
+}
+const { disciplines, projects } = Astro.props;
+const two = (n: number) => String(n).padStart(2, '0');
+---
+
+<header class="head wrap">
+  <h1 class="display title" id="services-title">
+    <span class="mask"><span class="word">Services</span></span>
+  </h1>
+  <dl class="facts label">
+    <div class="fact">
+      <dt class="muted">Disciplines</dt>
+      <dd>{two(disciplines)}</dd>
+    </div>
+    <div class="fact">
+      <dt class="muted">Projects</dt>
+      <dd>{two(projects)}</dd>
+    </div>
+  </dl>
+</header>
+
+<style>
+  .head {
+    --title: var(--t-display);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    padding-top: calc(var(--header-h) + clamp(28px, 4.2vw, 60px));
+    padding-bottom: clamp(22px, 2.4vw, 32px);
+    border-bottom: 1px solid var(--fg);
+  }
+
+  .title {
+    font-size: var(--title);
+    white-space: nowrap;
+  }
+
+  /* The word rises into place from behind its own baseline. */
+  .mask {
+    display: block;
+    overflow: clip;
+    /* room for the caps above and below the tight 0.8 line box */
+    padding-block: 0.06em 0.02em;
+    margin-block: -0.06em -0.02em;
+  }
+
+  .word {
+    display: block;
+    animation: services-rise 1.15s var(--ease-out) 0.08s both;
+  }
+
+  @keyframes services-rise {
+    from {
+      transform: translate3d(0, 104%, 0);
+    }
+  }
+
+  /* Two facts, sat on the title's baseline rather than the bottom of its line box. */
+  .facts {
+    flex: none;
+    display: grid;
+    gap: 2px;
+    margin-bottom: calc(var(--title) * 0.052);
+    animation: services-facts 1s var(--ease-out) 0.36s both;
+  }
+
+  .fact {
+    display: flex;
+    justify-content: space-between;
+    gap: 28px;
+  }
+
+  @keyframes services-facts {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 12px, 0);
+    }
+  }
+
+  /* Reduced motion: no arrival at all (global.css keeps animation delays). */
+  @media (prefers-reduced-motion: reduce) {
+    .word,
+    .facts {
+      animation: none !important;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .head {
+      --title: clamp(72px, 25vw, 124px);
+      flex-direction: column;
+      align-items: stretch;
+      gap: 20px;
+      padding-bottom: 18px;
+    }
+
+    .facts {
+      margin-bottom: 0;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 24px;
+    }
+
+    .fact {
+      justify-content: flex-start;
+      gap: 12px;
+    }
+  }
+</style>

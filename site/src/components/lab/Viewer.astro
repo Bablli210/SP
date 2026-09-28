@@ -1,0 +1,355 @@
+---
+/**
+ * The Lab viewer: a light <dialog> over the page. One frame per entry
+ * (large image, or its loop, and a caption); the script shows one at a time,
+ * flies the image in from its tile and back, and steps through what the
+ * current filter shows. Keys: ← → to step, Esc to close. Touch: swipe.
+ */
+import Media from '../Media.astro';
+import type { LabItem } from './layout';
+
+interface Props {
+  items: LabItem[];
+}
+const { items } = Astro.props;
+
+/** Honest sizes: the frame fits the space between the bars at the image's own ratio. */
+const sizesFor = (ar: number) =>
+  [
+    `(max-height: 500px) and (orientation: landscape) min(calc(100vw - 32px), calc((100vh - 124px) * ${ar}))`,
+    `(max-width: 760px) min(calc(100vw - 32px), calc((100vh - 250px) * ${ar}))`,
+    `min(calc(100vw - 80px), calc((100vh - 210px) * ${ar}))`,
+  ].join(', ');
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+
+<dialog class="viewer" aria-labelledby={items[0] ? `lab-v-${items[0].id}` : undefined} data-viewer data-lenis-prevent>
+  <div class="v-bg" data-v-bg></div>
+
+  <div class="v-frames">
+    {
+      items.map((it) => {
+        const ar = Math.round((it.image.width / it.image.height) * 10000) / 10000;
+        return (
+          <figure class="v-frame" data-v-frame={it.id} hidden>
+            <div class="v-fig">
+              <div class="v-hold" data-v-hold style={`--ar: ${ar}`}>
+                <Media class="v-media" src={it.image} alt={it.alt} sizes={sizesFor(ar)} />
+              </div>
+            </div>
+            <figcaption class="v-cap" data-v-cap>
+              <h2 class="serif v-title" id={`lab-v-${it.id}`}>
+                {it.title}
+              </h2>
+              <p class="label v-facts">
+                <span class:list={['v-kind', { recap: it.kind === 'recap' }]}>{it.kindLabel}</span>
+                <span class="sep" aria-hidden="true">
+                  ·
+                </span>
+                <time datetime={it.iso}>{it.date}</time>
+                {it.tool && (
+                  <>
+                    <span class="sep" aria-hidden="true">
+                      ·
+                    </span>
+                    <span>{it.tool}</span>
+                  </>
+                )}
+              </p>
+            </figcaption>
+          </figure>
+        );
+      })
+    }
+  </div>
+
+  <div class="v-top" data-v-chrome>
+    <p class="label v-count">
+      <span class="visually-hidden">Entry </span><span data-v-index>01</span><span aria-hidden="true"> / </span><span
+        class="visually-hidden"> of </span><span data-v-total>{pad(items.length)}</span>
+    </p>
+    <button class="label v-btn v-close" type="button" data-v-close autofocus>Close</button>
+  </div>
+
+  <div class="v-nav" data-v-chrome>
+    <button class="label v-btn" type="button" data-v-prev aria-label="Previous entry">
+      <span class="arrow" aria-hidden="true">←</span> Prev
+    </button>
+    <button class="label v-btn" type="button" data-v-next aria-label="Next entry">
+      Next <span class="arrow" aria-hidden="true">→</span>
+    </button>
+  </div>
+
+  <p class="visually-hidden" aria-live="polite" data-v-live></p>
+</dialog>
+
+<style>
+  .viewer {
+    --v-foot: clamp(104px, 13vh, 136px);
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    overscroll-behavior: contain;
+    background: transparent;
+    color: var(--fg);
+    outline: none;
+  }
+
+  .viewer::backdrop {
+    background: transparent;
+  }
+
+  .v-bg {
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+  }
+
+  .v-frames {
+    position: absolute;
+    inset: 0;
+  }
+
+  .v-frame {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-rows: var(--header-h) minmax(0, 1fr) var(--v-foot);
+    pointer-events: none;
+  }
+
+  .v-frame.is-current {
+    z-index: 1;
+  }
+
+  .v-fig {
+    grid-row: 2;
+    container-type: size;
+    display: grid;
+    place-items: center;
+    padding: 4px var(--g) 0;
+  }
+
+  .v-hold {
+    width: min(100cqw, 100cqh * var(--ar));
+    transform-origin: 0 0;
+    pointer-events: auto;
+    touch-action: pan-y pinch-zoom;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Not a shared element: the auto name from Media would collide with other pages' images. */
+  .v-hold :global(.media) {
+    view-transition-name: none !important;
+  }
+
+  .v-hold :global(img) {
+    -webkit-user-drag: none;
+  }
+
+  .v-hold :global(.v-loop) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .v-cap {
+    grid-row: 3;
+    align-self: start;
+    display: grid;
+    gap: 10px;
+    max-width: min(62ch, calc(100% - 300px));
+    padding: 22px var(--g) 0;
+    pointer-events: auto;
+  }
+
+  .v-title {
+    font-size: clamp(26px, 2.5vw, 38px);
+    line-height: 1;
+    text-wrap: balance;
+  }
+
+  .v-facts {
+    color: var(--muted);
+  }
+
+  .sep {
+    padding-inline: 0.45em;
+  }
+
+  .v-kind {
+    color: var(--fg);
+  }
+
+  .v-kind.recap {
+    color: var(--accent);
+  }
+
+  /* ---------- chrome ---------- */
+  .v-top {
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: var(--header-h);
+    padding: env(safe-area-inset-top, 0px) var(--g) 0;
+  }
+
+  .v-count {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .v-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 2px;
+  }
+
+  .v-close {
+    padding-left: 16px;
+  }
+
+  .v-nav {
+    position: absolute;
+    right: var(--g);
+    bottom: 0;
+    z-index: 2;
+    display: flex;
+    align-items: flex-start;
+    gap: 28px;
+    height: var(--v-foot);
+    /* The 44px buttons centre on the title's line. */
+    padding-top: calc(22px + (clamp(26px, 2.5vw, 38px) - 44px) / 2);
+  }
+
+  .arrow {
+    display: inline-block;
+    transition: transform 0.5s var(--ease);
+  }
+
+  @media (hover: hover) {
+    [data-v-prev]:hover .arrow {
+      transform: translate3d(-4px, 0, 0);
+    }
+
+    [data-v-next]:hover .arrow {
+      transform: translate3d(4px, 0, 0);
+    }
+  }
+
+  /*
+   * Phone: image and caption travel as one group, centred between the top bar
+   * and a full-width Prev / Next bar. The image leaves room for the caption.
+   */
+  @media (max-width: 760px) {
+    .viewer {
+      --v-bar: calc(58px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .v-frame {
+      grid-template-rows: var(--header-h) minmax(0, 1fr) auto auto minmax(0, 1fr) var(--v-bar);
+    }
+
+    .v-fig {
+      grid-row: 3;
+      container-type: inline-size;
+      padding: 0 var(--g);
+    }
+
+    .v-hold {
+      width: min(100cqw, (100svh - var(--header-h) - var(--v-bar) - 150px) * var(--ar));
+    }
+
+    .v-cap {
+      grid-row: 4;
+      max-width: none;
+      padding-top: 18px;
+      gap: 8px;
+    }
+
+    .v-title {
+      font-size: 28px;
+    }
+
+    .v-nav {
+      left: var(--g);
+      height: auto;
+      padding: 0 0 calc(env(safe-area-inset-bottom, 0px) + 10px);
+      justify-content: space-between;
+      border-top: 1px solid var(--rule);
+    }
+
+    .v-btn {
+      min-height: 48px;
+    }
+  }
+
+  /*
+   * Short landscape screens (a phone on its side): the image takes the height,
+   * so the bars get compact and the caption sits beside Prev / Next, as on desktop.
+   */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .viewer {
+      --header-h: 56px;
+      --v-foot: calc(64px + env(safe-area-inset-bottom, 0px));
+      --v-side: max(var(--g), env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+    }
+
+    .v-frame {
+      grid-template-rows: var(--header-h) minmax(0, 1fr) var(--v-foot);
+    }
+
+    .v-fig {
+      grid-row: 2;
+      container-type: size;
+      padding: 0 var(--v-side);
+    }
+
+    .v-hold {
+      width: min(100cqw, 100cqh * var(--ar));
+    }
+
+    .v-cap {
+      grid-row: 3;
+      max-width: min(62ch, calc(100% - 260px));
+      padding: 12px var(--v-side) 0;
+      gap: 6px;
+    }
+
+    .v-title {
+      font-size: 22px;
+    }
+
+    .v-top {
+      padding-inline: var(--v-side);
+    }
+
+    .v-nav {
+      left: auto;
+      right: var(--v-side);
+      height: var(--v-foot);
+      padding: calc(12px + (22px - 44px) / 2) 0 0;
+      justify-content: flex-start;
+      gap: 24px;
+      border-top: 0;
+    }
+
+    .v-btn {
+      min-height: 44px;
+    }
+  }
+</style>

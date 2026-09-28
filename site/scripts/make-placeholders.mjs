@@ -111,8 +111,9 @@ projects.forEach((p, i) => {
   jobs.push({ out: `src/assets/work/${p.slug}/05.jpg`, W: 2400, H: 1500, ...base, kind: 'wall', seed: p.slug + '5', label: L('05') });
 });
 const labAspects = [[1200, 1200], [1200, 1500], [1080, 1920], [1200, 1200], [1200, 1500], [1200, 1500], [1200, 1200], [1080, 1920], [1200, 1500], [1200, 1200]];
+const labNames = ['Circular type', 'Still life', 'Flash macro', 'Archive sheet', 'Lookbook figure', 'Recap 2025', 'Ring carousel', 'Stretch wordmark', 'Paper tabs', 'Recap 2024'];
 labAspects.forEach(([W, H], i) => {
-  jobs.push({ out: `src/assets/lab/lab-${String(i + 1).padStart(2, '0')}.jpg`, W, H, name: 'Lab ' + (i + 1), no: String(i + 1).padStart(3, '0'), year: 2025, accent: ['#2B3BF2', '#0E0E0E', '#6D2A6B', '#B8412B'][i % 4], kind: ['type', 'orb', 'macro', 'sheet', 'figure'][i % 5], seed: 'lab' + i, label: `PLACEHOLDER · LAB ${String(i + 1).padStart(2, '0')}` });
+  jobs.push({ out: `src/assets/lab/lab-${String(i + 1).padStart(2, '0')}.jpg`, W, H, name: labNames[i], no: String(i + 1).padStart(3, '0'), year: 2025, accent: ['#2B3BF2', '#0E0E0E', '#6D2A6B', '#B8412B'][i % 4], kind: ['type', 'orb', 'macro', 'sheet', 'figure'][i % 5], seed: 'lab' + i, label: `PLACEHOLDER · LAB ${String(i + 1).padStart(2, '0')}` });
 });
 for (let i = 1; i <= 5; i++) jobs.push({ out: `src/assets/studio/method-${i}.jpg`, W: 1200, H: 1600, name: 'Method', no: '00' + i, year: 2025, accent: '#2B3BF2', kind: ['sheet', 'type', 'orb', 'figure', 'wall'][i - 1], seed: 'method' + i, label: `PLACEHOLDER · METHOD 0${i}` });
 for (let i = 1; i <= 3; i++) jobs.push({ out: `src/assets/studio/person-${i}.jpg`, W: 1200, H: 1500, name: 'Person', no: '00' + i, year: 2025, accent: '#2B3BF2', kind: 'figure', seed: 'person' + i, label: `PLACEHOLDER · PORTRAIT 0${i}` });

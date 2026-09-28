@@ -1,0 +1,217 @@
+---
+/**
+ * Grid view: 4:5 covers in four columns (two on tablet, one on phone) with
+ * staggered offsets, and a fact caption under each. The covers carry the
+ * shared-element names, so a cover morphs into its case-study hero.
+ */
+import Media from '../Media.astro';
+import type { Entry } from './types';
+
+interface Props {
+  entries: Entry[];
+}
+const { entries } = Astro.props;
+const sizes = '(max-width: 760px) calc(100vw - 32px), (max-width: 1099px) 46vw, 23vw';
+---
+
+<div class="grid-view" data-panel="grid">
+  <ul class="grid" aria-label="Projects" data-items>
+    {
+      entries.map((e, i) => (
+        <li class="cell" data-item data-id={e.id} data-d={e.d} data-s={e.sector} data-plate={e.plate} style={`--i:${i}`}>
+          <a class="card" href={e.url}>
+            <Media
+              class="cover"
+              src={e.cover}
+              alt={e.coverAlt}
+              ratio="4 / 5"
+              sizes={sizes}
+              name={e.plate}
+              priority={i === 0}
+            />
+            <span class="cap">
+              <span class="cap-main"><span class="cap-no">N°{e.no}<span class="sep" aria-hidden="true">·</span></span><span class="cap-title">{e.title}</span><span class="cap-year"><span class="sep" aria-hidden="true">·</span>{e.year}</span></span>
+              <span class="cap-meta"><span class="meta-no">{e.no} · </span>{e.sector} · {e.disc}</span>
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</div>
+
+<style>
+  .grid {
+    --u: clamp(28px, 4.5vw, 72px);
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: var(--c-gap);
+    row-gap: clamp(56px, 6vw, 96px);
+    align-items: start;
+    padding: clamp(28px, 3vw, 44px) var(--g) var(--u);
+  }
+
+  /* Every other column steps down; counted over what is showing, so it holds while filtering. */
+  @media (min-width: 761px) {
+    .cell:nth-child(4n + 2 of :not([hidden], .is-leaving)),
+    .cell:nth-child(4n + 4 of :not([hidden], .is-leaving)) {
+      translate: 0 var(--u);
+    }
+  }
+
+  .cell.is-leaving {
+    translate: none;
+    pointer-events: none;
+  }
+
+  .card {
+    display: grid;
+    gap: 12px;
+  }
+
+  .cap {
+    display: grid;
+    gap: 3px;
+    font: 500 var(--t-label) / 1.5 var(--f-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .cap-main {
+    display: flex;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  .cap-no,
+  .cap-year {
+    flex: none;
+  }
+
+  .cap-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sep {
+    padding-inline: 0.5em;
+  }
+
+  .cap-meta {
+    color: var(--muted);
+  }
+
+  .meta-no {
+    display: none;
+  }
+
+  @media (hover: hover) and (min-width: 761px) {
+    .card {
+      transition: opacity 0.6s var(--ease);
+    }
+
+    .grid:has(.card:hover) .card:not(:hover) {
+      opacity: 0.42;
+    }
+
+    .card :global(.media img) {
+      transition: transform 1.4s var(--ease-out);
+    }
+
+    .card:hover :global(.media img) {
+      transform: scale(1.04);
+    }
+
+    .cap-meta {
+      opacity: 0;
+      transform: translate3d(0, -4px, 0);
+      transition:
+        opacity 0.5s var(--ease),
+        transform 0.6s var(--ease);
+    }
+
+    .card:hover .cap-meta,
+    .card:focus-visible .cap-meta {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .card:focus-visible {
+    outline-offset: 6px;
+  }
+
+  /*
+   * Page transitions: arrive.ts names only the cover that morphs. Should the
+   * index arrive before that script is loaded, a cover with no partner on the
+   * page being left moves in with the page instead of fading on its own.
+   */
+  .cell :global(.media) {
+    view-transition-class: work-cover;
+  }
+
+  :global(::view-transition-new(*.work-cover):only-child) {
+    animation: 0.6s var(--ease-out) 0.1s both vt-in;
+  }
+
+  /* First load: covers settle up in a cascade, from a visible start. */
+  :global(.work:not(.is-settled)) .cell {
+    animation: work-cell-in 1s var(--ease-out) both;
+    animation-delay: calc(var(--i) * 55ms);
+  }
+
+  @keyframes work-cell-in {
+    from {
+      opacity: 0.35;
+      transform: translate3d(0, 24px, 0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.work:not(.is-settled)) .cell {
+      animation: none;
+    }
+  }
+
+  @media (max-width: 1099px) {
+    .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* Phone: single-column cards, name large, facts beneath. */
+  @media (max-width: 760px) {
+    .grid {
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: 40px;
+      padding: 20px var(--g) 8px;
+    }
+
+    .cap {
+      gap: 6px;
+    }
+
+    .cap-main {
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+    }
+
+    .cap-no,
+    .sep {
+      display: none;
+    }
+
+    .cap-title {
+      font: 400 30px / 1.05 var(--f-serif);
+      letter-spacing: -0.01em;
+      text-transform: none;
+    }
+
+    .meta-no {
+      display: inline;
+    }
+  }
+</style>

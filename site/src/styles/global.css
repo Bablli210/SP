@@ -311,6 +311,40 @@ html.lenis body {
   animation-timing-function: var(--ease);
 }
 
+/* Shared images keep their crop while the frame morphs (a 4:5 plate into a full-bleed hero). */
+::view-transition-old(*),
+::view-transition-new(*) {
+  height: 100%;
+  object-fit: cover;
+}
+
+/* A named element with no partner on the other page leaves or arrives with the page, quickly. */
+::view-transition-old(*):only-child {
+  animation: 0.35s var(--ease) both vt-fade-out;
+}
+
+::view-transition-new(*):only-child {
+  animation: 0.5s var(--ease-out) 0.15s both vt-fade-in;
+}
+
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The header and the preview note hold still while pages change beneath them. */
+::view-transition-group(site-header),
+::view-transition-group(placeholder-note) {
+  animation-duration: 0.6s;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

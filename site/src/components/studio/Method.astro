@@ -1,0 +1,318 @@
+---
+/**
+ * The method: five steps as a strip of process images.
+ *
+ * Without script (and on touch screens) the strip is a native horizontal
+ * scroller with snap points. With a mouse or trackpad, method.ts takes over:
+ * drag with momentum, horizontal wheel and trackpad swipes, arrow keys and
+ * the ← → buttons, all eased toward the nearest step. When the five steps
+ * (nearly) fit the width, they sit still in a full-width row instead.
+ */
+import Media from '../Media.astro';
+import SectionHead from './SectionHead.astro';
+import { method } from '../../data/site';
+import { studioImage } from './images';
+
+const pad = (v: number) => String(v).padStart(2, '0');
+// The no-script label; method.ts sets the one for the current mode.
+const label = `Method, ${method.length} steps. Swipe or scroll sideways to move through them.`;
+---
+
+<section class="method" aria-labelledby="method-title" style={`--n:${method.length}`} data-method>
+  <SectionHead id="method-title" title="Method">
+    <div class="controls">
+      <span class="label muted hint" aria-hidden="true"
+        ><span class="hint-fine">Drag</span><span class="hint-touch">Swipe</span></span
+      >
+      <button class="ctl label" type="button" aria-controls="method-track" aria-label="Previous step" data-prev>
+        <span aria-hidden="true">←</span>
+      </button>
+      <button class="ctl label" type="button" aria-controls="method-track" aria-label="Next step" data-next>
+        <span aria-hidden="true">→</span>
+      </button>
+    </div>
+  </SectionHead>
+
+  <div class="viewport" id="method-track" role="region" aria-label={label} tabindex="0" data-viewport data-lenis-prevent-horizontal>
+    <ol class="track" data-track>
+      {
+        method.map((m, i) => (
+          <li class="step" data-step>
+            <div class="frame">
+              <Media
+                src={studioImage(m.image)}
+                alt={`${m.step}, process image (placeholder)`}
+                ratio="3 / 4"
+                sizes="(max-width: 760px) 74vw, (max-width: 1700px) 27vw, 460px"
+                widths={[480, 800, 1200]}
+              />
+            </div>
+            <div class="meta">
+              <span class="label num">{pad(i + 1)}</span>
+              <div class="text">
+                <h3 class="serif name">{m.step}</h3>
+                <p class="line">{m.line}</p>
+              </div>
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+
+  <div class="rail wrap" aria-hidden="true">
+    <span class="bar"><span class="thumb" data-thumb></span></span>
+  </div>
+</section>
+
+<script>
+  import { onPage } from '../../scripts/motion';
+  import { initMethod } from './method';
+
+  onPage(initMethod);
+</script>
+
+<style>
+  .method {
+    margin-top: var(--sec);
+    /* about three and a half steps across, never taller than the screen allows */
+    --card: clamp(240px, min(27vw, (100svh - 300px) * 0.75), 460px);
+    --gap: clamp(14px, 1.6vw, 24px);
+  }
+
+  /* ---------- controls ---------- */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .hint {
+    margin-right: 10px;
+  }
+
+  .hint-touch {
+    display: none;
+  }
+
+  @media (hover: none), (pointer: coarse) {
+    .hint-fine {
+      display: none;
+    }
+
+    .hint-touch {
+      display: inline;
+    }
+  }
+
+  .ctl {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    font-size: 14px;
+    border: 1px solid var(--rule);
+    transition:
+      border-color 0.4s var(--ease),
+      opacity 0.4s var(--ease);
+  }
+
+  .ctl span {
+    display: block;
+    transition: transform 0.5s var(--ease);
+  }
+
+  @media (hover: hover) {
+    .ctl:hover {
+      border-color: var(--fg);
+    }
+
+    .ctl[data-prev]:hover span {
+      transform: translateX(-3px);
+    }
+
+    .ctl[data-next]:hover span {
+      transform: translateX(3px);
+    }
+  }
+
+  .ctl[aria-disabled='true'] {
+    opacity: 0.32;
+    cursor: default;
+  }
+
+  .ctl[aria-disabled='true']:hover {
+    border-color: var(--rule);
+  }
+
+  .ctl[aria-disabled='true'] span {
+    transform: none !important;
+  }
+
+  /* Nothing to operate: before the script runs (the buttons would be inert)
+     and when the row fits. */
+  .method:not(.is-ready) .controls,
+  .method:not(.is-ready) .rail,
+  .is-static .controls,
+  .is-static .rail {
+    visibility: hidden;
+  }
+
+  /* ---------- the strip ---------- */
+  .viewport {
+    margin-top: clamp(32px, 3.6vw, 56px);
+    /* Native fallback (no script, touch): scroll sideways, stop on each step. */
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--g);
+    scrollbar-width: none;
+    outline-offset: -2px;
+  }
+
+  .viewport::-webkit-scrollbar {
+    display: none;
+  }
+
+  .track {
+    position: relative;
+    display: flex;
+    gap: var(--gap);
+    width: max-content;
+    padding-inline: var(--g);
+  }
+
+  .step {
+    flex: none;
+    width: var(--card);
+    scroll-snap-align: start;
+  }
+
+  .frame {
+    overflow: hidden;
+  }
+
+  /* ---------- static: the steps fit, one full-width row ---------- */
+  .is-static .track {
+    display: grid;
+    grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+    width: auto;
+  }
+
+  .is-static .step {
+    width: auto;
+  }
+
+  /* number | name over line, the number on the name's baseline */
+  .meta {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+    column-gap: 14px;
+    margin-top: 16px;
+  }
+
+  .num {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .name {
+    font-size: clamp(28px, 2.4vw, 40px);
+    line-height: 1;
+  }
+
+  .line {
+    max-width: 34ch;
+    margin-top: 8px;
+    font-size: var(--t-small);
+    line-height: 1.45;
+    color: var(--muted);
+  }
+
+  /* ---------- drag mode (method.ts, fine pointers) ---------- */
+  .is-drag .viewport {
+    overflow: clip;
+    scroll-snap-type: none;
+    cursor: grab;
+    touch-action: pan-y pinch-zoom;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* The moving strip sits on its own layer, above an outline: draw the focus ring over it. */
+  .is-drag .viewport {
+    position: relative;
+  }
+
+  .is-drag .viewport:focus-visible {
+    outline: none;
+  }
+
+  .is-drag .viewport:focus-visible::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border: 2px solid var(--accent);
+    pointer-events: none;
+  }
+
+  .is-drag.is-static .viewport {
+    cursor: auto;
+  }
+
+  .is-drag .track {
+    will-change: transform;
+  }
+
+  .is-drift .step :global(.media img) {
+    transform: scale(1.12);
+    will-change: transform;
+  }
+
+  .is-dragging .viewport,
+  .is-dragging .viewport * {
+    cursor: grabbing;
+  }
+
+  /* ---------- progress ---------- */
+  .rail {
+    margin-top: clamp(28px, 3vw, 44px);
+  }
+
+  .bar {
+    position: relative;
+    display: block;
+    height: 1px;
+    overflow: hidden;
+    background: var(--rule);
+  }
+
+  .thumb {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 50%;
+    background: var(--fg);
+    transform-origin: 0 50%;
+    will-change: transform;
+  }
+
+  @media (max-width: 760px) {
+    .method {
+      --card: 74vw;
+      --gap: 12px;
+    }
+
+    .hint {
+      margin-right: 4px;
+    }
+
+    .ctl {
+      width: 40px;
+      height: 40px;
+    }
+  }
+</style>

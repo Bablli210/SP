@@ -1,0 +1,195 @@
+---
+/**
+ * Next project: a full-width band with the next cover, the whole band a link.
+ * The cover drifts slower than the page as it comes up (case.ts), and on the
+ * way there it becomes the next case's hero: its shared-element name is off
+ * by default (so no other page's cover flies down to it) and switched on only
+ * when this link is followed.
+ */
+import Media from '../Media.astro';
+import { plateName, projectUrl, type Project } from '../../lib/work';
+
+interface Props {
+  project: Project;
+}
+const { project } = Astro.props;
+const d = project.data;
+---
+
+<nav class="next" aria-label="Next project" data-case-next>
+  <a class="band" href={projectUrl(project)} data-next-link data-plate={plateName(project)} data-astro-prefetch="viewport">
+    <Media class="next-media" src={d.cover} alt="" sizes="100vw" name={plateName(project)} />
+    <span class="text wrap">
+      <span class="label kicker">Next project</span>
+      <span class="row">
+        <span class="title serif">
+          {d.title}
+          <svg class="arrow" viewBox="0 0 34 24" aria-hidden="true" focusable="false">
+            <path d="M0 12h32M21 1l11 11-11 11" fill="none" stroke="currentColor" stroke-width="1.6"></path>
+          </svg>
+        </span>
+        <span class="label meta">
+          N°{d.no} <span aria-hidden="true">·</span> {d.year}
+        </span>
+      </span>
+    </span>
+  </a>
+</nav>
+
+<style>
+  .band {
+    position: relative;
+    display: block;
+    height: clamp(400px, 76vh, 860px);
+    height: clamp(400px, 76svh, 860px);
+    overflow: hidden;
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  /* The cover paints over an outline, so the focus ring is drawn above it. */
+  .band:focus-visible {
+    outline: none;
+  }
+
+  .band::after {
+    content: '';
+    position: absolute;
+    inset: 10px;
+    /* two tones, so it reads on a light cover and a dark one */
+    border: 2px solid var(--paper);
+    outline: 2px solid var(--ink);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .band:focus-visible::after {
+    opacity: 1;
+  }
+
+  .band :global(.next-media) {
+    position: absolute;
+    inset: 0;
+    /* both set, so the frame ignores the aspect-ratio Media puts on it */
+    width: 100%;
+    height: 100%;
+    view-transition-name: none;
+  }
+
+  /*
+   * Two shades, as in the hero: a light one inside the shared element (it
+   * travels into the next hero, which has the same one), and the text block's
+   * own, sized to it, so the kicker and the N° stay legible over any cover.
+   */
+  .band :global(.next-media)::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--ink) 40%, transparent) 0%,
+      color-mix(in srgb, var(--ink) 24%, transparent) 26%,
+      color-mix(in srgb, var(--ink) 9%, transparent) 48%,
+      color-mix(in srgb, var(--ink) 0%, transparent) 70%
+    );
+    pointer-events: none;
+  }
+
+  .band :global(.next-media img) {
+    transition: scale 1.4s var(--ease-out);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .band :global(.next-media img) {
+      will-change: transform;
+    }
+  }
+
+  .text {
+    position: absolute;
+    inset: auto 0 0;
+    isolation: isolate;
+    display: grid;
+    gap: clamp(10px, 1.2vw, 18px);
+    padding-bottom: clamp(22px, 2.8vw, 42px);
+  }
+
+  /* Dark through the whole block (its top edge at 1 / 1.8 of the shade), easing out above. */
+  .text::before {
+    content: '';
+    position: absolute;
+    inset: -80% 0 0;
+    z-index: -1;
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--ink) 54%, transparent) 0%,
+      color-mix(in srgb, var(--ink) 52%, transparent) 56%,
+      color-mix(in srgb, var(--ink) 40%, transparent) 63%,
+      color-mix(in srgb, var(--ink) 27%, transparent) 71%,
+      color-mix(in srgb, var(--ink) 14%, transparent) 81%,
+      color-mix(in srgb, var(--ink) 4%, transparent) 91%,
+      color-mix(in srgb, var(--ink) 0%, transparent) 100%
+    );
+    pointer-events: none;
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: last baseline;
+    gap: 24px;
+  }
+
+  .title {
+    min-width: 0;
+    font-size: clamp(52px, 10.5vw, 184px);
+    line-height: 0.88;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+
+  .arrow {
+    display: inline-block;
+    width: 0.62em;
+    height: auto;
+    margin-left: 0.14em;
+    vertical-align: 0.02em;
+    transition: transform 0.8s var(--ease);
+  }
+
+  .meta {
+    flex: none;
+    white-space: nowrap;
+  }
+
+  @media (hover: hover) {
+    .band:hover :global(.next-media img) {
+      scale: 1.035;
+    }
+
+    .band:hover .arrow {
+      transform: translate3d(0.16em, 0, 0);
+    }
+  }
+
+  @media (max-width: 760px) {
+    .band {
+      height: clamp(360px, 62vh, 620px);
+      height: clamp(360px, 62svh, 620px);
+    }
+
+    .row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .title {
+      font-size: clamp(44px, 13vw, 88px);
+    }
+
+    .text {
+      padding-bottom: 22px;
+    }
+  }
+</style>

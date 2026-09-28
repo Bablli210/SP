@@ -1,4 +1,23 @@
 ---
+/**
+ * Home: the work, first. A ring of featured projects with an index view.
+ * One full-viewport screen: no footer, no page scroll.
+ */
 import Base from '../layouts/Base.astro';
+import Ring from '../components/home/Ring.astro';
+import { studio } from '../data/site';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: studio.name,
+  url: studio.url,
+  email: studio.email,
+  sameAs: [studio.instagram.url],
+};
 ---
-<Base title="index"><section class="wrap" style="padding-top:120px"><h1 class="display" style="font-size:var(--t-display)">index</h1></section></Base>
+
+<Base smooth={false} footer={false} jsonLd={jsonLd}>
+  <h1 class="visually-hidden">{studio.name}, selected work</h1>
+  <Ring />
+</Base>

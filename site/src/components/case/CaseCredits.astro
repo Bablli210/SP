@@ -1,0 +1,184 @@
+---
+/**
+ * Credits (role / name), the result line when the client allows one, and the
+ * page's one call to action.
+ */
+import type { Project } from '../../lib/work';
+
+interface Props {
+  project: Project;
+}
+const { project } = Astro.props;
+const { credits, result } = project.data;
+---
+
+<section class="credits wrap" aria-labelledby="case-credits">
+  <div class="inner">
+    <h2 class="key label" id="case-credits">Credits</h2>
+    {
+      credits.length > 0 && (
+        <dl class="people">
+          {credits.map((c) => (
+            <div class="item">
+              <dt class="label muted">{c.role}</dt>
+              <dd class="serif">{c.name}</dd>
+            </div>
+          ))}
+        </dl>
+      )
+    }
+    {
+      result && (
+        <dl class="result">
+          <div class="item">
+            <dt class="label muted">Result</dt>
+            <dd class="serif">{result}</dd>
+          </div>
+        </dl>
+      )
+    }
+    <a class="cta label" href="/contact/">
+      <span class="cta-text">Start a similar project</span>
+      <span class="arrow" aria-hidden="true">→</span>
+    </a>
+  </div>
+</section>
+
+<style>
+  /* On the page grid: the key under Client, Result under Finding, the call to action below it. */
+  .inner {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--g);
+    row-gap: 32px;
+    align-items: start;
+    padding-block: clamp(24px, 2.8vw, 40px) clamp(80px, 10vw, 160px);
+    border-top: 1px solid var(--rule);
+  }
+
+  .key {
+    grid-column: 1 / span 3;
+  }
+
+  .people {
+    grid-column: 4 / span 6;
+    display: grid;
+    grid-template-columns: subgrid;
+    row-gap: 24px;
+  }
+
+  .people .item {
+    grid-column: span 2;
+  }
+
+  .result {
+    grid-column: 10 / span 3;
+  }
+
+  .item {
+    display: grid;
+    gap: 6px;
+  }
+
+  dd {
+    font-size: clamp(19px, 1.45vw, 22px);
+    line-height: 1.2;
+    text-wrap: pretty;
+  }
+
+  /* The one call to action: an ink block the accent wipes across on hover. */
+  .cta {
+    grid-column: 10 / span 3;
+    justify-self: start;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 4px;
+    padding: 15px 18px 15px 20px;
+    overflow: hidden;
+    isolation: isolate;
+    white-space: nowrap;
+    background: var(--fg);
+    color: var(--bg);
+  }
+
+  .cta::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--accent-text, var(--accent));
+    transform: scaleX(0);
+    transform-origin: 100% 50%;
+    transition: transform 0.7s var(--ease);
+  }
+
+  .arrow {
+    display: inline-block;
+    transition: transform 0.7s var(--ease);
+  }
+
+  @media (hover: hover) {
+    .cta:hover::before {
+      transform: none;
+      transform-origin: 0 50%;
+    }
+
+    .cta:hover .arrow {
+      transform: translate3d(5px, 0, 0);
+    }
+  }
+
+  @media (max-width: 1099px) {
+    .key,
+    .people {
+      grid-column: 1 / -1;
+    }
+
+    .people .item {
+      grid-column: span 4;
+    }
+
+    .result {
+      grid-column: 1 / span 6;
+    }
+
+    .cta {
+      grid-column: 7 / span 6;
+      justify-self: end;
+      align-self: end;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .inner {
+      row-gap: 22px;
+      padding-block: 22px 64px;
+    }
+
+    .people {
+      row-gap: 18px;
+    }
+
+    .people .item {
+      grid-column: span 6;
+    }
+
+    .result {
+      grid-column: 1 / -1;
+    }
+
+    dd {
+      font-size: 19px;
+    }
+
+    .cta {
+      grid-column: 1 / -1;
+      justify-self: stretch;
+      justify-content: space-between;
+      margin-top: 8px;
+      padding-block: 17px;
+    }
+  }
+</style>

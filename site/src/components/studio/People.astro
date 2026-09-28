@@ -1,0 +1,165 @@
+---
+/**
+ * People: 4:5 portraits with name and role, and one open frame that leads to
+ * the contact page (the careers note from src/data/site.ts).
+ */
+import Media from '../Media.astro';
+import SectionHead from './SectionHead.astro';
+import { people, careers } from '../../data/site';
+import { studioImage } from './images';
+
+const note = careers.open ? 'Open roles' : careers.note;
+---
+
+<section class="people" aria-labelledby="people-title">
+  <SectionHead id="people-title" title="People" />
+
+  <ul class="grid wrap">
+    {
+      people.map((p, i) => (
+        <li class="person reveal" style={`--i:${i}`}>
+          <Media
+            src={studioImage(p.image)}
+            alt={`Portrait of ${p.name} (placeholder image)`}
+            ratio="4 / 5"
+            sizes="(max-width: 760px) calc(50vw - 22px), (max-width: 1000px) 46vw, 22vw"
+            widths={[480, 800, 1200]}
+          />
+          <h3 class="serif name">{p.name}</h3>
+          <p class="label muted role">{p.role}</p>
+        </li>
+      ))
+    }
+    <li class="person reveal" style={`--i:${people.length}`}>
+      <a class="you" href="/contact/">
+        <span class="frame">
+          <span class="serif you-q">You?</span>
+          <span class="arrow" aria-hidden="true">→</span>
+        </span>
+        <span class="label note">{note}</span>
+      </a>
+    </li>
+  </ul>
+</section>
+
+<style>
+  .people {
+    margin-top: var(--sec);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(40px, 4vw, 64px) var(--g);
+    margin-top: clamp(32px, 3.6vw, 56px);
+  }
+
+  .person.reveal:global(.is-armed) {
+    transition-delay: calc(var(--i) * 90ms);
+  }
+
+  .name {
+    margin-top: 16px;
+    font-size: clamp(24px, 2vw, 32px);
+    line-height: 1.05;
+  }
+
+  .role {
+    margin-top: 6px;
+  }
+
+  /* ---------- the open frame ---------- */
+  .you {
+    display: block;
+  }
+
+  .frame {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 4 / 5;
+    border: 1px dashed var(--fg);
+    isolation: isolate;
+  }
+
+  /* hover fill: fades in underneath, opacity only */
+  .frame::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--bone);
+    opacity: 0;
+    transition: opacity 0.6s var(--ease);
+  }
+
+  .you-q {
+    font-size: clamp(44px, 4.6vw, 76px);
+    line-height: 1;
+    transition: transform 0.8s var(--ease);
+  }
+
+  .arrow {
+    position: absolute;
+    right: 16px;
+    bottom: 12px;
+    font: 400 20px / 1 var(--f-mono);
+    transition: transform 0.6s var(--ease);
+  }
+
+  .note {
+    display: block;
+    max-width: 34ch;
+    margin-top: 16px;
+  }
+
+  @media (hover: hover) {
+    .you:hover .frame::before {
+      opacity: 1;
+    }
+
+    .you:hover .you-q {
+      transform: translate3d(0, -6px, 0);
+    }
+
+    .you:hover .arrow {
+      transform: translate3d(5px, 0, 0);
+    }
+  }
+
+  .you:focus-visible {
+    outline: none;
+  }
+
+  .you:focus-visible .frame {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 1000px) {
+    .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 760px) {
+    .grid {
+      column-gap: 12px;
+      row-gap: 36px;
+    }
+
+    .name {
+      margin-top: 12px;
+      font-size: 22px;
+    }
+
+    .note {
+      margin-top: 12px;
+    }
+
+    .arrow {
+      right: 12px;
+      bottom: 10px;
+    }
+  }
+</style>

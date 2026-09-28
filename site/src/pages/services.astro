@@ -1,4 +1,61 @@
 ---
+/**
+ * Services: six disciplines, each sold by its work rather than a paragraph.
+ * One line per discipline; open a row and up to three covers prove it.
+ * Disciplines come from src/data/site.ts, projects from the work archive.
+ */
 import Base from '../layouts/Base.astro';
+import ServicesHead from '../components/services/ServicesHead.astro';
+import Disciplines from '../components/services/Disciplines.astro';
+import { disciplineRows } from '../components/services/pick';
+import { getProjects } from '../lib/work';
+import { studio } from '../data/site';
+
+const projects = await getProjects();
+const rows = disciplineRows(projects);
+const counted = projects.filter((p) => p.data.disciplines.length > 0).length;
+
+const description = `${studio.name}, services: ${rows.map((r) => r.label).join(', ')}. Each discipline shown through the work.`;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: `Services · ${studio.name}`,
+  url: new URL('/services/', Astro.site).href,
+  description,
+  mainEntity: {
+    '@type': 'Organization',
+    name: studio.legalName,
+    alternateName: studio.name,
+    url: studio.url,
+    email: studio.email,
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: 'Services',
+      itemListElement: rows.map((r, i) => ({
+        '@type': 'Offer',
+        position: i + 1,
+        itemOffered: {
+          '@type': 'Service',
+          name: r.label,
+          description: r.line,
+          url: new URL(`/services/#${r.key}`, Astro.site).href,
+        },
+      })),
+    },
+  },
+};
 ---
-<Base title="services"><section class="wrap" style="padding-top:120px"><h1 class="display" style="font-size:var(--t-display)">services</h1></section></Base>
+
+<Base title="Services" description={description} jsonLd={jsonLd} headerOverlay>
+  <section class="services" aria-labelledby="services-title">
+    <ServicesHead disciplines={rows.length} projects={counted} />
+    <Disciplines rows={rows} />
+  </section>
+</Base>
+
+<style>
+  .services {
+    padding-bottom: clamp(88px, 11vw, 176px);
+  }
+</style>

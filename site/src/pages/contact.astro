@@ -1,4 +1,153 @@
 ---
+/**
+ * Contact: one screen on ink. The title and the direct lines on the left,
+ * the brief on the right; on phones they stack in that order.
+ */
 import Base from '../layouts/Base.astro';
+import Direct from '../components/contact/Direct.astro';
+import BriefForm from '../components/contact/BriefForm.astro';
+import { studio } from '../data/site';
+
+const description = `Start a project with ${studio.name}. Send a brief, or write to ${studio.email}.`;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ContactPage',
+  name: `Contact · ${studio.name}`,
+  url: new URL('/contact/', Astro.site).href,
+  description,
+  mainEntity: {
+    '@type': 'Organization',
+    name: studio.legalName,
+    alternateName: studio.name,
+    url: studio.url,
+    email: studio.email,
+    sameAs: [studio.instagram.url],
+  },
+};
 ---
-<Base title="contact"><section class="wrap" style="padding-top:120px"><h1 class="display" style="font-size:var(--t-display)">contact</h1></section></Base>
+
+<Base title="Contact" description={description} theme="ink" cta={false} jsonLd={jsonLd} headerOverlay>
+  <section class="contact wrap" aria-labelledby="contact-title">
+    <div class="intro">
+      <h1 class="display title" id="contact-title">
+        <span class="mask"><span class="word">Start a</span></span>{' '}
+        <span class="mask"><span class="word" style="--k:1">project</span></span>
+      </h1>
+      <div class="direct-in">
+        <Direct />
+      </div>
+    </div>
+    <div class="side">
+      <BriefForm />
+    </div>
+  </section>
+</Base>
+
+<style>
+  .contact {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--g);
+    min-height: 100svh;
+    padding-top: calc(var(--header-h) + clamp(20px, 3.2vw, 48px));
+    padding-bottom: clamp(48px, 6vw, 88px);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .intro {
+    grid-column: 1 / span 7;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 56px;
+    min-width: 0;
+  }
+
+  .side {
+    grid-column: 8 / span 5;
+    align-self: end;
+    min-width: 0;
+  }
+
+  /* as large as the page titles elsewhere, but "project" must fit its columns */
+  .title {
+    --cols: 7;
+    font-size: min(var(--t-display), calc(((100vw - 13 * var(--g)) * var(--cols) / 12 + (var(--cols) - 1) * var(--g)) / 3.45));
+  }
+
+  /* each line rises from behind its own baseline */
+  .mask {
+    display: block;
+    overflow: clip;
+    padding-block: 0.06em 0.02em;
+    margin-block: -0.06em -0.02em;
+  }
+
+  .word {
+    display: block;
+    animation: contact-rise 1.15s var(--ease-out) both;
+    animation-delay: calc(60ms + var(--k, 0) * 90ms);
+  }
+
+  .direct-in {
+    animation: contact-fade 1s var(--ease-out) 0.42s both;
+  }
+
+  @keyframes contact-rise {
+    from {
+      transform: translate3d(0, 104%, 0);
+    }
+  }
+
+  @keyframes contact-fade {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 12px, 0);
+    }
+  }
+
+  @media (max-width: 1100px) and (min-width: 761px) {
+    .intro {
+      grid-column: 1 / span 6;
+    }
+
+    .title {
+      --cols: 6;
+    }
+
+    .side {
+      grid-column: 7 / span 6;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .contact {
+      display: block;
+      min-height: 0;
+      padding-top: calc(var(--header-h) + 12px);
+      padding-bottom: 72px;
+    }
+
+    .intro {
+      gap: 36px;
+    }
+
+    .title {
+      font-size: clamp(64px, 27.5vw, 150px);
+    }
+
+    .side {
+      margin-top: 64px;
+      padding-top: 28px;
+      border-top: 1px solid var(--rule);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .word,
+    .direct-in {
+      animation: none;
+    }
+  }
+</style>

@@ -73,6 +73,11 @@ const ogImage = new URL(image, Astro.site);
     <ClientRouter fallback="swap" />
     <script>
       import '../scripts/motion';
+      // Page-arrival handlers must be loaded before the first navigation into
+      // their page, so a first visit morphs as well as a return visit does.
+      import '../scripts/ring';
+      import '../components/work/arrive';
+      import '../components/case/warm';
     </script>
   </head>
   <body data-theme={theme} data-smooth={smooth ? 'on' : 'off'}>
@@ -84,7 +89,7 @@ const ogImage = new URL(image, Astro.site);
     {footer && <Footer cta={cta} />}
     {
       PLACEHOLDER_CONTENT && (
-        <p class="placeholder-note label" transition:persist>
+        <p class="placeholder-note label" transition:persist transition:name="placeholder-note">
           Preview · projects and images are placeholders
         </p>
       )

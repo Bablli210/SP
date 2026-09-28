@@ -1,0 +1,86 @@
+---
+/**
+ * The floating cover for the list view (desktop, fine pointer only).
+ * Every cover is stacked here; the hovered row's cover fades up. peek.ts
+ * moves it. Decorative: the rows carry the facts and the links.
+ */
+import Media from '../Media.astro';
+import type { Entry } from './types';
+
+interface Props {
+  entries: Entry[];
+}
+const { entries } = Astro.props;
+---
+
+<div class="peek" aria-hidden="true" data-peek>
+  <div class="frame">
+    {
+      entries.map((e) => (
+        <div class="shot" data-peek-id={e.id} data-plate={e.plate}>
+          <Media src={e.cover} alt="" ratio="4 / 5" sizes="clamp(200px, 19vw, 300px)" />
+        </div>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .peek {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 30;
+    width: clamp(200px, 19vw, 300px);
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  .frame {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    opacity: 0;
+    transform: scale(0.88);
+    transition:
+      opacity 0.4s var(--ease),
+      transform 0.7s var(--ease-out);
+    box-shadow: 0 40px 70px -48px color-mix(in srgb, var(--ink) 60%, transparent);
+  }
+
+  .peek.is-on .frame {
+    opacity: 1;
+    transform: none;
+  }
+
+  .shot {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.45s var(--ease);
+  }
+
+  .shot.is-active {
+    opacity: 1;
+  }
+
+  .shot :global(.media) {
+    height: 100%;
+    /* Media gives unnamed images an automatic transition name; these must not morph on their own. */
+    view-transition-name: none;
+  }
+
+  .shot :global(img) {
+    transform: scale(1.1);
+    transition: transform 0.9s var(--ease-out);
+  }
+
+  .shot.is-active :global(img) {
+    transform: none;
+  }
+
+  @media (max-width: 760px), (hover: none), (pointer: coarse) {
+    .peek {
+      display: none;
+    }
+  }
+</style>

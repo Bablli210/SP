@@ -1,0 +1,78 @@
+---
+/**
+ * "City · 14:32": the studio's local time, kept current to the minute.
+ * The time is filled in on the client (a build-time clock would be wrong);
+ * without a script only the city shows.
+ */
+interface Props {
+  city: string;
+  timeZone: string;
+}
+const { city, timeZone } = Astro.props;
+---
+
+<p class="local label" data-clock data-tz={timeZone}>
+  <span class="city">{city}</span><span class="sep" aria-hidden="true"> · </span><span class="visually-hidden">, local time </span><time
+    data-clock-time></time>
+</p>
+
+<script>
+  import { onPage } from '../../scripts/motion';
+
+  onPage(() => {
+    const root = document.querySelector<HTMLElement>('[data-clock]');
+    const out = root?.querySelector<HTMLTimeElement>('[data-clock-time]');
+    if (!root || !out) return;
+
+    let fmt: Intl.DateTimeFormat;
+    try {
+      fmt = new Intl.DateTimeFormat('en-GB', {
+        timeZone: root.dataset.tz,
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      });
+    } catch {
+      root.hidden = true; // an unknown time zone: say nothing rather than something wrong
+      return;
+    }
+
+    let timer = 0;
+    const tick = () => {
+      const now = new Date();
+      const hm = fmt.format(now);
+      if (out.textContent !== hm) {
+        out.textContent = hm;
+        out.dateTime = hm;
+      }
+      root.classList.add('is-set');
+      // wake on the next minute boundary, not every 60s from an arbitrary start
+      timer = window.setTimeout(tick, 60_000 - (now.getTime() % 60_000) + 50);
+    };
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      window.clearTimeout(timer);
+      tick();
+    };
+
+    tick();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  });
+</script>
+
+<style>
+  .local {
+    margin-top: 14px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* the separator waits for the time, so a script-less page shows just the city */
+  .local:not(.is-set) .sep {
+    display: none;
+  }
+</style>

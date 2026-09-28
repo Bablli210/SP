@@ -1,0 +1,114 @@
+---
+/**
+ * The direct lines: email and Instagram set large, and the studio's local
+ * time when a city and time zone are set in src/data/site.ts.
+ */
+import { studio } from '../../data/site';
+import LocalTime from './LocalTime.astro';
+---
+
+<div class="direct">
+  <p class="row">
+    <a class="big serif link-line" href={`mailto:${studio.email}`}>{studio.email}</a>
+    <button class="copy label" type="button" data-copy={studio.email} hidden>
+      <span data-copy-t>Copy</span><span class="visually-hidden"> email address</span>
+    </button>
+  </p>
+  <p class="row">
+    <a class="big serif link-line" href={studio.instagram.url} target="_blank" rel="noopener">
+      {studio.instagram.handle}<span class="ext" aria-hidden="true">↗</span><span class="visually-hidden"> (Instagram, opens in a new tab)</span>
+    </a>
+  </p>
+  {studio.city && studio.timeZone && <LocalTime city={studio.city} timeZone={studio.timeZone} />}
+  <p class="visually-hidden" aria-live="polite" data-copy-live></p>
+</div>
+
+<script>
+  import { onPage } from '../../scripts/motion';
+
+  onPage(() => {
+    const btn = document.querySelector<HTMLButtonElement>('[data-copy]');
+    const label = btn?.querySelector<HTMLElement>('[data-copy-t]');
+    const live = document.querySelector<HTMLElement>('[data-copy-live]');
+    if (!btn || !label || !live) return;
+    if (!window.isSecureContext || !navigator.clipboard) return;
+    btn.hidden = false;
+
+    let timer = 0;
+    const onClick = async () => {
+      try {
+        await navigator.clipboard.writeText(btn.dataset.copy ?? '');
+        label.textContent = 'Copied';
+        live.textContent = 'Email address copied';
+        btn.classList.add('is-copied');
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => {
+          label.textContent = 'Copy';
+          live.textContent = '';
+          btn.classList.remove('is-copied');
+        }, 1800);
+      } catch {
+        btn.hidden = true;
+      }
+    };
+    btn.addEventListener('click', onClick);
+    return () => {
+      btn.removeEventListener('click', onClick);
+      window.clearTimeout(timer);
+    };
+  });
+</script>
+
+<style>
+  .direct {
+    display: grid;
+    gap: 6px;
+    justify-items: start;
+  }
+
+  .row {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    max-width: 100%;
+  }
+
+  .big {
+    font-size: clamp(28px, 2.6vw, 40px);
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+    background-position: 0 92%;
+  }
+
+  .ext {
+    display: inline-block;
+    margin-left: 0.18em;
+    font-size: 0.72em;
+    vertical-align: 0.18em;
+    transition: transform 0.5s var(--ease);
+  }
+
+  @media (hover: hover) {
+    .big:hover .ext {
+      transform: translate3d(3px, -3px, 0);
+    }
+  }
+
+  .copy {
+    position: relative;
+    padding: 8px 0;
+    color: var(--muted);
+    transition: opacity 0.3s var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .copy:hover {
+      color: var(--fg);
+    }
+  }
+
+  .copy.is-copied {
+    color: var(--fg);
+  }
+</style>

@@ -1,4 +1,149 @@
 ---
+/**
+ * Not found: the ring, spilled. One screen, no footer, a way back to the work.
+ */
 import Base from '../layouts/Base.astro';
+import Spill from '../components/contact/Spill.astro';
 ---
-<Base title="404"><section class="wrap" style="padding-top:120px"><h1 class="display" style="font-size:var(--t-display)">404</h1></section></Base>
+
+<Base title="Not found" noindex footer={false} smooth={false}>
+  <section class="lost" aria-labelledby="lost-title">
+    <div class="copy wrap">
+      <h1 class="display code" id="lost-title">
+        <span class="mask"><span class="word">404</span></span><span class="visually-hidden">, page not found</span>
+      </h1>
+      <p class="line serif">This page fell off the ring.</p>
+      <a class="back label" href="/">Back to the work <span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+    <Spill />
+  </section>
+</Base>
+
+<style>
+  .lost {
+    position: relative;
+    height: 100vh;
+    height: 100svh;
+    overflow: clip;
+  }
+
+  .copy {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-top: calc(var(--header-h) + clamp(16px, 8.5svh, 88px));
+    pointer-events: none;
+  }
+
+  .copy > * {
+    pointer-events: auto;
+  }
+
+  .code {
+    font-size: min(18vw, 29svh);
+  }
+
+  .mask {
+    display: block;
+    overflow: clip;
+    padding-block: 0.06em 0.02em;
+    margin-block: -0.06em -0.02em;
+  }
+
+  .word {
+    display: block;
+    animation: lost-rise 1.15s var(--ease-out) 60ms both;
+  }
+
+  .line {
+    margin-top: clamp(16px, 2.6svh, 26px);
+    font-size: clamp(28px, 2.5vw, 40px);
+    line-height: 1.1;
+    animation: lost-fade 1s var(--ease-out) 0.3s both;
+  }
+
+  .back {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: clamp(20px, 3svh, 30px);
+    padding: 15px 20px 15px 22px;
+    background: var(--fg);
+    color: var(--bg);
+    letter-spacing: 0.08em;
+    animation: lost-fade 1s var(--ease-out) 0.4s both;
+    transition: transform 0.2s var(--ease-out);
+  }
+
+  .back:active {
+    transform: scale(0.985);
+  }
+
+  .arrow {
+    display: inline-block;
+    transition: transform 0.5s var(--ease);
+  }
+
+  @media (hover: hover) {
+    .back:hover .arrow {
+      transform: translate3d(5px, 0, 0);
+    }
+  }
+
+  @keyframes lost-rise {
+    from {
+      transform: translate3d(0, 104%, 0);
+    }
+  }
+
+  @keyframes lost-fade {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 12px, 0);
+    }
+  }
+
+  @media (max-width: 760px) {
+    .copy {
+      padding-top: calc(var(--header-h) + clamp(12px, 5svh, 48px));
+    }
+
+    .code {
+      font-size: min(46vw, 25svh);
+    }
+
+    .line {
+      font-size: clamp(26px, 7.4vw, 32px);
+    }
+  }
+
+  /* short screens (landscape phones, low windows): the copy shrinks with the height so the spill stays on screen */
+  @media (max-height: 520px) {
+    .copy {
+      padding-top: calc(var(--header-h) + 4px);
+    }
+
+    .code {
+      font-size: 26svh;
+    }
+
+    .line {
+      margin-top: 8px;
+      font-size: clamp(20px, 6svh, 28px);
+    }
+
+    .back {
+      margin-top: 12px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .word,
+    .line,
+    .back {
+      animation: none;
+    }
+  }
+</style>

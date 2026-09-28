@@ -1,0 +1,62 @@
+---
+/** List | Grid switch. The ink thumb slides under whichever is pressed. */
+---
+
+<div class="toggle label" role="group" aria-label="View" data-js-only>
+  <span class="thumb" aria-hidden="true"></span>
+  <button type="button" data-view-btn="list" aria-pressed="true">List</button>
+  <button type="button" data-view-btn="grid" aria-pressed="false">Grid</button>
+</div>
+
+<style>
+  .toggle {
+    position: relative;
+    display: inline-grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    padding: 3px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    flex: none;
+  }
+
+  .thumb {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    width: calc((100% - 6px) / 2);
+    border-radius: 999px;
+    background: var(--fg);
+    transition: transform 0.7s var(--ease);
+  }
+
+  .toggle:has([data-view-btn='grid'][aria-pressed='true']) .thumb {
+    transform: translateX(100%);
+  }
+
+  button {
+    position: relative;
+    padding: 9px 16px;
+    text-transform: inherit;
+    letter-spacing: inherit;
+    border-radius: 999px;
+    transition: color 0.5s var(--ease);
+  }
+
+  button[aria-pressed='true'] {
+    color: var(--bg);
+  }
+
+  @media (hover: hover) {
+    button[aria-pressed='false']:hover {
+      color: var(--muted);
+    }
+  }
+
+  @media (max-width: 760px) {
+    button {
+      padding: 8px 12px;
+    }
+  }
+</style>

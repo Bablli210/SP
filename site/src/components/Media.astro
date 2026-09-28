@@ -30,22 +30,39 @@ const {
   widths = [480, 800, 1200, 1600, 2000, 2400],
 } = Astro.props;
 const usable = widths.filter((w) => w <= src.width);
+const widthList = usable.length ? usable : [src.width];
+const frame = ratio ? `aspect-ratio: ${ratio}` : `aspect-ratio: ${src.width} / ${src.height}`;
 ---
 
-<div
-  class:list={['media', className]}
-  style={ratio ? `aspect-ratio: ${ratio}` : `aspect-ratio: ${src.width} / ${src.height}`}
-  transition:name={name}
->
-  <Image
-    src={src}
-    alt={alt}
-    widths={usable.length ? usable : [src.width]}
-    sizes={sizes}
-    loading={priority ? 'eager' : 'lazy'}
-    fetchpriority={priority ? 'high' : 'auto'}
-    decoding="async"
-    quality={88}
-    layout="none"
-  />
-</div>
+{/* transition:name with an undefined value still generates an automatic name, so only set it when asked. */}
+{
+  name ? (
+    <div class:list={['media', className]} style={frame} transition:name={name}>
+      <Image
+        src={src}
+        alt={alt}
+        widths={widthList}
+        sizes={sizes}
+        loading={priority ? 'eager' : 'lazy'}
+        fetchpriority={priority ? 'high' : 'auto'}
+        decoding="async"
+        quality={88}
+        layout="none"
+      />
+    </div>
+  ) : (
+    <div class:list={['media', className]} style={frame}>
+      <Image
+        src={src}
+        alt={alt}
+        widths={widthList}
+        sizes={sizes}
+        loading={priority ? 'eager' : 'lazy'}
+        fetchpriority={priority ? 'high' : 'auto'}
+        decoding="async"
+        quality={88}
+        layout="none"
+      />
+    </div>
+  )
+}

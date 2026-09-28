@@ -1,11 +1,117 @@
 ---
+/**
+ * Case study: one template for every project.
+ * Hero (the cover, full screen) → fact strip → the work → credits → next project.
+ * Behaviour (parallax, Close / Esc, film, shared-element hand-offs) lives in
+ * components/case/case.ts.
+ */
+import { getImage } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
-import Media from '../../components/Media.astro';
-import { getProjects, plateName } from '../../lib/work';
+import CaseHero from '../../components/case/CaseHero.astro';
+import CaseFacts from '../../components/case/CaseFacts.astro';
+import CaseGallery from '../../components/case/CaseGallery.astro';
+import CaseCredits from '../../components/case/CaseCredits.astro';
+import NextProject from '../../components/case/NextProject.astro';
+import { readableAccent } from '../../components/case/accent';
+import { getProjects, projectUrl, disciplineList, type Project } from '../../lib/work';
+import { studio } from '../../data/site';
+
 export async function getStaticPaths() {
   const projects = await getProjects();
-  return projects.map((p) => ({ params: { slug: p.id }, props: { project: p } }));
+  return projects.map((project, i) => ({
+    params: { slug: project.id },
+    // The archive wraps around: the last project leads back to the first.
+    props: { project, next: projects.length > 1 ? projects[(i + 1) % projects.length] : null },
+  }));
 }
-const { project } = Astro.props;
+
+interface Props {
+  project: Project;
+  next: Project | null;
+}
+const { project, next } = Astro.props;
+const d = project.data;
+
+// Social card: the cover, cropped to 1200 × 630.
+const og = await getImage({ src: d.cover, width: 1200, height: 630, fit: 'cover', format: 'jpg', quality: 82 });
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CreativeWork',
+  name: d.title,
+  url: new URL(projectUrl(project), Astro.site).href,
+  description: d.summary,
+  image: new URL(og.src, Astro.site).href,
+  dateCreated: String(d.year),
+  about: d.sector,
+  genre: disciplineList(project),
+  creator: { '@type': 'Organization', name: studio.name, url: studio.url },
+};
+
+const style = `--accent: ${d.accent}; --accent-text: ${readableAccent(d.accent)};`;
 ---
-<Base title={project.data.title}><Media src={project.data.cover} alt={project.data.coverAlt} name={plateName(project)} priority /></Base>
+
+<Base title={d.title} description={d.summary} image={og.src} headerOverlay cta={false} jsonLd={jsonLd}>
+  <article class="case" style={style} data-case>
+    <CaseHero project={project} />
+    <CaseFacts project={project} />
+    <CaseGallery project={project} />
+    <CaseCredits project={project} />
+  </article>
+  {next && <NextProject project={next} />}
+</Base>
+
+<script>
+  import '../../components/case/case';
+</script>
+
+<style is:global>
+  /*
+   * Shared-element morphs arriving on a case page: both snapshots fill the
+   * morphing frame (cropped, never stretched or letterboxed), so a 4:5 cover
+   * opens into the full-screen hero cleanly.
+   */
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /*
+   * The cover travelling into the hero (from the ring, the index or the Next
+   * band) is already loaded; the hero it becomes may still be loading. So the
+   * travelling cover stays solid, and the hero fades in over it through the
+   * second half of the morph: the morph shows the image, not an empty frame.
+   * (Setting the animation also drops the default plus-lighter blend, so the
+   * fade is a plain cover-over.)
+   */
+  ::view-transition-old(*.case-hero) {
+    animation: none;
+  }
+
+  ::view-transition-new(*.case-hero) {
+    animation: 0.55s var(--ease) 0.3s both case-fade;
+  }
+
+  /* The title and Close arrive as the cover lands, and finish with it. */
+  ::view-transition-new(case-title) {
+    animation: 0.6s var(--ease-out) 0.3s both case-rise;
+  }
+
+  ::view-transition-new(case-close) {
+    animation: 0.45s var(--ease) 0.45s both case-fade;
+  }
+
+  @keyframes case-rise {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 28px, 0);
+    }
+  }
+
+  @keyframes case-fade {
+    from {
+      opacity: 0;
+    }
+  }
+</style>

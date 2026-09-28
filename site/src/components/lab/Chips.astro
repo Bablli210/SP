@@ -1,0 +1,131 @@
+---
+/**
+ * Kind filters: All, then one chip per kind. One choice at a time.
+ * Recap carries the page's accent. Phone: a row under the title that wraps.
+ */
+import type { LabChip } from './layout';
+
+interface Props {
+  chips: LabChip[];
+}
+const { chips } = Astro.props;
+---
+
+<div class="chips" role="group" aria-label="Filter the lab" data-chips>
+  {
+    chips.map((c) => (
+      <button
+        class:list={['chip', { recap: c.value === 'recap' }]}
+        type="button"
+        data-chip={c.value}
+        data-label={c.label}
+        aria-pressed={c.value === 'all' ? 'true' : 'false'}
+      >
+        {c.label}
+        <span class="n" aria-hidden="true">
+          {c.count}
+        </span>
+      </button>
+    ))
+  }
+</div>
+
+<style>
+  .chips {
+    --chip-h: 34px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    height: var(--chip-h);
+    padding: 0 12px;
+    border: 1px solid var(--concrete);
+    border-radius: var(--radius);
+    font: 500 var(--t-label) / 1 var(--f-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition:
+      background-color 0.35s var(--ease),
+      border-color 0.35s var(--ease),
+      color 0.35s var(--ease);
+  }
+
+  .n {
+    margin-left: 5px;
+    font-size: 9px;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+    transform: translateY(-4px);
+    transition: color 0.35s var(--ease);
+  }
+
+  @media (hover: hover) {
+    .chip:hover {
+      border-color: var(--fg);
+    }
+  }
+
+  .chip[aria-pressed='true'] {
+    background: var(--fg);
+    border-color: var(--fg);
+    color: var(--bg);
+  }
+
+  .chip[aria-pressed='true'] .n {
+    color: var(--concrete);
+  }
+
+  /* Recap: the one accent on the page. */
+  .chip.recap,
+  .chip.recap .n {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  @media (hover: hover) {
+    .chip.recap:hover {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 8%, transparent);
+    }
+  }
+
+  .chip.recap[aria-pressed='true'] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+  }
+
+  .chip.recap[aria-pressed='true'] .n {
+    color: var(--bg);
+  }
+
+  /* Phone: chips start at the gutter and wrap if the screen is narrow. */
+  @media (max-width: 760px) {
+    .chips {
+      --chip-h: 36px;
+      justify-content: flex-start;
+    }
+
+    .chip {
+      padding: 0 11px;
+    }
+  }
+
+  /* Smallest phones: all five chips still fit on one row. */
+  @media (max-width: 380px) {
+    .chips {
+      gap: 4px;
+    }
+
+    .chip {
+      padding: 0 8px;
+    }
+  }
+</style>

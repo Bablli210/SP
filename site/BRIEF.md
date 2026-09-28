@@ -38,7 +38,7 @@ Reference material in this repo (read what your page needs):
 You may only create or edit the files your task names. Everything else is read-only, including `global.css`, `motion.ts`, `Base.astro`, `Header.astro`, `Footer.astro`, `Media.astro`, `work.ts`, `site.ts` and the content. If you need a change in a shared file, say exactly what and why in your report and work around it meanwhile.
 
 ## Checking your work
-- Start a dev server on your assigned port: `cd /home/user/SP/site && (npx astro dev --port <PORT> --host 127.0.0.1 > /tmp/dev-<PORT>.log 2>&1 &)`. Wait until `curl -s http://127.0.0.1:<PORT>/` answers.
+- Start a dev server on your assigned port: `cd /home/user/SP/site && (npx astro dev --port <PORT> --host 127.0.0.1 --ignore-lock > /tmp/dev-<PORT>.log 2>&1 &)`. Wait until `curl -s http://127.0.0.1:<PORT>/` answers.
 - Screenshot: `NODE_PATH=/opt/node22/lib/node_modules node scripts/snap.cjs http://127.0.0.1:<PORT>/<path>/ <scratch>/<name> [--full] [--reduced]`. It writes desktop and phone PNGs and prints console errors and overflow. Look at the PNGs with the Read tool. Write your own small Playwright script in your scratch folder to test interactions (drag, wheel, keys, clicks, transitions).
 - Types: `npx astro check` must report 0 errors in your files.
 - Do not run `astro build` (other builders share the folder). Stop your dev server when done: `pkill -f "astro dev --port <PORT>"`.

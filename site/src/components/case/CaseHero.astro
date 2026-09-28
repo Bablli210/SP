@@ -1,0 +1,191 @@
+---
+/**
+ * Case hero: the cover, full screen. It carries the project's shared-element
+ * name, so a ring plate, a work cover or the previous case's Next band morphs
+ * straight into it. Title bottom-left over a scrim, N° and year bottom-right,
+ * and a Close pill (fixed; it steps aside while reading down and returns on
+ * the first scroll up, see case.ts).
+ */
+import Media from '../Media.astro';
+import { plateName, type Project } from '../../lib/work';
+
+interface Props {
+  project: Project;
+}
+const { project } = Astro.props;
+const d = project.data;
+
+// The cover fills the screen: wider screens show it full width, narrower
+// ones (portrait phones) crop it to the screen's height instead.
+const { width: w, height: h } = d.cover;
+const sizes = `(max-aspect-ratio: ${w}/${h}) ${Math.ceil((w / h) * 100)}vh, 100vw`;
+---
+
+<a class="close label" href="/work/" data-case-close transition:name="case-close">
+  <span>Close</span><span class="visually-hidden"> case study</span>
+  <svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true" focusable="false">
+    <path d="M1 1l8 8M9 1L1 9" fill="none" stroke="currentColor" stroke-width="1.3"></path>
+  </svg>
+</a>
+
+<header class="hero" data-case-hero data-header-until>
+  <Media class="hero-media" src={d.cover} alt={d.coverAlt} sizes={sizes} priority name={plateName(project)} />
+  <div class="hero-text wrap" data-case-title transition:name="case-title">
+    <h1 class="title serif">{d.title}</h1>
+    <p class="meta label">
+      N°{d.no} <span aria-hidden="true">·</span> {d.year}
+    </p>
+  </div>
+</header>
+
+<style>
+  .hero {
+    position: relative;
+    height: 100vh;
+    height: 100svh;
+    min-height: 340px;
+    overflow: hidden;
+    background: var(--plate);
+  }
+
+  .hero :global(.hero-media) {
+    position: absolute;
+    inset: 0;
+    /* both set, so the frame ignores the aspect-ratio Media puts on it */
+    width: 100%;
+    height: 100%;
+    /* the arrival morph's timing is keyed to this class ([slug].astro) */
+    view-transition-class: case-hero;
+  }
+
+  /*
+   * Two shades keep the text legible over any cover. A light one lives inside
+   * the shared element, so it morphs with the image; the text block carries
+   * the rest (below), sized to itself, so a two-line title is covered as well
+   * as a one-line one, and the shade arrives with the text.
+   */
+  .hero :global(.hero-media)::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--ink) 40%, transparent) 0%,
+      color-mix(in srgb, var(--ink) 24%, transparent) 20%,
+      color-mix(in srgb, var(--ink) 9%, transparent) 38%,
+      color-mix(in srgb, var(--ink) 0%, transparent) 56%
+    );
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .hero :global(.hero-media img) {
+      will-change: transform;
+    }
+  }
+
+  .hero-text {
+    position: absolute;
+    inset: auto 0 0;
+    isolation: isolate;
+    display: flex;
+    justify-content: space-between;
+    align-items: last baseline;
+    gap: 24px;
+    padding-bottom: clamp(20px, 2.6vw, 40px);
+    color: var(--paper);
+  }
+
+  /*
+   * The text's own shade: dark through the whole block (its top edge sits at
+   * 1 / 1.7 of the shade's height), then easing out above it.
+   */
+  .hero-text::before {
+    content: '';
+    position: absolute;
+    inset: -70% 0 0;
+    z-index: -1;
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--ink) 54%, transparent) 0%,
+      color-mix(in srgb, var(--ink) 50%, transparent) 59%,
+      color-mix(in srgb, var(--ink) 38%, transparent) 66%,
+      color-mix(in srgb, var(--ink) 25%, transparent) 74%,
+      color-mix(in srgb, var(--ink) 13%, transparent) 83%,
+      color-mix(in srgb, var(--ink) 4%, transparent) 92%,
+      color-mix(in srgb, var(--ink) 0%, transparent) 100%
+    );
+    pointer-events: none;
+  }
+
+  .title {
+    min-width: 0;
+    /* width sets the size; a short screen (landscape phone, small laptop) caps it */
+    font-size: clamp(56px, min(12.5vw, 20svh), 216px);
+    line-height: 0.86;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+
+  .meta {
+    flex: none;
+    white-space: nowrap;
+  }
+
+  /* Close: a small pill under the header's right edge, within reach all the way down. */
+  .close {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + var(--header-h));
+    right: var(--g);
+    z-index: 70;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px 9px 15px;
+    border-radius: 999px;
+    background: var(--paper);
+    color: var(--ink);
+    /* a hairline edge, so over the paper sections it still reads as a control */
+    box-shadow: 0 0 0 1px var(--rule);
+    transition:
+      opacity 0.5s var(--ease),
+      transform 0.5s var(--ease);
+  }
+
+  .close svg {
+    transition: transform 0.6s var(--ease);
+  }
+
+  @media (hover: hover) {
+    .close:hover svg {
+      transform: rotate(90deg);
+    }
+  }
+
+  /* Stepped aside (case.ts): out of sight and reach of the pointer, but still
+     in the tab order, and back in view the moment it takes keyboard focus. */
+  .close.is-away:not(:focus-visible) {
+    opacity: 0;
+    transform: translate3d(0, -8px, 0);
+    pointer-events: none;
+  }
+
+  @media (max-width: 760px) {
+    .hero-text {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+      padding-bottom: 20px;
+    }
+
+    .title {
+      font-size: clamp(48px, 16.5vw, 96px);
+      line-height: 0.88;
+    }
+
+    .close {
+      top: calc(env(safe-area-inset-top, 0px) + var(--header-h) - 6px);
+      padding: 10px 14px;
+    }
+  }
+</style>

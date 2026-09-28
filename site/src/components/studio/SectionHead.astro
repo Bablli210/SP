@@ -1,0 +1,45 @@
+---
+/**
+ * Section opener on the Studio page: a full-bleed rule, one display word,
+ * and an optional aside (controls or a fact) on the same baseline.
+ */
+interface Props {
+  id: string;
+  title: string;
+}
+const { id, title } = Astro.props;
+---
+
+<div class="head wrap">
+  <h2 class="display title" id={id}>{title}</h2>
+  {
+    Astro.slots.has('default') && (
+      <div class="aside">
+        <slot />
+      </div>
+    )
+  }
+</div>
+
+<style>
+  .head {
+    --h2: clamp(52px, 5.6vw, 96px);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    padding-top: clamp(18px, 1.7vw, 26px);
+    border-top: 1px solid var(--fg);
+  }
+
+  .title {
+    font-size: var(--h2);
+    white-space: nowrap;
+  }
+
+  /* Sit the aside on the heading's baseline rather than the bottom of its line box. */
+  .aside {
+    flex: none;
+    margin-bottom: calc(var(--h2) * 0.045);
+  }
+</style>

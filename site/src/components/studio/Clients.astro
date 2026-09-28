@@ -1,0 +1,145 @@
+---
+/**
+ * Clients as a hairline-ruled logo grid, then press as one label line.
+ * Entries stay bracketed until the studio supplies real names and logos.
+ */
+import SectionHead from './SectionHead.astro';
+import { clients, press } from '../../data/site';
+---
+
+<section class="clients" aria-labelledby="clients-title">
+  <SectionHead id="clients-title" title="Clients" />
+
+  <div class="wrap">
+    <div class="clip reveal">
+      <ul class="logos">
+        {
+          clients.map((c) => (
+            <li class="logo">
+              <span class="label muted">{c}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="press wrap reveal" aria-labelledby="press-title">
+  <h2 class="label muted press-title" id="press-title">Press</h2>
+  <ul class="label press-list">
+    {
+      press.map((p) => (
+        <li>
+          {p.url ? (
+            <a class="item" href={p.url} target="_blank" rel="noopener">
+              <span class="outlet">{p.outlet}</span> · <span class="year">{p.year}</span>
+              <span class="ext" aria-hidden="true">
+                ↗
+              </span>
+              <span class="visually-hidden">(opens in a new tab)</span>
+            </a>
+          ) : (
+            <span class="item">
+              <span class="outlet">{p.outlet}</span> · <span class="year">{p.year}</span>
+            </span>
+          )}
+        </li>
+      ))
+    }
+  </ul>
+</section>
+
+<style>
+  /* ---------- logos ---------- */
+  .clients {
+    margin-top: var(--sec);
+  }
+
+  .clip {
+    /* hides the last column's right rule: rules run between cells only */
+    overflow: hidden;
+    margin-top: clamp(32px, 3.6vw, 56px);
+    border-top: 1px solid var(--rule);
+  }
+
+  .logos {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    margin-right: -1px;
+  }
+
+  .logo {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 2 / 1;
+    padding: 12px;
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    text-align: center;
+  }
+
+  /* ---------- press: one line of facts under the grid ---------- */
+  .press {
+    display: flex;
+    align-items: baseline;
+    gap: clamp(20px, 2.8vw, 40px);
+    margin-top: clamp(20px, 2vw, 28px);
+    padding-bottom: var(--sec);
+  }
+
+  .press-title {
+    flex: none;
+  }
+
+  .press-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px clamp(20px, 2.8vw, 40px);
+  }
+
+  .year {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ext {
+    display: inline-block;
+    transition: transform 0.5s var(--ease);
+  }
+
+  a.item .outlet {
+    background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+    transition: background-size 0.5s var(--ease);
+  }
+
+  @media (hover: hover) {
+    a.item:hover .outlet {
+      background-size: 100% 1px;
+    }
+
+    a.item:hover .ext {
+      transform: translate3d(2px, -2px, 0);
+    }
+  }
+
+  @media (max-width: 1000px) {
+    .logos {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .logo {
+      aspect-ratio: 3 / 2;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .logos {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .logo {
+      aspect-ratio: 3 / 2;
+      padding: 8px;
+    }
+  }
+</style>

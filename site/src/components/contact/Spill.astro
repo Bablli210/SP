@@ -1,0 +1,251 @@
+---
+/**
+ * 404: five covers from the ring, spilled across the foot of the screen at
+ * fixed, jumbled angles. They drop in once, then drift a little against the
+ * pointer (transform only; still for reduced motion). Each is a real link.
+ *
+ * No shared-element names here: the home ring morphs only the plate a
+ * visitor came back from, so these fade with the page instead. Media gives
+ * every frame an automatic transition name, which could pair a cover with an
+ * unrelated image on the next page; the style below switches that off.
+ */
+import Media from '../Media.astro';
+import { getFeatured, projectUrl } from '../../lib/work';
+
+const covers = (await getFeatured()).slice(0, 5);
+
+/*
+ * x: left edge, % of the screen width. b: bottom edge above the screen's foot,
+ * in cover widths (negative spills past it). r: rotation. d: parallax depth.
+ * Desktop (and any landscape screen) follows the wireframe; portrait phones
+ * get their own jumble.
+ */
+const LAYOUT = [
+  { x: 8.3, b: 0.22, r: -38, d: 0.8, mx: -12, mb: 0.5, mr: -34 },
+  { x: 26.4, b: 0.07, r: 71, d: 1.2, mx: 24, mb: -0.34, mr: 68 },
+  { x: 56.9, b: 0.3, r: -12, d: 0.6, mx: 57, mb: 0.12, mr: -12 },
+  { x: 75, b: 0.66, r: 24, d: 1, mx: 70, mb: 1.02, mr: 24 },
+  { x: 41.7, b: -0.16, r: -80, d: 1.4, mx: 30, mb: 0.86, mr: -80 },
+];
+---
+
+<div class="spill" data-spill>
+  {
+    covers.map((p, i) => {
+      const l = LAYOUT[i % LAYOUT.length];
+      return (
+        <a
+          class="piece"
+          href={projectUrl(p)}
+          aria-label={`${p.data.title}, N°${p.data.no}, ${p.data.year}`}
+          style={`--x:${l.x}%;--b:${l.b};--r:${l.r}deg;--mx:${l.mx}%;--mb:${l.mb};--mr:${l.mr}deg;--n:${i}`}
+          data-piece
+          data-depth={l.d}
+        >
+          <span class="fall">
+            <span class="tilt">
+              <Media
+                src={p.data.cover}
+                alt={p.data.coverAlt}
+                ratio="4 / 5"
+                sizes="(max-width: 760px) 40vw, 16vw"
+                widths={[320, 480, 800]}
+                priority
+              />
+            </span>
+          </span>
+        </a>
+      );
+    })
+  }
+</div>
+
+<script>
+  import { onPage, reducedMotion } from '../../scripts/motion';
+
+  /** Largest drift, in px and degrees, for a piece of depth 1. */
+  const AX = 26;
+  const AY = 16;
+  const AR = 1.6;
+  const EASE = 0.07; // share of the gap closed per 60Hz frame
+
+  onPage(() => {
+    const root = document.querySelector<HTMLElement>('[data-spill]');
+    if (!root || reducedMotion()) return;
+    const pieces = Array.from(root.querySelectorAll<HTMLElement>('[data-piece]'));
+    if (!pieces.length) return;
+    const depth = pieces.map((p) => Number(p.dataset.depth) || 1);
+
+    let tx = 0;
+    let ty = 0;
+    let cx = 0;
+    let cy = 0;
+    let raf = 0;
+    let last = 0;
+
+    const paint = () => {
+      pieces.forEach((p, i) => {
+        const d = depth[i];
+        // against the pointer, deeper pieces further
+        p.style.transform = `translate3d(${(-cx * AX * d).toFixed(2)}px, ${(-cy * AY * d).toFixed(2)}px, 0) rotate(${(cx * AR * d).toFixed(3)}deg)`;
+      });
+    };
+
+    const frame = (t: number) => {
+      const dt = last ? Math.min(64, t - last) : 16.67;
+      last = t;
+      const k = 1 - Math.pow(1 - EASE, dt / 16.67);
+      cx += (tx - cx) * k;
+      cy += (ty - cy) * k;
+      if (Math.abs(tx - cx) < 0.0008 && Math.abs(ty - cy) < 0.0008) {
+        cx = tx;
+        cy = ty;
+        paint();
+        raf = 0;
+        last = 0;
+        return;
+      }
+      paint();
+      raf = requestAnimationFrame(frame);
+    };
+    const kick = () => {
+      if (!raf) raf = requestAnimationFrame(frame);
+    };
+
+    const onMove = (e: PointerEvent) => {
+      tx = (e.clientX / window.innerWidth) * 2 - 1;
+      ty = (e.clientY / window.innerHeight) * 2 - 1;
+      kick();
+    };
+    const settle = (e: PointerEvent) => {
+      if (e.type === 'pointerup' && e.pointerType === 'mouse') return;
+      tx = 0;
+      ty = 0;
+      kick();
+    };
+    const onOut = (e: MouseEvent) => {
+      if (!e.relatedTarget) {
+        tx = 0;
+        ty = 0;
+        kick();
+      }
+    };
+
+    window.addEventListener('pointermove', onMove, { passive: true });
+    window.addEventListener('pointerup', settle, { passive: true });
+    window.addEventListener('pointercancel', settle, { passive: true });
+    document.addEventListener('mouseout', onOut);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', settle);
+      window.removeEventListener('pointercancel', settle);
+      document.removeEventListener('mouseout', onOut);
+    };
+  });
+</script>
+
+<style>
+  .spill {
+    --w: min(15.3vw, 25svh);
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .piece {
+    --rot: var(--r);
+    position: absolute;
+    left: var(--x);
+    bottom: calc(var(--b) * var(--w));
+    width: var(--w);
+    pointer-events: auto;
+    will-change: transform;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .piece:focus-visible {
+    outline: none;
+  }
+
+  /* the cover in hand comes to the top of the pile */
+  .piece:hover,
+  .piece:focus-visible {
+    z-index: 2;
+  }
+
+  .fall,
+  .tilt {
+    display: block;
+  }
+
+  /* leave with the page, never morph into another page's image */
+  .piece :global(.media) {
+    view-transition-name: none;
+  }
+
+  /* they drop in once, as if just knocked off the ring */
+  .fall {
+    animation: spill-fall 1.3s var(--ease-out) both;
+    animation-delay: calc(180ms + var(--n) * 80ms);
+  }
+
+  .tilt {
+    transform: rotate(var(--rot));
+    box-shadow: 0 34px 44px -36px color-mix(in srgb, var(--ink) 60%, transparent);
+    transition: transform 0.8s var(--ease-out);
+  }
+
+  .piece:focus-visible .tilt {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+  }
+
+  @media (hover: hover) {
+    .piece:hover .tilt {
+      transform: translate3d(0, -14px, 0) rotate(calc(var(--rot) * 0.92));
+    }
+  }
+
+  @keyframes spill-fall {
+    from {
+      opacity: 0;
+      transform: translate3d(0, -64px, 0) rotate(-9deg);
+    }
+    40% {
+      opacity: 1;
+    }
+  }
+
+  /* portrait phones get their own jumble; landscape ones keep the wide spread */
+  @media (max-width: 760px) and (orientation: portrait) {
+    .spill {
+      --w: min(37vw, 21svh);
+    }
+
+    .piece {
+      --rot: var(--mr);
+      left: var(--mx);
+      bottom: calc(var(--mb) * var(--w));
+    }
+  }
+
+  /* short, wide screens: smaller covers, kept to the foot of the screen */
+  @media (max-height: 520px) and (orientation: landscape) {
+    .spill {
+      --w: min(13vw, 30svh);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fall {
+      animation: none;
+    }
+
+    .piece {
+      will-change: auto;
+    }
+  }
+</style>

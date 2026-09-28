@@ -1,0 +1,598 @@
+---
+/**
+ * The disciplines as an accordion. Each row is a real heading button; opening
+ * it grows its panel (grid rows 0fr -> 1fr) and lifts in up to three covers
+ * that prove the discipline, plus a link to the filtered work index.
+ * One row open at a time; the first row with work is open on arrival, and
+ * /services/#<key> opens that row instead (applied before first paint).
+ *
+ * Covers here carry no shared-element names: one project can sit under
+ * several disciplines, and names must be unique per page.
+ */
+import Media from '../Media.astro';
+import { projectUrl } from '../../lib/work';
+import type { DisciplineRow } from './pick';
+
+interface Props {
+  rows: DisciplineRow[];
+}
+const { rows } = Astro.props;
+const openKey = rows.find((r) => r.projects.length > 0)?.key ?? null;
+const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
+---
+
+<ol class="acc" aria-label="Disciplines" data-acc>
+  {/* Marks the list as scripted before any row is parsed; without JS every panel stays open and every link reachable. */}
+  <script is:inline data-astro-rerun>document.currentScript.parentNode.setAttribute('data-js', '');</script>
+  {
+    rows.map((r, i) => {
+      const open = r.key === openKey;
+      const count = r.total > 0 ? `, ${r.total} ${r.total === 1 ? 'project' : 'projects'}` : '';
+      return (
+        <li class:list={['row', { 'is-open': open }]} id={r.key} style={`--i:${i}`} data-row>
+          <h2 class="head">
+            {/*
+              The heading, the button and its region are named "Brand Identity, 7 projects";
+              the one line is the button's description. aria-expanded is true for every row
+              until the inline script below sets the real state (without JS all rows are open).
+            */}
+            <button
+              class="btn"
+              type="button"
+              id={`${r.key}-btn`}
+              aria-label={`${r.label}${count}`}
+              aria-describedby={`${r.key}-line`}
+              aria-expanded="true"
+              aria-controls={`${r.key}-work`}
+              data-btn
+            >
+              <span class="btn-in">
+                <span class="no label">{r.no}</span>
+                <span class="name serif">
+                  {r.label}
+                  {r.total > 0 && <sup class="count label">{r.total}</sup>}
+                </span>
+                <span class="line" id={`${r.key}-line`}>
+                  {r.line}
+                </span>
+                <span class="sign" aria-hidden="true">
+                  <span class="bar" />
+                  <span class="bar bar-v" />
+                </span>
+              </span>
+            </button>
+          </h2>
+
+          <div class="panel" id={`${r.key}-work`} role="region" aria-labelledby={`${r.key}-btn`} data-panel>
+            <div class="clip">
+              <div class="body">
+                {r.projects.length > 0 ? (
+                  <>
+                    <ul class="cards" aria-label={`${r.label} work`}>
+                      {r.projects.map((p, j) => (
+                        <li class="card-item" style={`--j:${j}`}>
+                          <a class="card" href={projectUrl(p)} data-card>
+                            <Media
+                              class="thumb"
+                              src={p.data.cover}
+                              alt={p.data.coverAlt}
+                              ratio="4 / 3"
+                              sizes={sizes}
+                              widths={[480, 800, 1200]}
+                              priority={open}
+                            />
+                            <span class="cap label">
+                              <span class="cap-t">
+                                {p.data.title} · {p.data.year}
+                              </span>
+                              <span class="arrow" aria-hidden="true">
+                                →
+                              </span>
+                            </span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                    <p class="more" style={`--j:${r.projects.length}`}>
+                      <a class="all label" href={`/work/?d=${r.key}`}>
+                        <span class="link-line">See all {r.label} work</span>
+                        <span class="arrow" aria-hidden="true">
+                          →
+                        </span>
+                      </a>
+                    </p>
+                  </>
+                ) : (
+                  <p class="label soon">Work coming soon</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </li>
+      );
+    })
+  }
+</ol>
+
+{
+  /*
+   * Arrival state, applied before the first paint so nothing flashes open then shut:
+   * a remembered row (reload, back/forward) wins, then a deep link (/services/#identity),
+   * else the row open in the markup. A deep link also lands on its row straight away.
+   * `spServicesOpen` is accordion.ts's STATE_KEY.
+   */
+}
+<script is:inline data-astro-rerun>
+  (function () {
+    var acc = document.querySelector('[data-acc]');
+    if (!acc) return;
+    acc.setAttribute('data-js', '');
+    var rows = acc.querySelectorAll('[data-row]');
+    var st = history.state;
+    var remembered = !!st && typeof st === 'object' && 'spServicesOpen' in st;
+    var key = remembered ? st.spServicesOpen : null;
+    var fromHash = false;
+    if (!remembered && location.hash.length > 1) {
+      try {
+        key = decodeURIComponent(location.hash.slice(1));
+        fromHash = true;
+      } catch (e) {}
+    }
+    var hit = null;
+    for (var i = 0; i < rows.length; i++) if (rows[i].id === key) hit = rows[i];
+    acc.setAttribute('data-instant', '');
+    for (var j = 0; j < rows.length; j++) {
+      var on = remembered || hit ? rows[j] === hit : rows[j].classList.contains('is-open');
+      rows[j].classList.toggle('is-open', on);
+      var btn = rows[j].querySelector('[data-btn]');
+      if (btn) btn.setAttribute('aria-expanded', String(on));
+    }
+    void acc.offsetHeight;
+    acc.removeAttribute('data-instant');
+    if (remembered && typeof st.scrollY === 'number') window.scrollTo({ top: st.scrollY, behavior: 'instant' });
+    else if (fromHash && hit) hit.scrollIntoView({ block: 'start', behavior: 'instant' });
+  })();
+</script>
+
+<script>
+  import './accordion';
+</script>
+
+<style>
+  .acc {
+    --acc-dur: 0.85s;
+    /* N° column, shared with the work list so names line up across pages */
+    --c-no: clamp(40px, 6.25vw, 90px);
+    --c-gap: clamp(12px, 1.4vw, 20px);
+    --c-sign: 40px;
+    --pad-top: clamp(20px, 2.1vw, 30px);
+    --open-bg: color-mix(in srgb, var(--bone) 52%, var(--bg));
+  }
+
+  /* The accordion keeps the clicked row in place itself; the browser's own scroll anchoring would fight it. */
+  :global(html:has([data-acc])) {
+    overflow-anchor: none;
+  }
+
+  /* State changes applied at once: arrival, deep links, reduced motion (whole list); a collapse the reader overtakes (one row). */
+  .acc[data-instant] *,
+  .acc[data-instant] *::before,
+  .acc[data-instant] *::after,
+  .row[data-instant]::before,
+  .row[data-instant] *,
+  .row[data-instant] *::before,
+  .row[data-instant] *::after {
+    transition: none !important;
+  }
+
+  /* ---------- row ---------- */
+  .row {
+    position: relative;
+    isolation: isolate;
+    scroll-margin-top: calc(var(--header-h) + 12px);
+  }
+
+  /* open row sits on a bone ground that fades in */
+  .row::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--open-bg);
+    opacity: 0;
+    transition: opacity var(--acc-dur) var(--ease);
+    pointer-events: none;
+  }
+
+  .row.is-open::before {
+    opacity: 1;
+  }
+
+  /* Without JS every panel is open and nothing toggles: no ground, no sign. */
+  .acc:not([data-js]) .row::before,
+  .acc:not([data-js]) .sign {
+    display: none;
+  }
+
+  /* the rule under each row draws in on arrival */
+  .row::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0;
+    height: 1px;
+    background: var(--rule);
+    transform-origin: 0 50%;
+    animation: services-rule 1.3s var(--ease) both;
+    animation-delay: calc(var(--i) * 60ms);
+    pointer-events: none;
+  }
+
+  @keyframes services-rule {
+    from {
+      transform: scaleX(0);
+    }
+  }
+
+  /* ---------- header ---------- */
+  .head {
+    font: inherit;
+  }
+
+  .btn {
+    display: block;
+    width: 100%;
+    overflow: clip;
+    padding: var(--pad-top) var(--g) clamp(18px, 1.9vw, 28px);
+    text-align: left;
+  }
+
+  .btn:focus-visible {
+    outline-offset: -3px;
+  }
+
+  .btn-in {
+    display: grid;
+    grid-template-columns: var(--c-no) minmax(0, 1.25fr) minmax(0, 1fr) var(--c-sign);
+    column-gap: var(--c-gap);
+    align-items: baseline;
+    animation: services-row-rise 1s var(--ease-out) both;
+    animation-delay: calc(160ms + var(--i) * 60ms);
+  }
+
+  @keyframes services-row-rise {
+    from {
+      transform: translate3d(0, calc(100% + 24px), 0);
+    }
+  }
+
+  .no {
+    color: var(--accent);
+  }
+
+  .name {
+    justify-self: start;
+    max-width: 100%;
+    font-size: clamp(36px, 3.9vw, 60px);
+    line-height: 1.02;
+    transition: transform 0.8s var(--ease);
+  }
+
+  .count {
+    position: relative;
+    top: -0.15em;
+    margin-left: 0.35em;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 0;
+    vertical-align: super;
+  }
+
+  .line {
+    max-width: 30em;
+    font-size: var(--t-small);
+    line-height: 1.4;
+    color: var(--muted);
+    transition: color 0.5s var(--ease);
+  }
+
+  .is-open .line {
+    color: var(--fg);
+  }
+
+  /* plus that folds into a minus */
+  .sign {
+    position: relative;
+    justify-self: end;
+    align-self: center;
+    width: 18px;
+    height: 18px;
+  }
+
+  .bar {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: 1.5px;
+    margin-top: -0.75px;
+    background: currentColor;
+    transition: transform var(--acc-dur) var(--ease);
+  }
+
+  .bar-v {
+    transform: rotate(90deg);
+  }
+
+  .is-open .bar-v {
+    transform: rotate(0deg);
+  }
+
+  @media (hover: hover) {
+    .btn:hover .name {
+      transform: translate3d(0.12em, 0, 0);
+    }
+
+    .btn:hover .line {
+      color: var(--fg);
+    }
+  }
+
+  .btn:focus-visible .name {
+    transform: translate3d(0.12em, 0, 0);
+  }
+
+  /* ---------- panel: open by default, collapsed only once the script can open it ---------- */
+  .panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 1fr;
+    visibility: visible;
+    transition:
+      grid-template-rows var(--acc-dur) var(--ease),
+      visibility 0s linear 0s;
+  }
+
+  .acc[data-js] .row:not(.is-open) > .panel {
+    grid-template-rows: 0fr;
+    visibility: hidden;
+    transition:
+      grid-template-rows var(--acc-dur) var(--ease),
+      visibility 0s linear var(--acc-dur);
+  }
+
+  /* clip, not hidden: a clipped box is not a scroller, so focusing a cover mid-reveal cannot scroll the panel's insides */
+  .clip {
+    min-width: 0;
+    min-height: 0;
+    overflow: clip;
+  }
+
+  .body {
+    padding: 6px var(--g) clamp(34px, 3.6vw, 56px) calc(var(--g) + var(--c-no) + var(--c-gap));
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--c-gap);
+  }
+
+  /* Covers lift in one after another as the row opens, and drop away quickly as it closes. */
+  .card-item,
+  .more,
+  .soon {
+    transition:
+      opacity 0.9s var(--ease-out) calc(0.16s + var(--j, 0) * 0.07s),
+      transform 1.1s var(--ease-out) calc(0.16s + var(--j, 0) * 0.07s);
+  }
+
+  .acc[data-js] .row:not(.is-open) :is(.card-item, .more, .soon) {
+    opacity: 0;
+    transform: translate3d(0, 32px, 0);
+    transition:
+      opacity 0.35s var(--ease),
+      transform 0.5s var(--ease);
+  }
+
+  /* The row open on arrival cascades in with the page. */
+  .acc:not(.is-settled) .is-open .card-item,
+  .acc:not(.is-settled) .is-open .more,
+  .acc:not(.is-settled) .is-open .soon {
+    animation: services-card-in 1.1s var(--ease-out) both;
+    animation-delay: calc(420ms + var(--j, 0) * 80ms);
+  }
+
+  @keyframes services-card-in {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 32px, 0);
+    }
+  }
+
+  .card {
+    display: grid;
+    gap: 12px;
+  }
+
+  /* 4px + the 2px ring fits the panel's 6px top padding, so the clip never cuts the ring */
+  .card:focus-visible {
+    outline-offset: 4px;
+  }
+
+  /*
+   * Media.astro falls back to an auto-generated view-transition-name when no
+   * `name` is passed, and those names repeat across pages. These covers must
+   * not morph (a project can appear under several rows), so opt them out.
+   */
+  .card :global(.media) {
+    view-transition-name: none !important;
+  }
+
+  /* Images fade up as they arrive rather than popping in (only once the script is running). */
+  .acc.is-ready .card :global(.media img) {
+    opacity: 0;
+    transition: opacity 0.7s var(--ease-out);
+  }
+
+  .acc.is-ready .card :global(.media img.is-loaded) {
+    opacity: 1;
+  }
+
+  .cap {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6em;
+    min-width: 0;
+  }
+
+  .cap-t {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .arrow {
+    flex: none;
+    display: inline-block;
+    transition: transform 0.6s var(--ease);
+  }
+
+  .more {
+    margin-top: clamp(22px, 2.3vw, 34px);
+  }
+
+  .all {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.6em;
+    padding-block: 6px;
+  }
+
+  .all:hover .arrow,
+  .card:hover .arrow,
+  .all:focus-visible .arrow,
+  .card:focus-visible .arrow {
+    transform: translate3d(4px, 0, 0);
+  }
+
+  .all:hover .link-line,
+  .all:focus-visible .link-line {
+    background-size: 100% 1px;
+  }
+
+  .soon {
+    color: var(--muted);
+    padding-block: 2px 4px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .card {
+      transition: opacity 0.6s var(--ease);
+    }
+
+    .cards:has(.card:hover) .card:not(:hover) {
+      opacity: 0.45;
+    }
+  }
+
+  /* ---------- tablet ---------- */
+  @media (max-width: 1099px) {
+    .btn-in {
+      grid-template-columns: var(--c-no) minmax(0, 1fr) minmax(0, 0.8fr) var(--c-sign);
+    }
+  }
+
+  /* ---------- phone: name over its line, covers in a strip that follows the thumb ---------- */
+  @media (max-width: 760px) {
+    .acc {
+      --c-no: 34px;
+      --c-sign: 20px;
+      --pad-top: 18px;
+    }
+
+    .btn {
+      padding-bottom: 18px;
+    }
+
+    .btn-in {
+      grid-template-columns: var(--c-no) minmax(0, 1fr) var(--c-sign);
+      row-gap: 8px;
+    }
+
+    .name {
+      font-size: clamp(30px, 8.6vw, 38px);
+    }
+
+    .line {
+      grid-column: 2;
+      grid-row: 2;
+    }
+
+    .sign {
+      grid-column: 3;
+      grid-row: 1;
+      width: 16px;
+      height: 16px;
+    }
+
+    .body {
+      padding: 2px 0 30px;
+    }
+
+    .cards {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x mandatory;
+      scroll-padding-inline: calc(var(--g) + var(--c-no) + var(--c-gap)) var(--g);
+      padding-inline: calc(var(--g) + var(--c-no) + var(--c-gap)) var(--g);
+      /* room for the focus ring inside the scroller */
+      padding-block: 8px;
+      margin-block: -8px;
+      scrollbar-width: none;
+    }
+
+    .cards::-webkit-scrollbar {
+      display: none;
+    }
+
+    .card-item {
+      flex: 0 0 min(74vw, 340px);
+      scroll-snap-align: start;
+    }
+
+    .more,
+    .soon {
+      margin-left: calc(var(--g) + var(--c-no) + var(--c-gap));
+      margin-right: var(--g);
+    }
+
+    .more {
+      margin-top: 18px;
+    }
+  }
+
+  /* Reduced motion: global.css shortens durations but keeps delays, so arrivals are switched off outright. */
+  @media (prefers-reduced-motion: reduce) {
+    .btn-in,
+    .row::after,
+    .acc:not(.is-settled) .is-open .card-item,
+    .acc:not(.is-settled) .is-open .more,
+    .acc:not(.is-settled) .is-open .soon {
+      animation: none !important;
+    }
+
+    .card-item,
+    .more,
+    .soon,
+    .panel {
+      transition-delay: 0s !important;
+    }
+
+    .card :global(.media img) {
+      transform: none !important;
+    }
+  }
+</style>

@@ -1,0 +1,171 @@
+---
+/**
+ * Lab: experiments, type and motion studies, and the yearly Recap.
+ * A title with a live count, kind filters (kept in the URL as ?kind=), a
+ * masonry of stills and loops, and a viewer that opens from the tile.
+ * The masonry is packed at build time (see layout.ts), so it lays out
+ * before any script runs; scripts only animate between layouts.
+ */
+import type { LabEntry } from '../../lib/work';
+import { FILTERS, KIND_LABEL, LAYOUTS, pack, type Filter, type Kind, type LabChip, type LabItem } from './layout';
+import Chips from './Chips.astro';
+import Masonry from './Masonry.astro';
+import Viewer from './Viewer.astro';
+
+interface Props {
+  entries: LabEntry[];
+}
+const { entries } = Astro.props;
+
+const month = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+
+const items: LabItem[] = entries.map((e) => ({
+  id: e.id,
+  title: e.data.title,
+  kind: e.data.kind,
+  kindLabel: KIND_LABEL[e.data.kind],
+  date: month.format(e.data.date),
+  iso: e.data.date.toISOString().slice(0, 10),
+  tool: e.data.tool,
+  image: e.data.image,
+  alt: e.data.alt,
+  loop: e.data.loop,
+  place: '',
+}));
+
+// Pack one layout per filter and column count; tiles carry their slots, the list its heights.
+const heights: string[] = [];
+const place = new Map<string, string[]>(items.map((it) => [it.id, []]));
+for (const f of FILTERS) {
+  const set = items.filter((it) => f === 'all' || it.kind === f);
+  if (!set.length) continue;
+  const ratios = set.map((it) => it.image.height / it.image.width);
+  for (const { cols, offsets } of LAYOUTS) {
+    const { slots, height } = pack(ratios, cols, offsets);
+    heights.push(`--h-${f}-${cols}: ${height}`);
+    set.forEach((it, i) => {
+      const s = slots[i];
+      place.get(it.id)?.push(`--l-${f}-${cols}-c: ${s.c}; --l-${f}-${cols}-k: ${s.k}; --l-${f}-${cols}-m: ${s.m}`);
+    });
+  }
+}
+for (const it of items) it.place = (place.get(it.id) ?? []).join('; ');
+
+// Chips only for kinds that have entries, in the studio's order.
+const kinds = FILTERS.filter((f): f is Kind => f !== 'all');
+const chips: LabChip[] = [
+  { value: 'all', label: 'All', count: items.length },
+  ...kinds
+    .map((k) => ({ value: k as Filter, label: KIND_LABEL[k], count: items.filter((it) => it.kind === k).length }))
+    .filter((c) => c.count > 0),
+];
+---
+
+<section class="lab" data-lab aria-labelledby="lab-title">
+  <header class="head">
+    <h1 class="display title" id="lab-title">
+      Lab<sup class="count" aria-hidden="true">(<span class="count-n" data-count>{items.length}</span>)</sup>
+    </h1>
+    <div class="tools" data-js-only hidden>
+      <Chips chips={chips} />
+    </div>
+  </header>
+
+  <p class="visually-hidden" role="status" data-status></p>
+
+  <Masonry items={items} heights={heights.join('; ')} />
+
+  <Viewer items={items} />
+</section>
+
+{/* Applies a ?kind= filter from the URL before the first paint, so nothing flashes. */}
+<script is:inline data-astro-rerun>
+  (function () {
+    var root = document.querySelector('[data-lab]');
+    if (!root) return;
+    root.querySelectorAll('[data-js-only]').forEach(function (el) {
+      el.hidden = false;
+    });
+    var kind = String(new URLSearchParams(location.search).get('kind') || '').toLowerCase();
+    var chips = Array.prototype.slice.call(root.querySelectorAll('[data-chip]'));
+    var chip = chips.filter(function (c) {
+      return c.getAttribute('data-chip') === kind && kind !== 'all';
+    })[0];
+    if (!chip) return;
+    var n = 0;
+    root.querySelectorAll('[data-tile]').forEach(function (t) {
+      var ok = t.getAttribute('data-kind') === kind;
+      t.hidden = !ok;
+      if (ok) n++;
+    });
+    chips.forEach(function (c) {
+      c.setAttribute('aria-pressed', String(c === chip));
+    });
+    var masonry = root.querySelector('[data-masonry]');
+    if (masonry) masonry.setAttribute('data-filter', kind);
+    var count = root.querySelector('[data-count]');
+    if (count) count.textContent = String(n);
+  })();
+</script>
+
+<script>
+  import './controller';
+</script>
+
+<style>
+  .lab {
+    padding-top: calc(var(--header-h) + clamp(28px, 4.2vw, 60px));
+  }
+
+  .head {
+    --title: var(--t-display);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    padding: 0 var(--g) clamp(22px, 2.4vw, 32px);
+    border-bottom: 1px solid var(--fg);
+  }
+
+  .title {
+    font-size: var(--title);
+    white-space: nowrap;
+  }
+
+  /* Sit the chips on the title's baseline, not the bottom of its line box. */
+  .tools {
+    flex: 0 1 auto;
+    min-width: 0;
+    margin-bottom: calc(var(--title) * 0.066);
+  }
+
+  .count {
+    position: relative;
+    top: calc(var(--title) * 0.03);
+    display: inline-block;
+    margin-left: 0.3em;
+    font: 500 clamp(14px, 1.4vw, 20px) / 1 var(--f-mono);
+    font-stretch: 100%;
+    letter-spacing: 0.02em;
+    vertical-align: top;
+  }
+
+  .count-n {
+    display: inline-block;
+  }
+
+  /* Phone and small tablets: chips drop under the title and scroll sideways. */
+  @media (max-width: 760px) {
+    .head {
+      --title: clamp(76px, 22vw, 110px);
+      flex-direction: column;
+      align-items: stretch;
+      gap: 20px;
+      padding-bottom: 16px;
+    }
+
+    .tools {
+      margin-bottom: 0;
+    }
+  }
+</style>

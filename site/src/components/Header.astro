@@ -58,6 +58,48 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
 <script>
   import { onPage, getLenis } from '../scripts/motion';
 
+  /*
+   * Solid backdrop: on once content has scrolled under the header. A page with a
+   * full-bleed hero marks it with data-header-until; the header stays clear
+   * over it and turns solid once the hero has passed beneath.
+   */
+  onPage(() => {
+    const header = document.querySelector<HTMLElement>('[data-header]');
+    if (!header) return;
+    const until = document.querySelector<HTMLElement>('[data-header-until]');
+    let solid = false;
+    let first = true;
+    let ticking = false;
+    const sync = () => {
+      ticking = false;
+      const y = window.scrollY;
+      const limit = until ? until.getBoundingClientRect().bottom + y - header.offsetHeight : 8;
+      const on = y > limit;
+      if (on === solid && !first) return;
+      solid = on;
+      if (first) header.style.setProperty('--solid-t', '0s');
+      header.toggleAttribute('data-solid', on);
+      if (first) {
+        void getComputedStyle(header, '::after').opacity;
+        header.style.removeProperty('--solid-t');
+        first = false;
+      }
+    };
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(sync);
+      }
+    };
+    sync();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  });
+
   onPage(() => {
     const dialog = document.querySelector<HTMLDialogElement>('[data-menu]');
     const open = document.querySelector<HTMLButtonElement>('[data-menu-open]');
@@ -109,8 +151,28 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     pointer-events: none;
   }
 
+  .site-header {
+    view-transition-name: site-header;
+  }
+
   .site-header > * {
     pointer-events: auto;
+  }
+
+  /* Solid ground once content scrolls under the header (see the script). */
+  .site-header::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--bg);
+    opacity: 0;
+    transition: opacity var(--solid-t, 0.45s) var(--ease);
+    pointer-events: none;
+  }
+
+  .site-header[data-solid]::after {
+    opacity: 1;
   }
 
   .site-header.overlay::before {

@@ -1,0 +1,307 @@
+---
+/**
+ * The masonry: four columns on desktop, two below 1025px, each column
+ * starting a little lower than the last for rhythm. Tiles keep their image's
+ * own ratio. Placement comes from layout.ts as custom properties; CSS picks
+ * the set for the current filter (data-filter) and column count.
+ *
+ * Hover (desktop): a label rises with title · date · tool, and a loop, if
+ * the entry has one, plays muted. Click: the viewer opens from the tile.
+ */
+import Media from '../Media.astro';
+import type { LabItem } from './layout';
+
+interface Props {
+  items: LabItem[];
+  heights: string;
+}
+const { items, heights } = Astro.props;
+const sizes = '(max-width: 1024px) calc(50vw - 24px), calc(25vw - 32px)';
+---
+
+<div class="field">
+  <ul class="masonry" role="list" aria-label="Lab entries" data-masonry data-filter="all" style={heights}>
+    {
+      items.map((it, i) => (
+        <li
+          class="tile reveal"
+          data-tile
+          data-id={it.id}
+          data-kind={it.kind}
+          data-loop={it.loop}
+          style={`${it.place}; --i: ${i}`}
+        >
+          <button
+            class="tile-btn"
+            type="button"
+            aria-haspopup="dialog"
+            aria-label={`${it.title} · ${it.kindLabel} · ${it.date}${it.tool ? ` · ${it.tool}` : ''}`}
+            data-open={it.id}
+          >
+            <Media class="tile-media" src={it.image} alt={it.alt} sizes={sizes} priority={i < 4} />
+            {it.kind === 'recap' && <span class="tag label">Recap</span>}
+            <span class="cap" aria-hidden="true">
+              <span class="cap-in">
+                <span class="cap-title label">{it.title}</span>
+                <span class="cap-meta label">
+                  <time datetime={it.iso}>{it.date}</time>
+                  {it.tool && <span> · {it.tool}</span>}
+                </span>
+              </span>
+            </span>
+          </button>
+        </li>
+      ))
+    }
+  </ul>
+</div>
+
+<style>
+  .field {
+    container-type: inline-size;
+    padding: clamp(28px, 3vw, 44px) var(--g) clamp(72px, 10vw, 160px);
+  }
+
+  .masonry {
+    --cols: 4;
+    --gap: clamp(8px, 1.15vw, 18px);
+    /* one column's width, from the field's content width */
+    --cw: calc((100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols));
+    position: relative;
+  }
+
+  .tile {
+    position: absolute;
+    left: calc(var(--c) * (var(--cw) + var(--gap)));
+    top: calc(var(--k) * var(--cw) + var(--m) * var(--gap));
+    width: var(--cw);
+    /* Only the reveal's properties may transition; visibility (the viewer's lift) must switch at once. */
+    transition-property: transform, opacity;
+  }
+
+  /* ---------- one layout per filter (4 columns) ---------- */
+  .masonry[data-filter='all'] {
+    height: var(--h-all-4);
+  }
+  .masonry[data-filter='all'] > .tile {
+    --c: var(--l-all-4-c);
+    --k: var(--l-all-4-k);
+    --m: var(--l-all-4-m);
+  }
+  .masonry[data-filter='type'] {
+    height: var(--h-type-4);
+  }
+  .masonry[data-filter='type'] > .tile {
+    --c: var(--l-type-4-c);
+    --k: var(--l-type-4-k);
+    --m: var(--l-type-4-m);
+  }
+  .masonry[data-filter='motion'] {
+    height: var(--h-motion-4);
+  }
+  .masonry[data-filter='motion'] > .tile {
+    --c: var(--l-motion-4-c);
+    --k: var(--l-motion-4-k);
+    --m: var(--l-motion-4-m);
+  }
+  .masonry[data-filter='3d'] {
+    height: var(--h-3d-4);
+  }
+  .masonry[data-filter='3d'] > .tile {
+    --c: var(--l-3d-4-c);
+    --k: var(--l-3d-4-k);
+    --m: var(--l-3d-4-m);
+  }
+  .masonry[data-filter='recap'] {
+    height: var(--h-recap-4);
+  }
+  .masonry[data-filter='recap'] > .tile {
+    --c: var(--l-recap-4-c);
+    --k: var(--l-recap-4-k);
+    --m: var(--l-recap-4-m);
+  }
+
+  /* ---------- and again for 2 columns ---------- */
+  @media (max-width: 1024px) {
+    .masonry {
+      --cols: 2;
+    }
+    .masonry[data-filter='all'] {
+      height: var(--h-all-2);
+    }
+    .masonry[data-filter='all'] > .tile {
+      --c: var(--l-all-2-c);
+      --k: var(--l-all-2-k);
+      --m: var(--l-all-2-m);
+    }
+    .masonry[data-filter='type'] {
+      height: var(--h-type-2);
+    }
+    .masonry[data-filter='type'] > .tile {
+      --c: var(--l-type-2-c);
+      --k: var(--l-type-2-k);
+      --m: var(--l-type-2-m);
+    }
+    .masonry[data-filter='motion'] {
+      height: var(--h-motion-2);
+    }
+    .masonry[data-filter='motion'] > .tile {
+      --c: var(--l-motion-2-c);
+      --k: var(--l-motion-2-k);
+      --m: var(--l-motion-2-m);
+    }
+    .masonry[data-filter='3d'] {
+      height: var(--h-3d-2);
+    }
+    .masonry[data-filter='3d'] > .tile {
+      --c: var(--l-3d-2-c);
+      --k: var(--l-3d-2-k);
+      --m: var(--l-3d-2-m);
+    }
+    .masonry[data-filter='recap'] {
+      height: var(--h-recap-2);
+    }
+    .masonry[data-filter='recap'] > .tile {
+      --c: var(--l-recap-2-c);
+      --k: var(--l-recap-2-k);
+      --m: var(--l-recap-2-m);
+    }
+  }
+
+  /* A tile on its way out holds the spot it had (set inline by the script). */
+  .tile.is-leaving {
+    pointer-events: none;
+  }
+
+  /* The tile whose image is out in the viewer (visibility, so no running animation can show it). */
+  .tile.is-lifted {
+    visibility: hidden;
+  }
+
+  .tile-btn {
+    position: relative;
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    text-align: left;
+    /* Nothing on the button eases (reduced motion gives every property a tiny
+       transition), so it is visible, and focusable, the moment the lift ends. */
+    transition-property: none;
+  }
+
+  .tile-btn:focus-visible {
+    outline-offset: 4px;
+  }
+
+  /*
+   * Tiles are not shared elements: Media's transition:name gives every frame
+   * an auto name that would collide with other pages' images. They leave and
+   * arrive with the page.
+   */
+  .tile-btn :global(.media) {
+    view-transition-name: none !important;
+  }
+
+  .tile-btn :global(.media img) {
+    transition: transform 1.4s var(--ease-out);
+  }
+
+  /* The loop sits over the still and fades in once it is actually playing. */
+  .tile-btn :global(.tile-loop) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.5s var(--ease);
+    pointer-events: none;
+  }
+
+  .tile-btn :global(.tile-loop.is-playing) {
+    opacity: 1;
+  }
+
+  .tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 3px 6px 2px;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  /* ---------- hover label ---------- */
+  .cap {
+    position: absolute;
+    inset: auto 0 0;
+    display: none;
+    background: var(--bg);
+    transform: translate3d(0, 101%, 0);
+    transition: transform 0.45s var(--ease);
+  }
+
+  .cap-in {
+    display: grid;
+    gap: 1px;
+    padding: 10px 12px 11px;
+    transform: translate3d(0, 40%, 0);
+    opacity: 0;
+    transition:
+      transform 0.45s var(--ease),
+      opacity 0.3s var(--ease);
+  }
+
+  .cap-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cap-meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--muted);
+  }
+
+  @media (hover: hover) and (pointer: fine) and (min-width: 761px) {
+    .cap {
+      display: block;
+    }
+
+    .tile-btn:hover .cap,
+    .tile-btn:focus-visible .cap {
+      transform: none;
+      transition: transform 0.7s var(--ease-out);
+    }
+
+    .tile-btn:hover .cap-in,
+    .tile-btn:focus-visible .cap-in {
+      transform: none;
+      opacity: 1;
+      transition:
+        transform 0.8s var(--ease-out) 0.06s,
+        opacity 0.6s var(--ease-out) 0.06s;
+    }
+
+    .tile-btn:hover :global(.media img) {
+      transform: scale(1.035);
+    }
+  }
+
+  /* First load: tiles rise in a cascade (those below the fold wait for scroll instead). */
+  :global(.lab:not(.is-settled)) .tile:not(:global(.is-armed)) {
+    animation: lab-tile-in 1.1s var(--ease-out) both;
+    animation-delay: calc(120ms + var(--i) * 70ms);
+  }
+
+  @keyframes lab-tile-in {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 56px, 0);
+    }
+  }
+</style>

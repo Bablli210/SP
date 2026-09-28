@@ -1,4 +1,48 @@
 ---
+/**
+ * Studio: who makes the work and how, shown through images rather than
+ * paragraphs. The space, the five-step method, people, clients and press.
+ * Everything reads from src/data/site.ts; bracketed entries are placeholders.
+ */
 import Base from '../layouts/Base.astro';
+import Intro from '../components/studio/Intro.astro';
+import Method from '../components/studio/Method.astro';
+import People from '../components/studio/People.astro';
+import Clients from '../components/studio/Clients.astro';
+import { studio, method } from '../data/site';
+
+const description = `${studio.name}, the studio: the space, a five-step method (${method.map((m) => m.step).join(', ')}), the people and the clients.`;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'AboutPage',
+  name: `Studio · ${studio.name}`,
+  url: new URL('/studio/', Astro.site).href,
+  description: studio.thesis,
+  mainEntity: {
+    '@type': 'Organization',
+    name: studio.legalName,
+    alternateName: studio.name,
+    url: studio.url,
+    email: studio.email,
+    slogan: studio.short,
+    sameAs: [studio.instagram.url],
+  },
+};
 ---
-<Base title="studio"><section class="wrap" style="padding-top:120px"><h1 class="display" style="font-size:var(--t-display)">studio</h1></section></Base>
+
+<Base title="Studio" description={description} jsonLd={jsonLd} headerOverlay>
+  <div class="studio">
+    <Intro />
+    <Method />
+    <People />
+    <Clients />
+  </div>
+</Base>
+
+<style>
+  .studio {
+    /* space above each section's rule */
+    --sec: clamp(96px, 11vw, 176px);
+  }
+</style>

@@ -1,0 +1,642 @@
+---
+/**
+ * Home: the featured work on a slow ring, plus an index of every project.
+ *
+ * Plates are real links to their case studies. Their first-paint position is
+ * computed here (same maths as the client, per breakpoint) so the ring is laid
+ * out before any script runs and page transitions always find the plates in
+ * place. src/scripts/ring.ts takes over for input and motion.
+ */
+import Media from '../Media.astro';
+import IndexList from './IndexList.astro';
+import { getFeatured, getProjects, projectUrl, plateName, disciplineList } from '../../lib/work';
+import { PLACEHOLDER_CONTENT } from '../../data/site';
+import { GEOMETRY, pose, wrapK, type RingMode } from './geometry';
+
+const featured = await getFeatured();
+const all = await getProjects();
+const n = featured.length;
+const pad = (v: number) => String(v).padStart(2, '0');
+const fix = (v: number, d = 4) => Number(v.toFixed(d));
+
+/** First-paint pose of plate i (front = featured[0]) for both breakpoints, as CSS variables. */
+const firstPose = (i: number) => {
+  const k = wrapK(i, n);
+  const vars: string[] = [];
+  for (const mode of Object.keys(GEOMETRY) as RingMode[]) {
+    const p = pose(GEOMETRY[mode], k, n);
+    vars.push(
+      `--ax-${mode}:${fix(p.x)}`,
+      `--ay-${mode}:${fix(p.y)}`,
+      `--rot-${mode}:${fix((p.rot * 180) / Math.PI, 3)}deg`,
+      `--s-${mode}:${fix(p.s)}`,
+      `--o-${mode}:${fix(p.o, 3)}`,
+      `--veil-${mode}:${fix(p.veil, 3)}`,
+    );
+  }
+  vars.push(`--z:${pose(GEOMETRY.desk, k, n).z}`, `--rank:${Math.min(3, Math.abs(k))}`);
+  return vars.join(';');
+};
+
+const first = featured[0];
+const label =
+  'Selected work, arranged as a ring. Drag, swipe, scroll or use the arrow keys to turn it; select the front project to open it.';
+---
+
+<div
+  class:list={['ring', { 'has-note': PLACEHOLDER_CONTENT }]}
+  data-ring
+  data-view="ring"
+  data-intro
+  style={`--rho-desk:${GEOMETRY.desk.rho};--rho-mob:${GEOMETRY.mob.rho}`}
+>
+  <section class="stage" id="ring-stage" data-stage tabindex="0" aria-label={label}>
+    <div class="guide" aria-hidden="true"></div>
+    {
+      featured.map((p, i) => (
+        <a
+          class:list={['plate', { 'is-front': i === 0 }]}
+          href={projectUrl(p)}
+          style={firstPose(i)}
+          draggable="false"
+          aria-label={`${p.data.title}, N°${p.data.no}, ${p.data.sector}, ${p.data.year}`}
+          data-plate
+          data-slug={p.id}
+          data-vt={plateName(p)}
+          data-title={p.data.title}
+          data-no={p.data.no}
+          data-sector={p.data.sector}
+          data-year={p.data.year}
+          data-disc={disciplineList(p)}
+        >
+          <div class="plate-drop">
+            <div class="plate-in">
+              <Media
+                src={p.data.cover}
+                alt={p.data.coverAlt}
+                ratio="4 / 5"
+                name={plateName(p)}
+                sizes="(max-width: 760px) 64vw, 30vw"
+                widths={[480, 800, 1200, 1600]}
+                priority={Math.abs(wrapK(i, n)) <= 1}
+              />
+              <span class="plate-veil" aria-hidden="true" />
+            </div>
+          </div>
+        </a>
+      ))
+    }
+  </section>
+
+  <div class="bar">
+    <p class="cap-name serif" aria-hidden="true">
+      <span class="swap" data-swap="name"><span class="swap-item">{first?.data.title}</span></span>
+    </p>
+    <p class="cap-facts label" aria-hidden="true">
+      <span class="swap" data-swap="facts">
+        <span class="swap-item facts">
+          <span class="facts-line">
+            <span class="fact" data-f="no">N°{first?.data.no}</span>
+            <span class="fact" data-f="sector">{first?.data.sector}</span>
+            <span class="fact" data-f="year">{first?.data.year}</span>
+          </span>
+          <span class="facts-line fact-disc" data-f="disc">{first && disciplineList(first)}</span>
+        </span>
+      </span>
+    </p>
+    <p class="count serif" aria-hidden="true">
+      <span class="swap" data-swap="count"><span class="swap-item">{pad(n ? 1 : 0)}</span></span>
+      <span class="count-total">{`/ ${pad(n)}`}</span>
+    </p>
+    <div class="views" role="group" aria-label="View">
+      <span class="thumb" aria-hidden="true"></span>
+      <button class="label" type="button" aria-pressed="true" aria-controls="ring-stage" data-view-btn="ring">Ring</button>
+      <button class="label" type="button" aria-pressed="false" aria-controls="ring-index" data-view-btn="index">Index</button>
+    </div>
+  </div>
+
+  <IndexList projects={all} />
+
+  <p class="hint label" aria-hidden="true">
+    <span class="hint-fine">Drag · scroll · ← →</span><span class="hint-touch">Swipe</span>
+  </p>
+  <p class="visually-hidden" aria-live="polite" data-live></p>
+</div>
+
+<script>
+  import { onPage } from '../../scripts/motion';
+  import { initRing } from '../../scripts/ring';
+
+  onPage(initRing);
+</script>
+
+<style>
+  /* The home is one screen: nothing scrolls. */
+  :global(html:has([data-ring])),
+  :global(html:has([data-ring]) body) {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  .ring {
+    /* front plate width, and the top of the ring (where the front plate stands) */
+    --w0: max(160px, min(calc((100svh - 320px) * 0.7), 40vw));
+    /* the front plate hangs just under the header, or centres when the width limits it */
+    --ring-top: max(calc(var(--header-h) + 36px + var(--w0) * 1.25), calc(50svh + var(--w0) * 0.3));
+    --rho: var(--rho-desk);
+    --R: calc(var(--w0) * var(--rho));
+    --bottom: calc(var(--g) + env(safe-area-inset-bottom, 0px));
+    position: relative;
+    height: 100vh;
+    height: 100svh;
+    overflow: clip;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* leave room for the placeholder notice while it is on */
+  .ring.has-note {
+    --bottom: calc(var(--g) + 30px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* ---------- stage ---------- */
+  .stage {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: clip;
+    touch-action: pan-y pinch-zoom;
+    cursor: grab;
+    outline: none;
+  }
+
+  .stage:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -12px;
+  }
+
+  .is-dragging .stage,
+  .is-dragging .plate {
+    cursor: grabbing;
+  }
+
+  .guide {
+    position: absolute;
+    left: calc(50% - var(--R));
+    top: var(--ring-top);
+    width: calc(var(--R) * 2);
+    aspect-ratio: 1;
+    border: 1px solid var(--rule);
+    border-radius: 50%;
+    pointer-events: none;
+    transition: opacity 0.9s var(--ease);
+  }
+
+  .plate {
+    --ax: var(--ax-desk);
+    --ay: var(--ay-desk);
+    --rot: var(--rot-desk);
+    --s: var(--s-desk);
+    --o: var(--o-desk);
+    --veil: var(--veil-desk);
+    position: absolute;
+    left: calc(50% - var(--w0) / 2);
+    top: calc(var(--ring-top) - var(--w0) * 1.25);
+    z-index: var(--z);
+    display: block;
+    width: var(--w0);
+    transform-origin: 50% 100%;
+    transform: translate3d(calc(var(--ax) * var(--w0)), calc(var(--ay) * var(--w0)), 0) rotate(var(--rot))
+      scale(var(--s));
+    opacity: var(--o);
+    cursor: inherit;
+    outline-offset: 8px;
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+  }
+
+  .plate.is-front {
+    cursor: pointer;
+  }
+
+  .is-moving .plate {
+    will-change: transform, opacity;
+  }
+
+  /*
+   * Page transitions: no plate is a shared element by default, so arriving
+   * before ring.ts has loaded is a plain crossfade (a snapshot ignores the
+   * plate's own fade and veil, so named plates would flash in at full
+   * strength). ring.ts names the one plate that morphs, from data-vt.
+   */
+  .plate :global(.media) {
+    view-transition-name: none;
+  }
+
+  .plate-drop,
+  .plate-in {
+    position: relative;
+  }
+
+  .plate-in {
+    box-shadow: 0 36px 48px -40px color-mix(in srgb, var(--ink) 55%, transparent);
+  }
+
+  .plate-in :global(img) {
+    pointer-events: none;
+    -webkit-user-drag: none;
+    transition: transform 1.4s var(--ease-out);
+  }
+
+  .plate-veil {
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    opacity: var(--veil);
+    pointer-events: none;
+    will-change: opacity;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .ring:not(.is-dragging, .is-moving) .plate.is-front:hover .plate-in :global(img) {
+      transform: scale(1.035);
+    }
+  }
+
+  /* index view: the ring sinks away, plates one after another */
+  .plate-drop {
+    transition:
+      transform 0.9s var(--ease),
+      opacity 0.6s var(--ease);
+    transition-delay: var(--dd, 0ms);
+  }
+
+  .ring[data-view='index'] .plate-drop {
+    transform: translate3d(0, 26%, 0);
+    opacity: 0;
+  }
+
+  /* opening a case: the front plate gives under the hand while the next page loads */
+  .plate.is-pressed .plate-drop {
+    transform: scale(0.975);
+    transition: transform 0.45s var(--ease-out);
+  }
+
+  .ring[data-view='index'] .guide {
+    opacity: 0;
+  }
+
+  /* first load: the work rises into place, front first (never with reduced motion) */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html:not([data-astro-transition])) .ring[data-intro] .plate-in {
+      animation: plate-rise 1.4s var(--ease-out) both;
+      animation-delay: calc(var(--rank) * 110ms + 60ms);
+    }
+
+    :global(html:not([data-astro-transition])) .ring[data-intro] .guide {
+      animation: fade-in 1.8s var(--ease-out) both;
+    }
+
+    :global(html:not([data-astro-transition])) .ring[data-intro] .swap-item,
+    :global(html:not([data-astro-transition])) .ring[data-intro] .count-total {
+      animation: mask-up 1.1s var(--ease-out) 0.35s both;
+    }
+
+    :global(html:not([data-astro-transition])) .ring[data-intro] .views,
+    :global(html:not([data-astro-transition])) .ring[data-intro] .hint {
+      animation: fade-in 1.2s var(--ease-out) 0.6s both;
+    }
+  }
+
+  @keyframes plate-rise {
+    from {
+      transform: translate3d(0, 12%, 0);
+      opacity: 0;
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes mask-up {
+    from {
+      transform: translate3d(0, 110%, 0);
+    }
+  }
+
+  /* ---------- caption, counter, view toggle ---------- */
+  .bar {
+    position: absolute;
+    left: var(--g);
+    right: var(--g);
+    bottom: var(--bottom);
+    z-index: 2;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'name count'
+      'facts views';
+    align-items: end;
+    column-gap: var(--g);
+    row-gap: 12px;
+    pointer-events: none;
+  }
+
+  /*
+   * A soft wash of paper in both lower corners: the far plates and the guide
+   * sink into the page there, so they never muddy the caption or the counter.
+   */
+  .bar::before {
+    --wash: min(760px, 56vw) 100% no-repeat;
+    content: '';
+    position: absolute;
+    left: calc(-1 * var(--g));
+    right: calc(-1 * var(--g));
+    bottom: calc(-1 * var(--bottom));
+    z-index: -1;
+    height: calc(100% + var(--bottom) + 40px);
+    background:
+      radial-gradient(farthest-side at 0% 100%, var(--bg) 50%, transparent) left bottom / var(--wash),
+      radial-gradient(farthest-side at 100% 100%, var(--bg) 50%, transparent) right bottom / var(--wash);
+    pointer-events: none;
+    transition: opacity 0.55s var(--ease);
+  }
+
+  .ring[data-view='index'] .bar::before {
+    opacity: 0;
+  }
+
+  .cap-name {
+    grid-area: name;
+    justify-self: start;
+    font-size: var(--t-name);
+    line-height: 1;
+  }
+
+  .cap-facts {
+    grid-area: facts;
+    justify-self: start;
+    max-width: min(560px, calc(100vw - 2 * var(--g) - 320px));
+    color: var(--muted);
+  }
+
+  .count {
+    grid-area: count;
+    justify-self: end;
+    display: flex;
+    align-items: baseline;
+    gap: 0.28em;
+    font-size: clamp(28px, 3vw, 44px);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .count-total {
+    display: inline-block;
+    word-spacing: 0.12em;
+    font-size: 0.45em;
+    color: var(--muted);
+  }
+
+  .cap-name,
+  .cap-facts,
+  .count {
+    transition:
+      opacity 0.55s var(--ease),
+      transform 0.8s var(--ease);
+  }
+
+  .ring[data-view='index'] .cap-name,
+  .ring[data-view='index'] .cap-facts,
+  .ring[data-view='index'] .count {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+
+  /* masked text swap: items share one grid cell and slide through the mask */
+  .swap {
+    display: inline-grid;
+    overflow: hidden;
+    vertical-align: bottom;
+    padding-block: 0.08em 0.14em;
+    margin-block: -0.08em -0.14em;
+  }
+
+  .swap-item {
+    grid-area: 1 / 1;
+    display: block;
+    white-space: nowrap;
+  }
+
+  /* two fixed lines (facts, then disciplines) so the caption never changes height */
+  .facts {
+    display: grid;
+    row-gap: 3px;
+  }
+
+  .facts-line {
+    display: flex;
+    gap: 18px;
+  }
+
+  .fact-disc {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .views {
+    grid-area: views;
+    justify-self: end;
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 4px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    pointer-events: auto;
+  }
+
+  .views button {
+    position: relative;
+    z-index: 1;
+    padding: 9px 16px 8px;
+    border-radius: 999px;
+    transition: color 0.5s var(--ease);
+  }
+
+  .views button[aria-pressed='true'] {
+    color: var(--bg);
+  }
+
+  .views button:focus-visible {
+    outline-offset: 2px;
+  }
+
+  .thumb {
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    bottom: 4px;
+    width: calc((100% - 8px) / 2);
+    border-radius: 999px;
+    background: var(--fg);
+    transition: transform 0.65s var(--ease);
+  }
+
+  .ring[data-view='index'] .thumb {
+    transform: translate3d(100%, 0, 0);
+  }
+
+  /* ---------- hint ---------- */
+  .hint {
+    position: absolute;
+    left: 50%;
+    bottom: calc(var(--bottom) + 2px);
+    z-index: 2;
+    transform: translateX(-50%);
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+    pointer-events: none;
+    transition: opacity 0.8s var(--ease);
+  }
+
+  .hint-touch {
+    display: none;
+  }
+
+  /* narrower screens: the hint sits under the front plate, clear of the caption */
+  @media (max-width: 1100px) {
+    .hint {
+      top: calc(var(--ring-top) + 30px);
+      bottom: auto;
+    }
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    .hint-fine {
+      display: none;
+    }
+
+    .hint-touch {
+      display: inline;
+    }
+  }
+
+  .ring.hint-off .hint,
+  .ring[data-view='index'] .hint {
+    opacity: 0;
+  }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 760px) {
+    .ring {
+      --w0: max(150px, min(68vw, calc((100svh - 330px) * 0.62)));
+      --ring-top: calc(50svh + var(--w0) * 0.625 - 80px);
+      --rho: var(--rho-mob);
+      --bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .ring.has-note {
+      --bottom: calc(50px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .plate {
+      --ax: var(--ax-mob);
+      --ay: var(--ay-mob);
+      --rot: var(--rot-mob);
+      --s: var(--s-mob);
+      --o: var(--o-mob);
+      --veil: var(--veil-mob);
+      outline-offset: 5px;
+    }
+
+    .bar {
+      grid-template-areas:
+        'name count'
+        'facts facts'
+        'views views';
+      row-gap: 10px;
+    }
+
+    .cap-name {
+      font-size: clamp(32px, 10.4vw, 44px);
+    }
+
+    .cap-facts {
+      max-width: none;
+    }
+
+    .fact-disc {
+      display: none;
+    }
+
+    .facts-line {
+      gap: 14px;
+    }
+
+    .count {
+      font-size: 26px;
+    }
+
+    .views {
+      justify-self: start;
+      margin-top: 6px;
+    }
+
+    .views button {
+      padding: 11px 18px 10px;
+    }
+  }
+
+  /* phones held sideways (and very short windows): a smaller ring above a two-row caption */
+  @media (max-height: 480px) and (orientation: landscape) {
+    .ring {
+      --w0: max(110px, min(calc((100svh - var(--header-h) - var(--bottom) - 92px) * 0.8), 30vw));
+      --ring-top: calc(var(--header-h) + 6px + var(--w0) * 1.25);
+    }
+
+    .bar {
+      grid-template-areas:
+        'name count'
+        'facts views';
+      row-gap: 8px;
+    }
+
+    .cap-name {
+      font-size: 28px;
+    }
+
+    /* one line of facts, level with the toggle */
+    .cap-facts {
+      align-self: center;
+    }
+
+    .count {
+      font-size: 26px;
+    }
+
+    .fact-disc,
+    .hint {
+      display: none;
+    }
+
+    .views {
+      justify-self: end;
+      margin-top: 0;
+    }
+
+    .views button {
+      padding: 8px 14px 7px;
+    }
+  }
+</style>

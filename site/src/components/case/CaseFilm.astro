@@ -1,0 +1,109 @@
+---
+/**
+ * The case film: muted, inline, looping, and only playing while it is on
+ * screen (case.ts). The frame takes the poster's ratio, so a portrait cut sits
+ * in the column rhythm and a landscape one runs across the grid. A small
+ * control pauses it (and starts it, under reduced motion, where it never
+ * plays on its own).
+ */
+import { getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  src: string;
+  poster: ImageMetadata;
+  label: string;
+  n: string;
+  caption?: string;
+}
+const { src, poster, label, n, caption } = Astro.props;
+
+const portrait = poster.height >= poster.width;
+const posterImg = await getImage({ src: poster, width: Math.min(poster.width, portrait ? 1200 : 2400), quality: 85 });
+
+const ext = src.split('?')[0].split('.').pop()?.toLowerCase() ?? '';
+const type = ({ mp4: 'video/mp4', m4v: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime' } as Record<string, string>)[ext];
+---
+
+<figure class:list={['film', 'reveal', portrait ? 'is-portrait' : 'is-landscape']} data-film>
+  <div class="frame media" style={`aspect-ratio: ${poster.width} / ${poster.height}; background-image: url("${posterImg.src}")`}>
+    <video muted playsinline loop preload="none" poster={posterImg.src} aria-label={label} data-film-video>
+      <source src={src} type={type} />
+    </video>
+    <button type="button" class="toggle label" aria-label="Play film" data-film-toggle>
+      <span class="state" data-film-state>Play</span>
+      <span class="tc" aria-hidden="true" data-film-tc>00:00</span>
+    </button>
+  </div>
+  <figcaption class="cap label">
+    <span class="n">{n}</span> <span aria-hidden="true">·</span> {caption ?? 'Film'}
+  </figcaption>
+</figure>
+
+<style>
+  .film {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    row-gap: 12px;
+  }
+
+  /* The poster doubles as the frame's ground, so a fractional edge never shows a seam. */
+  .frame {
+    background-color: var(--ink);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
+
+  .is-portrait .frame {
+    grid-column: 3 / span 5;
+  }
+
+  .is-portrait .cap {
+    grid-column: 8 / span 4;
+    align-self: end;
+  }
+
+  .is-landscape .frame,
+  .is-landscape .cap {
+    grid-column: 1 / -1;
+  }
+
+  .toggle {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    display: inline-flex;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  .state {
+    min-width: 5ch;
+    text-align: left;
+  }
+
+  .tc {
+    color: var(--graphite);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cap {
+    color: var(--muted);
+  }
+
+  .n {
+    color: var(--fg);
+  }
+
+  @media (max-width: 760px) {
+    .is-portrait .frame,
+    .is-portrait .cap {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

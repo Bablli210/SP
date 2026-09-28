@@ -1,0 +1,838 @@
+---
+/**
+ * The brief: four numbered questions and a send button.
+ *
+ * With PUBLIC_FORM_ENDPOINT set, the brief is POSTed there (fetch, JSON
+ * accept) and a thank-you replaces the form in place. Without it, the brief
+ * opens as an email to the studio. With no script at all the form still
+ * works: it posts to the endpoint, or hands the brief to the mail app.
+ */
+import { disciplines, studio } from '../../data/site';
+
+const endpoint = String(import.meta.env.PUBLIC_FORM_ENDPOINT ?? '').trim();
+const needs = [...disciplines.map((d) => d.label), 'Not sure yet'];
+const NOT_SURE = 'Not sure yet';
+---
+
+<div class="brief" data-brief>
+  <form
+    class="form"
+    action={endpoint || `mailto:${studio.email}`}
+    method="post"
+    enctype={endpoint ? undefined : 'text/plain'}
+    novalidate
+    aria-label="Project brief"
+    data-form
+    data-endpoint={endpoint}
+    data-to={studio.email}
+  >
+    <div class="field" style="--i:0" data-field="name">
+      <label class="head label" for="brief-name">
+        <span class="no" aria-hidden="true">01</span>
+        <span>Name</span>
+        <span class="req" aria-hidden="true">Required</span>
+      </label>
+      <div class="line">
+        <input
+          class="input serif"
+          id="brief-name"
+          name="name"
+          type="text"
+          autocomplete="name"
+          autocapitalize="words"
+          spellcheck="false"
+          required
+          placeholder="Your name"
+        />
+      </div>
+      <p class="err label" id="brief-name-err" data-err></p>
+    </div>
+
+    <div class="field" style="--i:1" data-field="email">
+      <label class="head label" for="brief-email">
+        <span class="no" aria-hidden="true">02</span>
+        <span>Email</span>
+        <span class="req" aria-hidden="true">Required</span>
+      </label>
+      <div class="line">
+        <input
+          class="input serif"
+          id="brief-email"
+          name="email"
+          type="email"
+          inputmode="email"
+          autocomplete="email"
+          autocapitalize="off"
+          spellcheck="false"
+          required
+          placeholder="you@brand.com"
+        />
+      </div>
+      <p class="err label" id="brief-email-err" data-err></p>
+    </div>
+
+    <fieldset class="field needs" style="--i:2">
+      <legend class="head label">
+        <span class="no" aria-hidden="true">03</span>
+        <span>What do you need?</span>
+      </legend>
+      <div class="chips" data-chips>
+        {
+          needs.map((label, j) => (
+            <label class="chip" style={`--j:${j}`}>
+              <input
+                class="chip-input"
+                type="checkbox"
+                name="needs"
+                value={label}
+                data-exclusive={label === NOT_SURE ? '' : undefined}
+              />
+              <span class="chip-face serif">
+                <span class="chip-t">{label}</span>
+                <span class="chip-on" aria-hidden="true">
+                  {label}
+                </span>
+              </span>
+            </label>
+          ))
+        }
+      </div>
+    </fieldset>
+
+    <div class="field" style="--i:3">
+      <label class="head label" for="brief-message">
+        <span class="no" aria-hidden="true">04</span>
+        <span>Tell us about it</span>
+      </label>
+      <div class="line">
+        <textarea
+          class="input area serif"
+          id="brief-message"
+          name="message"
+          rows="3"
+          placeholder="Brand, timing, budget range"
+          data-lenis-prevent></textarea>
+      </div>
+    </div>
+
+    <div class="hp" aria-hidden="true">
+      <label>Leave this empty <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" /></label>
+    </div>
+
+    <div class="send" style="--i:4">
+      <button class="submit label" type="submit" data-submit>
+        <span class="submit-t">
+          <span class="t-idle">Send brief</span>
+          <span class="t-busy" aria-hidden="true">Sending</span>
+        </span>
+        <span class="arrow" aria-hidden="true">→</span>
+        <span class="progress" aria-hidden="true"></span>
+      </button>
+      <p class="note label" data-note></p>
+    </div>
+  </form>
+
+  <!-- always rendered (and outside the form, which hides on success) so every change is announced -->
+  <p class="visually-hidden" role="status" data-status></p>
+
+  <div class="done" data-done></div>
+
+  <template data-done-tpl>
+    <p class="done-k label" data-done-k>Brief sent</p>
+    <h2 class="done-t serif" tabindex="-1" data-done-focus>
+      <span class="done-l">Thank you.</span> <span class="done-l">We’ll be in touch.</span>
+    </h2>
+    <p class="done-note label" data-done-note></p>
+    <a class="done-link label link-line" href="/work/">Back to the work <span aria-hidden="true">→</span></a>
+  </template>
+</div>
+
+<script>
+  import { onPage, reducedMotion, getLenis } from '../../scripts/motion';
+  import { readBrief, problem, mailtoHref, wait, type FieldKey } from './brief';
+
+  const MIN_SENDING = 700; // long enough to read, short enough not to feel slow
+  const TIMEOUT = 15000;
+
+  onPage(() => {
+    const root = document.querySelector<HTMLElement>('[data-brief]');
+    const form = root?.querySelector<HTMLFormElement>('[data-form]');
+    const done = root?.querySelector<HTMLElement>('[data-done]');
+    const tpl = root?.querySelector<HTMLTemplateElement>('[data-done-tpl]');
+    const submit = root?.querySelector<HTMLButtonElement>('[data-submit]');
+    const note = root?.querySelector<HTMLElement>('[data-note]');
+    const status = root?.querySelector<HTMLElement>('[data-status]');
+    if (!root || !form || !done || !tpl || !submit || !note || !status) return;
+
+    const endpoint = form.dataset.endpoint ?? '';
+    const to = form.dataset.to ?? '';
+    const reduce = reducedMotion();
+
+    const fields = (['name', 'email'] as FieldKey[]).map((key) => {
+      const wrap = form.querySelector<HTMLElement>(`[data-field="${key}"]`)!;
+      return {
+        key,
+        wrap,
+        input: wrap.querySelector<HTMLInputElement>('input')!,
+        err: wrap.querySelector<HTMLElement>('[data-err]')!,
+      };
+    });
+    type Field = (typeof fields)[number];
+
+    let attempted = false;
+    let busy = false;
+    let finished = false;
+    let ctrl: AbortController | null = null;
+    const timers: number[] = [];
+
+    /* ---------- validation ---------- */
+
+    function mark(f: Field): boolean {
+      const msg = problem(f.key, f.input.value);
+      if (msg) {
+        // Rewrite only on change so a screen reader is not told twice.
+        if (f.err.textContent !== msg) f.err.textContent = msg;
+        f.input.setAttribute('aria-invalid', 'true');
+        f.input.setAttribute('aria-describedby', f.err.id);
+        f.wrap.classList.add('is-invalid');
+        return false;
+      }
+      f.err.textContent = '';
+      f.input.removeAttribute('aria-invalid');
+      f.input.removeAttribute('aria-describedby');
+      f.wrap.classList.remove('is-invalid');
+      return true;
+    }
+
+    // After the first attempt, errors clear as soon as a field is fixed and
+    // come back when the visitor leaves a field that is still wrong.
+    const onInput = (e: Event) => {
+      const f = fields.find((x) => x.input === e.target);
+      if (f && attempted && f.wrap.classList.contains('is-invalid')) mark(f);
+    };
+    const onBlur = (e: FocusEvent) => {
+      const f = fields.find((x) => x.input === e.target);
+      if (f && attempted) mark(f);
+    };
+
+    /* ---------- chips: "Not sure yet" stands alone ---------- */
+
+    const chips = Array.from(form.querySelectorAll<HTMLInputElement>('.chip-input'));
+    const onChip = (e: Event) => {
+      const t = e.target as HTMLInputElement;
+      if (!t.checked || !chips.includes(t)) return;
+      const exclusive = t.hasAttribute('data-exclusive');
+      for (const c of chips) {
+        if (c !== t && (exclusive || c.hasAttribute('data-exclusive'))) c.checked = false;
+      }
+    };
+
+    /* ---------- states ---------- */
+
+    /** Turning busy off leaves the status alone: the outcome writes its own. */
+    function setBusy(on: boolean) {
+      busy = on;
+      form!.setAttribute('aria-busy', on ? 'true' : 'false');
+      form!.classList.toggle('is-sending', on);
+      submit!.setAttribute('aria-disabled', on ? 'true' : 'false');
+      if (on) status!.textContent = 'Sending your brief…';
+    }
+
+    function showError(fallback: string) {
+      const msg = 'The brief didn’t send. Try again, or write to ';
+      // the note is what people see; the status region is what gets announced
+      status!.textContent = `${msg}${to}.`;
+      note!.textContent = '';
+      note!.classList.add('is-error');
+      note!.append(msg);
+      const a = document.createElement('a');
+      a.href = fallback;
+      a.className = 'link-line';
+      a.textContent = to;
+      note!.append(a, '.');
+    }
+
+    /** Replace the form in place with the thank-you, then hand it focus. */
+    async function showDone(mode: 'sent' | 'mail', mailHref = '') {
+      finished = true;
+      const frag = tpl!.content.cloneNode(true) as DocumentFragment;
+      const kicker = frag.querySelector<HTMLElement>('[data-done-k]');
+      const extra = frag.querySelector<HTMLElement>('[data-done-note]');
+      const heading = frag.querySelector<HTMLElement>('[data-done-focus]');
+      let said = 'Brief sent.';
+      if (mode === 'mail' && kicker && extra) {
+        kicker.textContent = 'Email app opened';
+        const lead = 'Your brief is ready to send from there. Nothing opened? Write to ';
+        extra.append(lead);
+        const a = document.createElement('a');
+        a.href = mailHref;
+        a.className = 'link-line';
+        a.textContent = to;
+        extra.append(a, '.');
+        said = `Email app opened. ${lead}${to}.`;
+      } else extra?.remove();
+
+      if (!reduce) {
+        form!.classList.add('is-leaving');
+        await wait(420);
+      }
+      form!.hidden = true;
+      form!.inert = true;
+      done!.append(frag);
+      root!.classList.add('is-done');
+      // focus reads the heading; the status adds what happened, politely after it
+      (heading ?? done!).focus({ preventScroll: true });
+      status!.textContent = said;
+
+      // Bring the message into view if the form was taller than the screen.
+      const top = done!.getBoundingClientRect().top;
+      const header = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 72;
+      if (top < header || top > window.innerHeight * 0.7) {
+        const lenis = getLenis();
+        const y = window.scrollY + top - header - 32;
+        if (lenis) lenis.scrollTo(y, { immediate: reduce });
+        else window.scrollTo({ top: y, behavior: reduce ? 'auto' : 'smooth' });
+      }
+    }
+
+    /* ---------- submit ---------- */
+
+    const onSubmit = async (e: SubmitEvent) => {
+      e.preventDefault();
+      if (busy || finished) return;
+      attempted = true;
+      note.classList.remove('is-error');
+      note.textContent = '';
+      status.textContent = '';
+
+      const bad = fields.filter((f) => !mark(f));
+      if (bad.length) {
+        bad[0].input.focus();
+        return;
+      }
+
+      const data = new FormData(form);
+      const brief = readBrief(data);
+      const mail = mailtoHref(to, brief);
+
+      // A filled honeypot is a bot: thank it and send nothing.
+      if (String(data.get('_gotcha') ?? '')) {
+        await showDone('sent');
+        return;
+      }
+
+      if (!endpoint) {
+        window.location.href = mail;
+        await showDone('mail', mail);
+        return;
+      }
+
+      setBusy(true);
+      ctrl = new AbortController();
+      const timer = window.setTimeout(() => ctrl?.abort(), TIMEOUT);
+      timers.push(timer);
+      try {
+        const [res] = await Promise.all([
+          fetch(endpoint, {
+            method: 'POST',
+            body: data,
+            headers: { Accept: 'application/json' },
+            signal: ctrl.signal,
+          }),
+          wait(reduce ? 0 : MIN_SENDING),
+        ]);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        // keep the sending look while the form leaves, then reset it out of sight
+        await showDone('sent');
+        setBusy(false);
+      } catch {
+        if (!root.isConnected) return; // the visitor has left the page
+        setBusy(false);
+        showError(mail);
+      } finally {
+        window.clearTimeout(timer);
+        ctrl = null;
+      }
+    };
+
+    form.addEventListener('submit', onSubmit);
+    form.addEventListener('input', onInput);
+    form.addEventListener('focusout', onBlur);
+    form.addEventListener('change', onChip);
+
+    return () => {
+      form.removeEventListener('submit', onSubmit);
+      form.removeEventListener('input', onInput);
+      form.removeEventListener('focusout', onBlur);
+      form.removeEventListener('change', onChip);
+      ctrl?.abort();
+      timers.forEach((t) => window.clearTimeout(t));
+    };
+  });
+</script>
+
+<style>
+  .brief {
+    --line: color-mix(in srgb, var(--fg) 42%, transparent);
+    --hint: color-mix(in srgb, var(--fg) 50%, var(--bg));
+    --in: clamp(24px, 2.05vw, 30px);
+    position: relative;
+  }
+
+  .form {
+    display: grid;
+    gap: clamp(38px, 4.4vh, 48px);
+    transition:
+      opacity 0.42s var(--ease),
+      transform 0.42s var(--ease);
+  }
+
+  .form.is-leaving {
+    opacity: 0;
+    transform: translate3d(0, -14px, 0);
+  }
+
+  /* ---------- fields ---------- */
+  .field {
+    position: relative;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    animation: brief-in 1s var(--ease-out) both;
+    animation-delay: calc(240ms + var(--i) * 75ms);
+  }
+
+  .head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    width: 100%;
+    padding: 0;
+    color: var(--muted);
+  }
+
+  .no {
+    color: var(--fg);
+    min-width: 2ch;
+  }
+
+  .req {
+    margin-left: auto;
+  }
+
+  .line {
+    position: relative;
+    margin-top: 6px;
+  }
+
+  /* resting underline, then a second one that draws in on focus */
+  .line::before,
+  .line::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--line);
+    transform-origin: 0 50%;
+    pointer-events: none;
+  }
+
+  .line::before {
+    animation: brief-draw 1.1s var(--ease) both;
+    animation-delay: calc(300ms + var(--i) * 75ms);
+  }
+
+  .line::after {
+    height: 2px;
+    background: var(--fg);
+    transform: scaleX(0);
+    transition: transform 0.6s var(--ease);
+  }
+
+  .line:focus-within::after {
+    transform: scaleX(1);
+  }
+
+  /* invalid: the resting line turns accent; focus still draws the heavier paper line over it */
+  .field.is-invalid .line::before {
+    background: var(--accent);
+  }
+
+  .input {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 6px 0 12px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    font-size: var(--in);
+    line-height: 1.25;
+    caret-color: var(--accent);
+    appearance: none;
+  }
+
+  .input:focus,
+  .input:focus-visible {
+    /* the drawn underline is the focus indicator */
+    outline: none;
+  }
+
+  .input::placeholder {
+    color: var(--hint);
+    opacity: 1;
+  }
+
+  .input:-webkit-autofill,
+  .input:-webkit-autofill:hover,
+  .input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--fg);
+    box-shadow: 0 0 0 100px var(--bg) inset;
+    transition: background-color 9999s;
+  }
+
+  .area {
+    resize: none;
+    min-height: calc(3 * 1.25em + 18px);
+    max-height: calc(9 * 1.25em + 18px);
+    field-sizing: content;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* inline error: sits in the gap below the line, so nothing shifts */
+  .err {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 10px);
+    color: var(--accent);
+    opacity: 0;
+    transform: translate3d(0, -4px, 0);
+    transition:
+      opacity 0.3s var(--ease-out),
+      transform 0.3s var(--ease-out);
+  }
+
+  .field.is-invalid .err {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* ---------- chips ---------- */
+  .needs .head {
+    margin-bottom: 14px;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .chip {
+    position: relative;
+    display: inline-flex;
+    animation: brief-in 0.8s var(--ease-out) both;
+    animation-delay: calc(240ms + var(--i, 2) * 75ms + var(--j) * 32ms);
+  }
+
+  .chip-input {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .chip-face {
+    --pad: 7px 13px 8px;
+    position: relative;
+    display: block;
+    padding: var(--pad);
+    border: 1px solid var(--line);
+    font-size: clamp(18px, 1.45vw, 21px);
+    line-height: 1.2;
+    white-space: nowrap;
+    transition: transform 0.28s var(--ease-out);
+  }
+
+  /* hover ring and selected fill are separate layers that only fade */
+  .chip-face::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border: 1px solid var(--fg);
+    opacity: 0;
+    transition: opacity 0.28s var(--ease-out);
+    pointer-events: none;
+  }
+
+  .chip-on {
+    position: absolute;
+    inset: 0;
+    padding: var(--pad);
+    background: var(--fg);
+    color: var(--bg);
+    opacity: 0;
+    transition: opacity 0.28s var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .chip-input:hover ~ .chip-face::before {
+      opacity: 1;
+    }
+  }
+
+  .chip-input:checked ~ .chip-face::before,
+  .chip-input:checked ~ .chip-face .chip-on {
+    opacity: 1;
+  }
+
+  .chip-input:active ~ .chip-face {
+    transform: scale(0.965);
+  }
+
+  .chip-input:focus-visible ~ .chip-face {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  /* honeypot: off-screen for people, still in the form for bots */
+  .hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  /* ---------- send ---------- */
+  .send {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px 22px;
+    padding-top: 4px;
+    animation: brief-in 1s var(--ease-out) both;
+    animation-delay: calc(240ms + var(--i) * 75ms);
+  }
+
+  .submit {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 24px 18px 26px;
+    overflow: hidden;
+    background: var(--fg);
+    color: var(--bg);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    transition: transform 0.2s var(--ease-out);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* both labels share one cell, so the button never changes width */
+  .submit-t {
+    display: grid;
+  }
+
+  .submit-t > * {
+    grid-area: 1 / 1;
+    transition:
+      opacity 0.3s var(--ease-out),
+      transform 0.3s var(--ease-out);
+  }
+
+  .t-busy {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+
+  .is-sending .t-idle {
+    opacity: 0;
+    transform: translate3d(0, -6px, 0);
+  }
+
+  .is-sending .t-busy {
+    opacity: 1;
+    transform: none;
+  }
+
+  .arrow {
+    display: inline-block;
+    transition:
+      transform 0.5s var(--ease),
+      opacity 0.3s var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .submit:hover .arrow {
+      transform: translate3d(5px, 0, 0);
+    }
+  }
+
+  .submit:active {
+    transform: scale(0.985);
+  }
+
+  /* sending: a hairline runs along the button's foot */
+  .progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    opacity: 0;
+  }
+
+  .is-sending .progress {
+    opacity: 1;
+    animation: brief-progress 1.3s var(--ease) infinite;
+  }
+
+  .is-sending .arrow {
+    opacity: 0;
+  }
+
+  .is-sending .submit {
+    cursor: progress;
+  }
+
+  .note {
+    flex: 1 1 220px;
+    color: var(--muted);
+  }
+
+  .note:empty {
+    display: none;
+  }
+
+  .note.is-error {
+    color: var(--fg);
+  }
+
+  .note :global(a),
+  .done-note :global(a) {
+    color: var(--fg);
+    text-transform: none;
+    background-size: 100% 1px;
+  }
+
+  /* ---------- thank you ---------- */
+  .done:empty {
+    display: none;
+  }
+
+  .is-done .done > * {
+    animation: brief-in 1s var(--ease-out) var(--d, 0ms) both;
+  }
+
+  .done-k {
+    color: var(--muted);
+  }
+
+  .done-t {
+    margin-top: 18px;
+    font-size: clamp(40px, 4.4vw, 68px);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    --d: 80ms;
+  }
+
+  /* focused by script only, to be read out; never a tab stop */
+  .done-t:focus {
+    outline: none;
+  }
+
+  .done-l {
+    display: block;
+  }
+
+  .done-note {
+    max-width: 44ch;
+    margin-top: 22px;
+    color: var(--muted);
+    --d: 160ms;
+  }
+
+  .done-link {
+    display: inline-block;
+    margin-top: 34px;
+    --d: 220ms;
+  }
+
+  @keyframes brief-in {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 18px, 0);
+    }
+  }
+
+  @keyframes brief-draw {
+    from {
+      transform: scaleX(0);
+    }
+  }
+
+  @keyframes brief-progress {
+    0% {
+      transform: scaleX(0);
+      transform-origin: 0 50%;
+    }
+    50% {
+      transform: scaleX(1);
+      transform-origin: 0 50%;
+    }
+    50.01% {
+      transform-origin: 100% 50%;
+    }
+    100% {
+      transform: scaleX(0);
+      transform-origin: 100% 50%;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .form {
+      gap: 46px;
+    }
+
+    .chip-face {
+      --pad: 9px 13px 10px;
+    }
+
+    .submit {
+      width: 100%;
+      justify-content: space-between;
+      padding-block: 20px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .field,
+    .chip,
+    .send,
+    .line::before,
+    .is-done .done > * {
+      animation: none;
+    }
+
+    .is-sending .progress {
+      animation: none;
+      transform: none;
+    }
+  }
+</style>

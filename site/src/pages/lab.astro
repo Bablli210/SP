@@ -1,4 +1,34 @@
 ---
+/**
+ * Lab: where the studio plays in public. Type studies, motion tests, 3D
+ * stills and the yearly Recap, as a masonry of stills and loops.
+ */
 import Base from '../layouts/Base.astro';
+import LabIndex from '../components/lab/LabIndex.astro';
+import { KIND_LABEL } from '../components/lab/layout';
+import { getLab } from '../lib/work';
+import { studio } from '../data/site';
+
+const entries = await getLab();
+
+const kinds = [...new Set(entries.map((e) => e.data.kind))].map((k) => KIND_LABEL[k]);
+const description = `${studio.name}, lab: ${entries.length} experiments and archives in ${kinds.join(', ')}.`;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: `Lab · ${studio.name}`,
+  url: new URL('/lab/', Astro.site).href,
+  hasPart: entries.map((e) => ({
+    '@type': 'CreativeWork',
+    name: e.data.title,
+    dateCreated: e.data.date.toISOString().slice(0, 10),
+    genre: KIND_LABEL[e.data.kind],
+    creator: { '@type': 'Organization', name: studio.name, url: studio.url },
+  })),
+};
 ---
-<Base title="lab"><section class="wrap" style="padding-top:120px"><h1 class="display" style="font-size:var(--t-display)">lab</h1></section></Base>
+
+<Base title="Lab" description={description} jsonLd={jsonLd} headerOverlay>
+  <LabIndex entries={entries} />
+</Base>

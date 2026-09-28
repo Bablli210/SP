@@ -1,0 +1,208 @@
+---
+/**
+ * Studio opener: the page title set huge, the studio's own line beside it,
+ * then two photographs of the space in an asymmetric pair (wide + detail).
+ * The photographs drift slightly inside their frames as the page scrolls
+ * (scroll-driven, on the compositor; off for reduced motion).
+ */
+import Media from '../Media.astro';
+import { studio } from '../../data/site';
+import { studioImage } from './images';
+
+const wide = studioImage('studio/studio-wide.jpg');
+const detail = studioImage('studio/studio-detail.jpg');
+---
+
+<section class="intro" aria-labelledby="studio-title">
+  <div class="top grid-12 wrap">
+    <h1 class="display title" id="studio-title">
+      <span class="mask"><span class="word">Studio</span></span>
+    </h1>
+    <p class="serif thesis">{studio.thesis}</p>
+  </div>
+
+  <div class="space grid-12 wrap">
+    <figure class="shot shot-wide">
+      <Media
+        src={wide}
+        alt="The studio space (placeholder image)"
+        ratio="16 / 10"
+        sizes="(max-width: 760px) calc(100vw - 32px), 62vw"
+        priority
+      />
+      <figcaption class="label cap"><span>Studio</span><span class="muted">Fig. 01</span></figcaption>
+    </figure>
+    <figure class="shot shot-detail">
+      <Media
+        src={detail}
+        alt="Process detail in the studio (placeholder image)"
+        ratio="4 / 5"
+        sizes="(max-width: 760px) 64vw, 24vw"
+        widths={[480, 800, 1200]}
+        priority
+      />
+      <figcaption class="label cap"><span>Detail</span><span class="muted">Fig. 02</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<style>
+  .intro {
+    --title: var(--t-display);
+    padding-top: calc(var(--header-h) + clamp(28px, 4.2vw, 60px));
+  }
+
+  .top {
+    align-items: end;
+    row-gap: 28px;
+  }
+
+  .title {
+    grid-column: 1 / span 7;
+    font-size: var(--title);
+    white-space: nowrap;
+  }
+
+  /* The word rises into place from behind its own baseline. */
+  .mask {
+    display: block;
+    overflow: clip;
+    /* room for the caps above and below the tight 0.8 line box */
+    padding-block: 0.06em 0.02em;
+    margin-block: -0.06em -0.02em;
+  }
+
+  .word {
+    display: block;
+  }
+
+  .thesis {
+    grid-column: 9 / -1;
+    max-width: 17em;
+    /* last line sits on the title's baseline */
+    margin-bottom: calc(var(--title) * 0.035);
+    font-size: clamp(24px, 2.3vw, 36px);
+    line-height: 1.12;
+    letter-spacing: -0.012em;
+    text-wrap: balance;
+  }
+
+  /* Entrance: reduced motion shows both at rest from the first frame. */
+  @media (prefers-reduced-motion: no-preference) {
+    .word {
+      animation: rise 1.15s var(--ease-out) 0.08s both;
+    }
+
+    .thesis {
+      animation: lift 1.1s var(--ease-out) 0.28s both;
+    }
+  }
+
+  @keyframes rise {
+    from {
+      transform: translate3d(0, 104%, 0);
+    }
+  }
+
+  @keyframes lift {
+    from {
+      transform: translate3d(0, 18px, 0);
+      opacity: 0;
+    }
+  }
+
+  /* ---------- the space ---------- */
+  .space {
+    margin-top: clamp(48px, 6.4vw, 104px);
+    align-items: end;
+  }
+
+  .shot-wide {
+    grid-column: 1 / span 8;
+    view-timeline: --shot-wide block;
+  }
+
+  .shot-detail {
+    grid-column: 10 / span 3;
+    view-timeline: --shot-detail block;
+  }
+
+  .cap {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding-top: 12px;
+  }
+
+  /* Scroll-driven drift: the photograph moves a touch slower than its frame. */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .shot :global(.media img) {
+        animation: drift linear both;
+        animation-range: cover 0% cover 100%;
+        will-change: transform;
+      }
+
+      .shot-wide :global(.media img) {
+        animation-timeline: --shot-wide;
+      }
+
+      /* gentler than the wide shot: the detail sits low on the first screen,
+         where a deeper crop would cut into the top of the picture */
+      .shot-detail :global(.media img) {
+        --drift: 3%;
+        --zoom: 1.08;
+        animation-timeline: --shot-detail;
+      }
+    }
+  }
+
+  /* zoom leaves at least the drift as margin on each side: (zoom - 1) / 2 > drift */
+  @keyframes drift {
+    from {
+      transform: translate3d(0, calc(var(--drift, 5%) * -1), 0) scale(var(--zoom, 1.12));
+    }
+    to {
+      transform: translate3d(0, var(--drift, 5%), 0) scale(var(--zoom, 1.12));
+    }
+  }
+
+  @media (max-width: 1100px) {
+    .title {
+      grid-column: 1 / -1;
+    }
+
+    .thesis {
+      grid-column: 6 / -1;
+      margin-bottom: 0;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .intro {
+      --title: clamp(88px, 29vw, 132px);
+    }
+
+    .top {
+      row-gap: 20px;
+    }
+
+    .thesis {
+      grid-column: 1 / -1;
+      font-size: clamp(24px, 6.6vw, 30px);
+    }
+
+    .space {
+      margin-top: 40px;
+      row-gap: 28px;
+    }
+
+    .shot-wide {
+      grid-column: 1 / -1;
+    }
+
+    .shot-detail {
+      grid-column: 5 / -1;
+    }
+  }
+</style>

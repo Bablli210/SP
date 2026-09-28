@@ -1,0 +1,212 @@
+---
+/**
+ * The work, in an editorial 12-column rhythm set by each item's layout:
+ *   full   edge to edge
+ *   wide   across the grid at 16:10
+ *   half   side by side in pairs (6 + 6) at 4:5; a lone half keeps its column
+ *   offset five columns pushed right, its caption facing it across the space
+ * The film (if any) comes in before the first offset, else before the closing
+ * full-bleed image. Captions are facts: "01 · Identity system".
+ */
+import type { ImageMetadata } from 'astro';
+import Media from '../Media.astro';
+import CaseFilm from './CaseFilm.astro';
+import type { Project } from '../../lib/work';
+
+interface Props {
+  project: Project;
+}
+const { project } = Astro.props;
+const { gallery, film, title } = project.data;
+
+type Layout = 'full' | 'wide' | 'half' | 'offset';
+type Block =
+  | { kind: 'image'; layout: Layout; src: ImageMetadata; alt: string; caption?: string; side?: 'a' | 'b' | 'solo' }
+  | { kind: 'film' };
+
+const blocks: Block[] = gallery.map((g) => ({ kind: 'image' as const, ...g }));
+
+// Halves pair up in order; a half with no partner stands alone.
+for (let i = 0; i < blocks.length; i++) {
+  const b = blocks[i];
+  if (b.kind !== 'image' || b.layout !== 'half') continue;
+  const next = blocks[i + 1];
+  if (next?.kind === 'image' && next.layout === 'half') {
+    b.side = 'a';
+    next.side = 'b';
+    i++;
+  } else {
+    b.side = 'solo';
+  }
+}
+
+if (film) {
+  const isLayout = (l: Layout) => (b: Block) => b.kind === 'image' && b.layout === l;
+  let at = blocks.findIndex(isLayout('offset'));
+  if (at < 0) at = blocks.findLastIndex(isLayout('full'));
+  if (at < 0) at = blocks.length;
+  blocks.splice(at, 0, { kind: 'film' });
+}
+
+const num = (i: number) => String(i + 1).padStart(2, '0');
+
+// Honest sizes. Content width is 100vw - 2 × --g (16px on phones, 2.8vw, 40px from 1429px).
+const sizes: Record<Layout, string> = {
+  full: '100vw',
+  wide: '(max-width: 760px) calc(100vw - 32px), (max-width: 1428px) 94vw, calc(100vw - 80px)',
+  half: '(max-width: 760px) calc(50vw - 22px), (max-width: 1428px) 46vw, calc(50vw - 60px)',
+  offset: '(max-width: 760px) calc(66.7vw - 25px), (max-width: 1428px) 38vw, calc(41.7vw - 57px)',
+};
+const ratios: Partial<Record<Layout, string>> = { wide: '16 / 10', half: '4 / 5' };
+---
+
+{
+  blocks.length > 0 && (
+    <section class="gallery wrap" aria-label="Gallery">
+      {blocks.map((b, i) =>
+        b.kind === 'film' && film ? (
+          <CaseFilm src={film.src} poster={film.poster} caption={film.caption} n={num(i)} label={`${title}, film`} />
+        ) : b.kind === 'image' ? (
+          <figure
+            class:list={['fig', 'reveal', `is-${b.layout}`, b.side && `side-${b.side}`]}
+            style={b.side === 'b' ? '--d: 120ms' : undefined}
+          >
+            <Media src={b.src} alt={b.alt} ratio={ratios[b.layout]} sizes={sizes[b.layout]} />
+            <figcaption class="cap label">
+              <span class="n">{num(i)}</span>
+              {b.caption && (
+                <>
+                  {' '}
+                  <span aria-hidden="true">·</span> {b.caption}
+                </>
+              )}
+            </figcaption>
+          </figure>
+        ) : null,
+      )}
+    </section>
+  )
+}
+
+<style>
+  .gallery {
+    --gap-x: var(--g);
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--gap-x);
+    row-gap: clamp(40px, 8vw, 136px);
+    padding-block: clamp(56px, 7vw, 112px) clamp(72px, 9vw, 150px);
+  }
+
+  .fig {
+    display: grid;
+    align-content: start;
+    row-gap: 12px;
+    min-width: 0;
+  }
+
+  /*
+   * Media gives every frame a view-transition name, generated when none is
+   * passed, and the generated names repeat from case to case. Gallery images
+   * never travel between pages: they leave and arrive with the page.
+   */
+  .fig :global(.media) {
+    view-transition-name: none;
+  }
+
+  .cap {
+    min-width: 0;
+    color: var(--muted);
+  }
+
+  .n {
+    color: var(--fg);
+  }
+
+  /* layouts */
+  .is-full {
+    grid-column: 1 / -1;
+    margin-inline: calc(var(--g) * -1);
+  }
+
+  .is-full :global(.media) {
+    max-height: 100vh;
+    max-height: 100svh;
+  }
+
+  .is-full .cap {
+    padding-inline: var(--g);
+  }
+
+  .is-wide {
+    grid-column: 1 / -1;
+  }
+
+  .side-a,
+  .side-solo {
+    grid-column: 1 / span 6;
+  }
+
+  .side-b {
+    grid-column: 7 / span 6;
+  }
+
+  .is-offset {
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+  }
+
+  .is-offset :global(.media) {
+    grid-column: 8 / span 5;
+    grid-row: 1;
+  }
+
+  .is-offset .cap {
+    grid-column: 4 / span 4;
+    grid-row: 1;
+    align-self: end;
+    text-align: right;
+  }
+
+  /* Reveal: the frame lifts in (global .reveal) while the picture settles inside it. */
+  .fig.is-armed {
+    transition-delay: var(--d, 0ms);
+  }
+
+  .fig.is-armed :global(.media img) {
+    transform: scale(1.08);
+    transition: transform 1.6s var(--ease-out) var(--d, 0ms);
+  }
+
+  .fig.is-armed.is-in :global(.media img) {
+    transform: none;
+  }
+
+  @media (max-width: 760px) {
+    .gallery {
+      --gap-x: 12px;
+      row-gap: 36px;
+      padding-block: 24px 64px;
+    }
+
+    .fig {
+      row-gap: 8px;
+    }
+
+    /* Two-up captions share a narrow column: keep them on one line each. */
+    .side-a .cap,
+    .side-b .cap {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .is-offset :global(.media) {
+      grid-column: 5 / -1;
+    }
+
+    .is-offset .cap {
+      grid-column: 1 / span 4;
+    }
+  }
+</style>

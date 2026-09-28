@@ -35,11 +35,17 @@ function stopLenis() {
   lenis = null;
 }
 
-/** Pages opt out of smooth scroll with <body data-smooth="off"> (e.g. the home ring). */
+/**
+ * Pages opt out of smooth scroll with <body data-smooth="off"> (e.g. the home ring).
+ * After a page change, Lenis adopts wherever the router put the page (the top, an
+ * anchor, or the restored position on Back) instead of forcing the top.
+ */
 function syncSmooth() {
   if (document.body.dataset.smooth === 'off') stopLenis();
   else startLenis();
-  lenis?.scrollTo(0, { immediate: true });
+  if (!lenis) return;
+  lenis.resize();
+  lenis.scrollTo(window.scrollY, { immediate: true, force: true });
 }
 
 type Cleanup = void | (() => void);

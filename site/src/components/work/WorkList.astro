@@ -1,0 +1,208 @@
+---
+/**
+ * List view: one fact row per project (N°, client, sector, disciplines, year).
+ * Rows settle up in a wave on first load. Hover or focus keeps one row in
+ * ink and fades the rest; the cover preview lives in Peek.astro.
+ */
+import type { Entry } from './types';
+
+interface Props {
+  entries: Entry[];
+}
+const { entries } = Astro.props;
+---
+
+<div class="list" data-panel="list">
+  <div class="cols label" aria-hidden="true">
+    <span>N°</span>
+    <span>Client</span>
+    <span class="c-sector">Sector</span>
+    <span class="c-disc">Discipline</span>
+    <span class="c-year">Year</span>
+  </div>
+  <ol class="rows" aria-label="Projects" data-items>
+    {
+      entries.map((e, i) => (
+        <li class="item" data-item data-id={e.id} data-d={e.d} data-s={e.sector} style={`--i:${i}`}>
+          <a class="row" href={e.url} data-row data-id={e.id}>
+            <span class="row-in">
+              <span class="c-no label">{e.no}</span>
+              <span class="c-name serif">{e.client}</span>
+              <span class="c-sector">{e.sector}</span>
+              <span class="c-disc">{e.disc}</span>
+              <span class="c-year label">{e.year}</span>
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</div>
+
+<style>
+  .cols,
+  .row-in {
+    display: grid;
+    grid-template-columns: var(--c-no) minmax(0, 1fr) var(--c-sector) var(--c-disc) var(--c-year);
+    column-gap: var(--c-gap);
+  }
+
+  .cols {
+    padding: 14px var(--g) 11px;
+    border-bottom: 1px solid var(--rule);
+    color: var(--muted);
+  }
+
+  .rows {
+    position: relative;
+  }
+
+  .item {
+    position: relative;
+  }
+
+  .item::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0;
+    height: 1px;
+    background: var(--rule);
+    transform-origin: 0 50%;
+    pointer-events: none;
+  }
+
+  .item.is-leaving {
+    pointer-events: none;
+  }
+
+  .row {
+    display: block;
+    overflow: clip;
+    padding: 16px var(--g) 13px;
+    transition: color 0.5s var(--ease);
+  }
+
+  .row:focus-visible {
+    outline-offset: -3px;
+  }
+
+  .row-in {
+    align-items: baseline;
+  }
+
+  .c-name {
+    justify-self: start;
+    max-width: 100%;
+    font-size: clamp(34px, 4vw, 58px);
+    line-height: 1.02;
+    transition: transform 0.8s var(--ease);
+  }
+
+  .row-in .c-sector,
+  .row-in .c-disc {
+    font-size: var(--t-small);
+    line-height: 1.35;
+    padding-right: 12px;
+  }
+
+  .c-year {
+    text-align: right;
+  }
+
+  .c-no {
+    transition: color 0.5s var(--ease);
+  }
+
+  /* One row in ink, the rest recede. */
+  @media (hover: hover) {
+    .rows:has(.row:hover) .row:not(:hover) {
+      color: var(--concrete);
+    }
+
+    .row:hover .c-name {
+      transform: translate3d(0.14em, 0, 0);
+    }
+
+    .row:hover .c-no {
+      color: var(--accent);
+    }
+  }
+
+  .rows:has(.row:focus-visible) .row:not(:focus-visible) {
+    color: var(--concrete);
+  }
+
+  .row:focus-visible .c-no {
+    color: var(--accent);
+  }
+
+  /* First load: rows settle up in a wave from a visible start (inside the row's clip); the rules draw in. */
+  :global(.work:not(.is-settled)) .row-in {
+    animation: work-row-rise 0.9s var(--ease-out) both;
+    animation-delay: calc(var(--i) * 50ms);
+  }
+
+  :global(.work:not(.is-settled)) .item::after {
+    animation: work-rule-draw 1.2s var(--ease) both;
+    animation-delay: calc(var(--i) * 50ms);
+  }
+
+  @keyframes work-row-rise {
+    from {
+      opacity: 0.45;
+      transform: translate3d(0, 10px, 0);
+    }
+  }
+
+  @keyframes work-rule-draw {
+    from {
+      transform: scaleX(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.work:not(.is-settled)) .row-in,
+    :global(.work:not(.is-settled)) .item::after {
+      animation: none;
+    }
+  }
+
+  @media (max-width: 1099px) {
+    .cols,
+    .row-in {
+      grid-template-columns: var(--c-no) minmax(0, 1fr) var(--c-sector) var(--c-year);
+    }
+
+    .c-disc {
+      display: none;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .cols {
+      display: none;
+    }
+
+    .row {
+      padding: 14px var(--g) 13px;
+    }
+
+    .row-in {
+      grid-template-columns: 34px minmax(0, 1fr) auto;
+      row-gap: 2px;
+    }
+
+    .c-name {
+      font-size: 30px;
+    }
+
+    .row-in .c-sector {
+      grid-column: 2 / -1;
+      grid-row: 2;
+      font: 500 var(--t-label) / 1.5 var(--f-mono);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+  }
+</style>

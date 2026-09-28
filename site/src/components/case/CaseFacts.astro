@@ -1,0 +1,96 @@
+---
+/**
+ * The one fact strip: client, sector, discipline and the finding. The finding
+ * is the only prose on the page; its key takes the project's accent.
+ */
+import { disciplineList, type Project } from '../../lib/work';
+
+interface Props {
+  project: Project;
+}
+const { project } = Astro.props;
+const d = project.data;
+
+const facts = [
+  { key: 'Client', value: d.client },
+  { key: 'Sector', value: d.sector },
+  { key: 'Discipline', value: disciplineList(project) },
+];
+---
+
+<section class="facts wrap" aria-labelledby="case-facts">
+  <h2 class="visually-hidden" id="case-facts">Facts</h2>
+  <dl class="strip">
+    {
+      facts.map((f) => (
+        <div class="fact">
+          <dt class="label muted">{f.key}</dt>
+          <dd class="serif">{f.value}</dd>
+        </div>
+      ))
+    }
+    <div class="fact finding">
+      <dt class="label">Finding</dt>
+      <dd class="serif">{d.finding}</dd>
+    </div>
+  </dl>
+</section>
+
+<style>
+  .strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: var(--g);
+    row-gap: 28px;
+    padding-block: clamp(28px, 3.4vw, 52px);
+    border-bottom: 1px solid var(--fg);
+  }
+
+  .fact {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+  }
+
+  dd {
+    font-size: clamp(20px, 1.75vw, 27px);
+    line-height: 1.16;
+    text-wrap: pretty;
+  }
+
+  .finding dt {
+    color: var(--accent-text, var(--accent));
+  }
+
+  @media (max-width: 1099px) {
+    .strip {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 760px) {
+    .strip {
+      column-gap: 20px;
+      row-gap: 22px;
+      padding-block: 24px;
+    }
+
+    .fact {
+      gap: 5px;
+    }
+
+    dd {
+      font-size: 20px;
+    }
+
+    .fact:nth-child(3),
+    .finding {
+      grid-column: 1 / -1;
+    }
+
+    .finding dd {
+      font-size: 22px;
+      line-height: 1.15;
+    }
+  }
+</style>

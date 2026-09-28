@@ -1,7 +1,30 @@
 ---
 import Base from '../../layouts/Base.astro';
-import Media from '../../components/Media.astro';
-import { getProjects, projectUrl, plateName } from '../../lib/work';
+import WorkIndex from '../../components/work/WorkIndex.astro';
+import { getProjects, projectUrl, disciplineLabel } from '../../lib/work';
+import { studio, disciplines } from '../../data/site';
+
 const projects = await getProjects();
+
+const used = disciplines.filter((d) => projects.some((p) => p.data.disciplines.includes(d.key)));
+const description = `${studio.name}, work index: ${projects.length} projects in ${used.map((d) => disciplineLabel(d.key)).join(', ')}.`;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: `Work · ${studio.name}`,
+  url: new URL('/work/', Astro.site).href,
+  hasPart: projects.map((p) => ({
+    '@type': 'CreativeWork',
+    name: p.data.title,
+    url: new URL(projectUrl(p), Astro.site).href,
+    dateCreated: String(p.data.year),
+    genre: p.data.sector,
+    creator: { '@type': 'Organization', name: studio.name, url: studio.url },
+  })),
+};
 ---
-<Base title="Work"><section class="wrap" style="padding-top:120px">{projects.map((p) => <a href={projectUrl(p)}><Media src={p.data.cover} alt={p.data.coverAlt} ratio="4 / 5" name={plateName(p)} /></a>)}</section></Base>
+
+<Base title="Work" description={description} jsonLd={jsonLd} headerOverlay>
+  <WorkIndex projects={projects} />
+</Base>
