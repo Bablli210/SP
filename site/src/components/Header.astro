@@ -1,0 +1,229 @@
+---
+/**
+ * Global header: wordmark, primary nav, and a full-screen menu on small screens.
+ * `overlay` gives it a soft backdrop so it stays legible over full-bleed imagery.
+ */
+import { nav, studio } from '../data/site';
+
+interface Props {
+  overlay?: boolean;
+}
+const { overlay = false } = Astro.props;
+const path = Astro.url.pathname;
+const isCurrent = (href: string) => path === href || (href !== '/' && path.startsWith(href));
+---
+
+<header class:list={['site-header', { overlay }]} data-header>
+  <a class="brand ui" href="/" aria-label={`${studio.name}, home`}>Serious Play</a>
+
+  <nav class="primary ui" aria-label="Main">
+    {
+      nav.map((item) => (
+        <a class="link-line" href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+          {item.label}
+        </a>
+      ))
+    }
+  </nav>
+
+  <button class="menu-btn label" type="button" aria-expanded="false" aria-controls="site-menu" data-menu-open>
+    Menu
+  </button>
+
+  <dialog class="menu" id="site-menu" aria-label="Menu" data-menu>
+    <div class="menu-top">
+      <a class="ui brand-in-menu" href="/">Serious Play</a>
+      <button class="label" type="button" data-menu-close>Close</button>
+    </div>
+    <nav aria-label="Main">
+      <ul>
+        {
+          nav.map((item, i) => (
+            <li style={`--i:${i}`}>
+              <a class="display" href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    <div class="menu-foot">
+      <a class="serif" href={`mailto:${studio.email}`}>{studio.email}</a>
+      <a class="label" href={studio.instagram.url} target="_blank" rel="noopener">{studio.instagram.handle} ↗</a>
+    </div>
+  </dialog>
+</header>
+
+<script>
+  import { onPage, getLenis } from '../scripts/motion';
+
+  onPage(() => {
+    const dialog = document.querySelector<HTMLDialogElement>('[data-menu]');
+    const open = document.querySelector<HTMLButtonElement>('[data-menu-open]');
+    const close = document.querySelector<HTMLButtonElement>('[data-menu-close]');
+    if (!dialog || !open || !close) return;
+
+    const show = () => {
+      dialog.showModal();
+      open.setAttribute('aria-expanded', 'true');
+      getLenis()?.stop();
+    };
+    const hide = () => {
+      dialog.close();
+    };
+    const onClose = () => {
+      open.setAttribute('aria-expanded', 'false');
+      getLenis()?.start();
+      open.focus();
+    };
+    open.addEventListener('click', show);
+    close.addEventListener('click', hide);
+    dialog.addEventListener('close', onClose);
+    // Close the menu when a link inside it is followed.
+    const links = dialog.querySelectorAll('a');
+    links.forEach((a) => a.addEventListener('click', hide));
+
+    return () => {
+      open.removeEventListener('click', show);
+      close.removeEventListener('click', hide);
+      dialog.removeEventListener('close', onClose);
+      links.forEach((a) => a.removeEventListener('click', hide));
+      if (dialog.open) dialog.close();
+    };
+  });
+</script>
+
+<style>
+  .site-header {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 80;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    height: var(--header-h);
+    padding: env(safe-area-inset-top, 0px) var(--g) 0;
+    color: var(--fg);
+    pointer-events: none;
+  }
+
+  .site-header > * {
+    pointer-events: auto;
+  }
+
+  .site-header.overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 -24px;
+    z-index: -1;
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 70%, transparent), transparent);
+    pointer-events: none;
+  }
+
+  .brand {
+    font-weight: 700;
+  }
+
+  .primary {
+    display: flex;
+    gap: 24px;
+  }
+
+  .menu-btn {
+    display: none;
+    padding: 14px 0 14px 16px;
+  }
+
+  @media (max-width: 760px) {
+    .primary {
+      display: none;
+    }
+
+    .menu-btn {
+      display: block;
+    }
+  }
+
+  /* full-screen menu */
+  .menu {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: calc(env(safe-area-inset-top, 0px) + 20px) var(--g) calc(env(safe-area-inset-bottom, 0px) + 28px);
+    border: 0;
+    background: var(--ink);
+    color: var(--paper);
+    flex-direction: column;
+  }
+
+  .menu[open] {
+    display: flex;
+  }
+
+  .menu::backdrop {
+    background: transparent;
+  }
+
+  .menu-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .menu-top button {
+    padding: 14px 0 14px 16px;
+  }
+
+  .brand-in-menu {
+    font-weight: 700;
+  }
+
+  .menu nav {
+    margin-top: 48px;
+  }
+
+  .menu li {
+    border-bottom: 1px solid #34332f;
+    overflow: hidden;
+  }
+
+  .menu li:first-child {
+    border-top: 1px solid #34332f;
+  }
+
+  .menu nav a {
+    display: block;
+    padding: 12px 0;
+    font-size: clamp(56px, 18vw, 96px);
+    transform: translateY(0);
+  }
+
+  .menu[open] nav a {
+    animation: menu-in 0.7s var(--ease-out) both;
+    animation-delay: calc(var(--i) * 45ms + 60ms);
+  }
+
+  .menu nav a[aria-current='page'] {
+    color: #9fa7ff;
+  }
+
+  @keyframes menu-in {
+    from {
+      transform: translateY(100%);
+    }
+  }
+
+  .menu-foot {
+    margin-top: auto;
+    display: grid;
+    gap: 8px;
+  }
+
+  .menu-foot .serif {
+    font-size: 24px;
+  }
+</style>

@@ -1,0 +1,11 @@
+---
+import Base from '../../layouts/Base.astro';
+import Media from '../../components/Media.astro';
+import { getProjects, plateName } from '../../lib/work';
+export async function getStaticPaths() {
+  const projects = await getProjects();
+  return projects.map((p) => ({ params: { slug: p.id }, props: { project: p } }));
+}
+const { project } = Astro.props;
+---
+<Base title={project.data.title}><Media src={project.data.cover} alt={project.data.coverAlt} name={plateName(project)} priority /></Base>

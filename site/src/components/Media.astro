@@ -1,0 +1,51 @@
+---
+/**
+ * One image in a fixed-ratio frame, responsive and lazy by default.
+ * Pass `name` to make it a shared element in page transitions
+ * (e.g. a ring plate that becomes the case-study hero).
+ */
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  src: ImageMetadata;
+  alt: string;
+  /** CSS aspect-ratio of the frame, e.g. "4 / 5". Omit to use the image's own ratio. */
+  ratio?: string;
+  sizes?: string;
+  priority?: boolean;
+  class?: string;
+  name?: string;
+  widths?: number[];
+}
+
+const {
+  src,
+  alt,
+  ratio,
+  sizes = '(max-width: 760px) 100vw, 50vw',
+  priority = false,
+  class: className,
+  name,
+  widths = [480, 800, 1200, 1600, 2000, 2400],
+} = Astro.props;
+const usable = widths.filter((w) => w <= src.width);
+---
+
+<div
+  class:list={['media', className]}
+  style={ratio ? `aspect-ratio: ${ratio}` : `aspect-ratio: ${src.width} / ${src.height}`}
+  transition:name={name}
+>
+  <Image
+    src={src}
+    alt={alt}
+    widths={usable.length ? usable : [src.width]}
+    sizes={sizes}
+    loading={priority ? 'eager' : 'lazy'}
+    fetchpriority={priority ? 'high' : 'auto'}
+    decoding="async"
+    quality={88}
+    layout="none"
+  />
+</div>

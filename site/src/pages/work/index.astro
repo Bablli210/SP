@@ -1,0 +1,7 @@
+---
+import Base from '../../layouts/Base.astro';
+import Media from '../../components/Media.astro';
+import { getProjects, projectUrl, plateName } from '../../lib/work';
+const projects = await getProjects();
+---
+<Base title="Work"><section class="wrap" style="padding-top:120px">{projects.map((p) => <a href={projectUrl(p)}><Media src={p.data.cover} alt={p.data.coverAlt} ratio="4 / 5" name={plateName(p)} /></a>)}</section></Base>

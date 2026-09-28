@@ -1,0 +1,118 @@
+---
+/**
+ * Global footer. The "Start a project" band is the site's one call to action;
+ * pages that are already the contact point hide it with cta={false}.
+ */
+import { nav, studio } from '../data/site';
+
+interface Props {
+  cta?: boolean;
+}
+const { cta = true } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer" data-theme="ink">
+  {
+    cta && (
+      <a class="cta wrap" href="/contact/">
+        <span class="display cta-title">Start a project</span>
+        <span class="label cta-meta">
+          Brief form <span aria-hidden="true">→</span>
+        </span>
+      </a>
+    )
+  }
+  <div class="base wrap">
+    <div class="contact">
+      <a class="serif link-line" href={`mailto:${studio.email}`}>{studio.email}</a>
+      <a class="label link-line" href={studio.instagram.url} target="_blank" rel="noopener">
+        {studio.instagram.handle} ↗
+      </a>
+    </div>
+    <nav class="ui links" aria-label="Footer">
+      {
+        nav.map((item) => (
+          <a class="link-line" href={item.href}>
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+    <p class="label muted legal">© {year} {studio.legalName}</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .cta {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    padding-block: clamp(56px, 8vw, 110px) clamp(40px, 5vw, 64px);
+    border-bottom: 1px solid #34332f;
+  }
+
+  .cta-title {
+    font-size: clamp(64px, 12vw, 190px);
+    transition: transform 0.8s var(--ease);
+  }
+
+  .cta:hover .cta-title {
+    transform: translateX(12px);
+  }
+
+  .cta-meta {
+    color: #bebdb8;
+    white-space: nowrap;
+  }
+
+  .base {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr;
+    gap: 24px;
+    align-items: end;
+    padding-block: 28px calc(52px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .contact {
+    display: grid;
+    gap: 6px;
+    justify-items: start;
+  }
+
+  .contact .serif {
+    font-size: clamp(22px, 2.2vw, 32px);
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+  }
+
+  .legal {
+    justify-self: end;
+    color: #a6a49e;
+  }
+
+  @media (max-width: 760px) {
+    .cta {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .base {
+      grid-template-columns: 1fr;
+    }
+
+    .legal {
+      justify-self: start;
+    }
+  }
+</style>

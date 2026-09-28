@@ -1,0 +1,115 @@
+---
+/**
+ * Page shell: SEO, fonts, page transitions, header and footer.
+ *
+ * Props
+ * - title / description / image: SEO and social card
+ * - theme: 'paper' (default) or 'ink' for dark pages
+ * - smooth: false turns off smooth scroll (pages with their own scroll behaviour)
+ * - footer: false hides the global footer; cta: false hides its "Start a project" band
+ * - headerOverlay: header sits over a full-bleed hero with a legible backdrop
+ * - jsonLd: structured data object for this page
+ */
+import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { studio, PLACEHOLDER_CONTENT } from '../data/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  theme?: 'paper' | 'ink';
+  smooth?: boolean;
+  footer?: boolean;
+  cta?: boolean;
+  headerOverlay?: boolean;
+  noindex?: boolean;
+  jsonLd?: Record<string, unknown>;
+}
+
+const {
+  title,
+  description = studio.thesis,
+  image = '/og.jpg',
+  theme = 'paper',
+  smooth = true,
+  footer = true,
+  cta = true,
+  headerOverlay = false,
+  noindex = false,
+  jsonLd,
+} = Astro.props;
+
+const fullTitle = title ? `${title} · ${studio.name}` : `${studio.name} · ${studio.short}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL(image, Astro.site);
+---
+
+<!doctype html>
+<html lang="en" data-theme={theme}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta name="theme-color" content={theme === 'ink' ? '#0e0e0e' : '#f3f2ee'} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={studio.name} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+
+    <ClientRouter fallback="swap" />
+    <script>
+      import '../scripts/motion';
+    </script>
+  </head>
+  <body data-theme={theme} data-smooth={smooth ? 'on' : 'off'}>
+    <a class="skip-link label" href="#main">Skip to content</a>
+    <Header overlay={headerOverlay} />
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    {footer && <Footer cta={cta} />}
+    {
+      PLACEHOLDER_CONTENT && (
+        <p class="placeholder-note label" transition:persist>
+          Preview · projects and images are placeholders
+        </p>
+      )
+    }
+  </body>
+</html>
+
+<style>
+  main {
+    display: block;
+    outline: none;
+  }
+
+  .placeholder-note {
+    position: fixed;
+    left: 50%;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    z-index: 90;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(14, 14, 14, 0.82);
+    color: #f3f2ee;
+    font-size: 10px;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+</style>
