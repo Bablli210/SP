@@ -14,12 +14,23 @@
  */
 import { prefetch } from 'astro:prefetch';
 import type { TransitionBeforePreparationEvent } from 'astro:transitions/client';
-import { reducedMotion } from './motion';
+import { reducedMotion, clamp } from './motion';
 import { GEOMETRY, MOBILE_QUERY, pose, pxPerStep, wrapK, type RingGeometry } from '../components/home/geometry';
+import { aimAtPointer, aimAtRow, follower, type PreviewBox } from '../components/home/preview-follow';
 
 const STORE_FRONT = 'sp:ring-front';
 const STORE_HINT = 'sp:ring-hint';
-const EASE = 'cubic-bezier(0.7, 0, 0.2, 1)';
+
+/**
+ * The caption roll's easing: the --ease token (global.css), read once when the
+ * ring starts so the script moves like the stylesheet. The fallback is the
+ * token's value today.
+ */
+let ease = 'cubic-bezier(0.7, 0, 0.2, 1)';
+function readEase(from: Element) {
+  const token = getComputedStyle(from).getPropertyValue('--ease').trim();
+  if (token && CSS.supports('animation-timing-function', token)) ease = token;
+}
 
 /** Time constants (ms) of the eased follow: while the hand drives, and while gliding to rest. */
 const TAU_HAND = 60;
@@ -32,7 +43,6 @@ const MAX_THROW = 3;
 type View = 'ring' | 'index';
 
 const mod = (v: number, n: number) => ((v % n) + n) % n;
-const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
 function read(key: string): string | null {
   try {
@@ -80,9 +90,19 @@ function fillCount(i: number) {
   };
 }
 
+/** The roll that brought each caption line in, kept here so a swap never has to ask the element for it. */
+const rolls = new WeakMap<Element, Animation>();
+
 /**
  * Swap the text in a masked box. The outgoing line leaves from wherever it is
  * (so fast spins roll smoothly), the new one slides in from the other side.
+ *
+ * This runs inside the ring's animation frame, right after the plates are
+ * written, so it must not read anything back (no computed style, no
+ * getAnimations(): either would force a style and layout pass mid-frame). The
+ * outgoing roll has no start keyframe: the browser starts it from the line's
+ * current, still-animating position, and the roll that brought the line in
+ * keeps running underneath it until the line is removed.
  */
 function swap(box: HTMLElement | null, fill: (el: HTMLElement) => void, dir: number, instant: boolean, delay = 0) {
   if (!box) return;
@@ -90,24 +110,22 @@ function swap(box: HTMLElement | null, fill: (el: HTMLElement) => void, dir: num
   if (!current) return;
   if (instant || !current.animate) {
     for (const el of Array.from(box.children)) if (el !== current) el.remove();
-    current.getAnimations().forEach((a) => a.cancel());
+    rolls.get(current)?.cancel();
+    rolls.delete(current);
     fill(current);
     return;
   }
-  const from = getComputedStyle(current).transform;
-  current.getAnimations().forEach((a) => a.cancel());
   const next = current.cloneNode(true) as HTMLElement;
   fill(next);
   box.append(next);
   // Old and new move in lockstep, one line apart, like a counter rolling over.
-  const timing: KeyframeAnimationOptions = { duration: 760, delay, easing: EASE, fill: 'both' };
-  current
-    .animate([{ transform: from === 'none' ? 'translate3d(0, 0, 0)' : from }, { transform: `translate3d(0, ${-dir * 112}%, 0)` }], timing)
-    .finished.then(
-      () => current.remove(),
-      () => {},
-    );
-  next.animate([{ transform: `translate3d(0, ${dir * 112}%, 0)` }, { transform: 'translate3d(0, 0, 0)' }], timing);
+  const timing: KeyframeAnimationOptions = { duration: 760, delay, easing: ease, fill: 'both' };
+  current.animate([{ transform: `translate3d(0, ${-dir * 112}%, 0)` }], timing).finished.then(
+    () => current.remove(),
+    () => {},
+  );
+  const roll = next.animate([{ transform: `translate3d(0, ${dir * 112}%, 0)` }, { transform: 'translate3d(0, 0, 0)' }], timing);
+  rolls.set(next, roll);
 }
 
 function paintCaption(root: HTMLElement, plates: HTMLElement[], i: number, dir: number, instant: boolean) {
@@ -275,6 +293,7 @@ export function initRing(): (() => void) | void {
 
   const reduce = reducedMotion();
   const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
+  readEase(root);
   const cache = freshCache(n);
   let geo = geometry();
   let w0 = plateWidth(plates[0]);
@@ -328,10 +347,6 @@ export function initRing(): (() => void) | void {
     }
     const front = mod(Math.round(cur), n);
     write(STORE_FRONT, String(front));
-    if (front !== announced && live) {
-      live.textContent = `${plates[front].dataset.title}, ${front + 1} of ${n}`;
-      announced = front;
-    }
     try {
       prefetch(plates[front].href);
     } catch {
@@ -392,6 +407,42 @@ export function initRing(): (() => void) | void {
     root!.classList.add('hint-off');
     write(STORE_HINT, '1');
   }
+
+  /* ---------- announcements ---------- */
+  /*
+   * A focused plate speaks for itself (its name carries its position, see
+   * Ring.astro), so the live region only covers turns that move no focus:
+   * arrows on the stage, wheel, drag and clicks. It speaks as soon as the input
+   * has named its destination (not when the ring comes to rest, a second and a
+   * half later), and a quick run of presses says only where it ends.
+   */
+  let announceTimer = 0;
+  const isPlate = (el: Element | null) => !!el && el.matches('[data-plate]') && root!.contains(el);
+
+  function announce(i: number) {
+    window.clearTimeout(announceTimer);
+    announceTimer = window.setTimeout(() => {
+      const ae = document.activeElement;
+      if (!live || i === announced || isPlate(ae)) return;
+      // Focus has left the ring for the rest of the page: that has the floor now.
+      if (ae && ae !== document.body && ae.id !== 'main' && !root!.contains(ae)) return;
+      live.textContent = `${plates[i].dataset.title}, ${i + 1} of ${n}`;
+      announced = i;
+    }, 250);
+  }
+
+  /**
+   * Focus has just spoken plate i: drop anything pending, and clear the region
+   * so the next announcement is heard even if its text repeats the last one.
+   */
+  function spoken(i: number) {
+    window.clearTimeout(announceTimer);
+    announced = i;
+    if (live) live.textContent = '';
+  }
+
+  /** The plate the ring is turning to (or resting on). */
+  const heading = () => mod(Math.round(target), n);
 
   /* ---------- drag / swipe ---------- */
   let pointerId = -1;
@@ -454,6 +505,7 @@ export function initRing(): (() => void) | void {
       dest = target + clamp(v * TAU_SETTLE, -MAX_THROW, MAX_THROW);
     }
     target = Math.round(dest);
+    if (dragMoved && !cancelled) announce(heading());
     // A plain press on a still ring changes nothing: no loop, no layer churn.
     if (target !== cur || moving) kick();
   }
@@ -487,11 +539,12 @@ export function initRing(): (() => void) | void {
     }
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     const i = plates.indexOf(plate);
-    if (i !== mod(Math.round(target), n)) {
+    if (i !== heading()) {
       e.preventDefault();
       e.stopPropagation();
       dismissHint();
       goTo(i);
+      announce(i);
       return;
     }
     // Front plate: follow the link. The router morphs the plate into the case hero;
@@ -530,6 +583,7 @@ export function initRing(): (() => void) | void {
     if (Math.abs(moved) < 0.04) target = Math.round(target);
     else if (moved > 0) target = Math.max(Math.ceil(target - 0.25), base + 1);
     else target = Math.min(Math.floor(target + 0.25), base - 1);
+    announce(heading());
     kick();
   }
 
@@ -547,6 +601,7 @@ export function initRing(): (() => void) | void {
       wheelAcc += d;
       if (!wheelLock && Math.abs(wheelAcc) > 30) {
         step(Math.sign(wheelAcc));
+        announce(heading());
         wheelLock = true;
       }
       wheelTimer = window.setTimeout(() => {
@@ -605,21 +660,28 @@ export function initRing(): (() => void) | void {
         goTo(n - 1);
         break;
       case 'Enter':
+        // Open the front project, as a click on it would.
         if (ae !== stage) return;
-        plates[mod(Math.round(target), n)].click();
-        break;
+        e.preventDefault();
+        plates[heading()].click();
+        return;
       default:
         return;
     }
     e.preventDefault();
     dismissHint();
-    if (onPlate) plates[mod(Math.round(target), n)].focus({ preventScroll: true });
+    // On a plate, focus follows the ring and the plate's name says where it is;
+    // anywhere else (the stage, the view toggle) the live region says it.
+    if (onPlate) plates[heading()].focus({ preventScroll: true });
+    else announce(heading());
   }
 
   function onFocusIn(e: FocusEvent) {
     const plate = (e.target as Element).closest?.<HTMLAnchorElement>('[data-plate]');
     if (!plate || dragging || !plate.matches(':focus-visible')) return;
-    goTo(plates.indexOf(plate));
+    const i = plates.indexOf(plate);
+    goTo(i);
+    spoken(i);
   }
 
   /* ---------- views ---------- */
@@ -662,59 +724,68 @@ export function initRing(): (() => void) | void {
   }
 
   /* ---------- index preview ---------- */
-  let peekX = 0;
-  let peekY = 0;
-  let peekTX = 0;
-  let peekTY = 0;
-  let peekR = 0;
-  let peekRaf = 0;
-  let peekLast = 0;
+  /*
+   * Placement and motion come from components/home/preview-follow.ts: beside
+   * the pointer, never over the hovered name, below the header, with the same
+   * follow, lean and rise as the /work/ list. A keyboard-focused row gets it
+   * after its name, just above or below the row so its focus ring stays clear.
+   */
+  const peekFollow = peek ? follower(peek, reduce) : null;
   let peekShown = false;
   let peekSlug = '';
-  let hasAim = false;
+  /** The row the preview belongs to, and whether keyboard focus (not the pointer) put it there. */
+  let peekRow: HTMLElement | null = null;
+  let peekByKey = false;
+  let pointerX = -1;
+  let pointerY = -1;
+  let peekBox: PreviewBox | null = null;
+  /** How far a hovered name slides over, px (--name-shift in IndexList.astro). */
+  let nameShift = 0;
 
-  function peekTick(now: number) {
-    if (!peek) return;
-    const dt = peekLast ? Math.min(50, Math.max(1, now - peekLast)) : 16.7;
-    peekLast = now;
-    const a = reduce ? 1 : 1 - Math.exp(-dt / 110);
-    const lag = peekTX - peekX;
-    peekX += (peekTX - peekX) * a;
-    peekY += (peekTY - peekY) * a;
-    const tilt = reduce ? 0 : clamp(lag * 0.03, -5, 5);
-    peekR += (tilt - peekR) * (reduce ? 1 : 1 - Math.exp(-dt / 140));
-    peek.style.transform = `translate3d(${peekX.toFixed(2)}px, ${peekY.toFixed(2)}px, 0) rotate(${peekR.toFixed(3)}deg)`;
-    if (Math.abs(peekTX - peekX) < 0.1 && Math.abs(peekTY - peekY) < 0.1 && Math.abs(peekR) < 0.01) {
-      peekRaf = 0;
-      return;
-    }
-    peekRaf = requestAnimationFrame(peekTick);
+  /**
+   * The preview's size, and the highest it may sit: the top of the list, just
+   * under the header. Measured on first use and again after a resize. Null
+   * while the preview is not displayed (no fine pointer, or not ready yet).
+   */
+  function measurePeek(): PreviewBox | null {
+    if (peekBox || !peek || !index) return peekBox;
+    const w = peek.offsetWidth;
+    if (!w) return null;
+    peekBox = { w, h: peek.offsetHeight || w * 1.25, top: index.getBoundingClientRect().top };
+    const name = rowsEl?.querySelector('.name');
+    nameShift = name ? parseFloat(getComputedStyle(name).getPropertyValue('--name-shift')) || 0 : 0;
+    return peekBox;
   }
 
-  function aim(x: number, y: number) {
-    if (!peek) return;
-    const w = peek.offsetWidth || 260;
-    const h = w * 1.25;
-    const gap = 32;
-    let tx = x + gap;
-    if (tx + w > window.innerWidth - 12) tx = x - gap - w;
-    const ty = clamp(y - h * 0.5, 12, Math.max(12, window.innerHeight - h - 12));
-    peekTX = tx;
-    peekTY = ty;
-    if (!hasAim || !peekShown) {
-      // Appear at the cursor rather than flying in from the last spot.
-      peekX = tx;
-      peekY = ty;
-      hasAim = true;
-    }
-    if (!peekRaf) {
-      peekLast = 0;
-      peekRaf = requestAnimationFrame(peekTick);
-    }
+  /**
+   * Right edge of a row's name where it comes to rest: its layout box, plus the
+   * slide when hovered. (Its drawn box would lag while the slide runs.)
+   */
+  function nameRight(row: HTMLElement, hovered: boolean): number {
+    const name = row.querySelector<HTMLElement>('.name');
+    const parent = name?.offsetParent;
+    if (!name || !parent) return 0;
+    const left = parent.getBoundingClientRect().left + parent.clientLeft;
+    return left + name.offsetLeft + name.offsetWidth + (hovered ? nameShift : 0);
   }
 
-  function showPeek(slug: string) {
-    if (!peek || !fine.matches) return;
+  function placePeek(row: HTMLElement, byKey: boolean): boolean {
+    const box = measurePeek();
+    if (!box || !peekFollow) return false;
+    const aim = byKey
+      ? aimAtRow(row.getBoundingClientRect(), nameRight(row, false), box)
+      : aimAtPointer(pointerX, pointerY, nameRight(row, true), box);
+    // A hidden preview appears at its aim instead of flying in from its last spot.
+    peekFollow.to(aim, !peekShown);
+    return true;
+  }
+
+  function showPeek(row: HTMLElement, byKey: boolean) {
+    const slug = row.dataset.slug;
+    if (!peek || !slug || view !== 'index' || !fine.matches) return;
+    if (!placePeek(row, byKey)) return;
+    peekRow = row;
+    peekByKey = byKey;
     if (slug !== peekSlug) {
       for (const it of peekItems) it.classList.toggle('is-on', it.dataset.peekItem === slug);
       peekSlug = slug;
@@ -725,20 +796,46 @@ export function initRing(): (() => void) | void {
 
   function hidePeek() {
     peekShown = false;
+    peekRow = null;
     peek?.classList.remove('is-on');
   }
 
+  const rowOf = (el: EventTarget | null) => (el instanceof Element ? el.closest<HTMLElement>('[data-row]') : null);
+
   function onRowsOver(e: PointerEvent) {
     if (e.pointerType !== 'mouse') return;
-    const row = (e.target as Element).closest<HTMLAnchorElement>('[data-row]');
-    if (!row?.dataset.slug) return;
-    aim(e.clientX, e.clientY);
-    showPeek(row.dataset.slug);
+    pointerX = e.clientX;
+    pointerY = e.clientY;
+    const row = rowOf(e.target);
+    if (row) showPeek(row, false);
   }
 
   function onWindowMove(e: PointerEvent) {
-    if (view !== 'index' || e.pointerType !== 'mouse' || !peekShown) return;
-    aim(e.clientX, e.clientY);
+    if (view !== 'index' || e.pointerType !== 'mouse') return;
+    pointerX = e.clientX;
+    pointerY = e.clientY;
+    if (peekShown && peekRow && !peekByKey) placePeek(peekRow, false);
+  }
+
+  function onRowsFocusIn(e: FocusEvent) {
+    const row = rowOf(e.target);
+    if (row?.matches(':focus-visible')) showPeek(row, true);
+  }
+
+  function onRowsFocusOut(e: FocusEvent) {
+    if (peekByKey && !rowOf(e.relatedTarget)) hidePeek();
+  }
+
+  // The list scrolls under a still pointer (or a focused row moves): follow what is there now.
+  function onIndexScroll() {
+    if (!peekShown || !peekRow) return;
+    if (peekByKey) {
+      placePeek(peekRow, true);
+      return;
+    }
+    const row = rowOf(document.elementFromPoint(pointerX, pointerY));
+    if (row && rowsEl?.contains(row)) showPeek(row, false);
+    else hidePeek();
   }
 
   /* ---------- leaving the page ---------- */
@@ -787,6 +884,7 @@ export function initRing(): (() => void) | void {
       w0 = plateWidth(plates[0]);
       for (const c of cache) c.t = '';
       render();
+      peekBox = null;
       if (peekShown && !fine.matches) hidePeek();
     });
   }
@@ -816,20 +914,24 @@ export function initRing(): (() => void) | void {
   viewBtns.forEach((b) => b.addEventListener('click', onViewClick));
   rowsEl?.addEventListener('pointerover', onRowsOver);
   rowsEl?.addEventListener('pointerleave', hidePeek);
+  rowsEl?.addEventListener('focusin', onRowsFocusIn);
+  rowsEl?.addEventListener('focusout', onRowsFocusOut);
   rowsEl?.addEventListener('click', onRowClick);
+  index?.addEventListener('scroll', onIndexScroll, { passive: true });
   document.addEventListener('astro:before-preparation', onBeforePreparation);
 
   return () => {
     endDrag(true, performance.now());
     unpress();
     cancelAnimationFrame(raf);
-    cancelAnimationFrame(peekRaf);
+    peekFollow?.stop();
     cancelAnimationFrame(resizeRaf);
     window.clearTimeout(wheelTimer);
     window.clearTimeout(introTimer);
+    window.clearTimeout(announceTimer);
     if (hasIdle) window.cancelIdleCallback(idleId);
     else window.clearTimeout(idleId);
-    write(STORE_FRONT, String(mod(Math.round(target), n)));
+    write(STORE_FRONT, String(heading()));
     stage.removeEventListener('pointerdown', onPointerDown);
     stage.removeEventListener('mousedown', onMouseDown);
     stage.removeEventListener('dragstart', onDragStart);
@@ -843,7 +945,10 @@ export function initRing(): (() => void) | void {
     viewBtns.forEach((b) => b.removeEventListener('click', onViewClick));
     rowsEl?.removeEventListener('pointerover', onRowsOver);
     rowsEl?.removeEventListener('pointerleave', hidePeek);
+    rowsEl?.removeEventListener('focusin', onRowsFocusIn);
+    rowsEl?.removeEventListener('focusout', onRowsFocusOut);
     rowsEl?.removeEventListener('click', onRowClick);
+    index?.removeEventListener('scroll', onIndexScroll);
     document.removeEventListener('astro:before-preparation', onBeforePreparation);
   };
 }

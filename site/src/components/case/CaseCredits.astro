@@ -1,7 +1,8 @@
 ---
 /**
  * Credits (role / name), the result line when the client allows one, and the
- * page's one call to action.
+ * page's one call to action. Its rule runs the full width of the page, like
+ * the site's other section rules.
  */
 import type { Project } from '../../lib/work';
 
@@ -45,6 +46,11 @@ const { credits, result } = project.data;
 </section>
 
 <style>
+  /* The section spans the page (its gutters are padding), so the rule does too. */
+  .credits {
+    border-top: 1px solid var(--rule);
+  }
+
   /* On the page grid: the key under Client, Result under Finding, the call to action below it. */
   .inner {
     display: grid;
@@ -53,7 +59,6 @@ const { credits, result } = project.data;
     row-gap: 32px;
     align-items: start;
     padding-block: clamp(24px, 2.8vw, 40px) clamp(80px, 10vw, 160px);
-    border-top: 1px solid var(--rule);
   }
 
   .key {

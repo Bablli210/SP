@@ -4,13 +4,18 @@
  *
  * - Arriving: arrive.ts sets up the incoming index before the transition
  *   captures it (imported here, so it is registered once the index has loaded).
+ *   Back from a case (Close, Esc, Back), keyboard focus returns to that
+ *   project's row or card when the page comes back to it, else to the content,
+ *   so the next Tab carries on from there instead of from the top.
  * - Leaving: only the cover of the case being opened keeps its name; the rest
  *   leave with the page.
- * - On the page: filters and view switches animate; nothing reloads.
+ * - On the page: filters and view switches animate; nothing reloads. On a
+ *   phone the filter rows scroll sideways; a chip reached with the keyboard is
+ *   brought fully into view.
  */
 import type { TransitionBeforePreparationEvent } from 'astro:transitions/client';
 import { onPage, reducedMotion } from '../../scripts/motion';
-import { coverOf, nameOnly, pathOf, trimPath } from './arrive';
+import { coverOf, nameOnly, pathOf, shownShare, takeArrival, trimPath } from './arrive';
 import { applySet, commit, stop, own, EASE, EASE_OUT, TAG, SETTLE_TAG, type SetMotion } from './flip';
 import { setupPeek } from './peek';
 import {
@@ -25,6 +30,8 @@ import {
 } from './state';
 
 const VIEWS: View[] = ['list', 'grid'];
+/** A case study's path (trailing slash trimmed). */
+const CASE_PATH = /^\/work\/[^/]+$/;
 
 const MOTION: Record<View, SetMotion> = {
   list: {
@@ -336,6 +343,27 @@ onPage(() => {
     );
   };
 
+  // ---------- phone: a chip reached with the keyboard comes fully into its row's view ----------
+  const onFilterFocus = (e: FocusEvent) => {
+    const chip = e.target instanceof HTMLElement ? e.target.closest<HTMLElement>('[data-filter]') : null;
+    const scroller = chip?.closest<HTMLElement>('[data-scroller]');
+    // Keyboard only: a tapped chip stays under the finger.
+    if (!chip || !scroller || !chip.matches(':focus-visible')) return;
+    if (scroller.scrollWidth <= scroller.clientWidth + 1) return; // the row wraps (desktop): nothing hides
+    // The row's scroll-padding keeps the chip and its focus ring clear of the faded edges.
+    const cs = getComputedStyle(scroller);
+    const padL = parseFloat(cs.scrollPaddingLeft) || 0;
+    const padR = parseFloat(cs.scrollPaddingRight) || 0;
+    const box = scroller.getBoundingClientRect();
+    const r = chip.getBoundingClientRect();
+    let dx = 0;
+    if (r.left < box.left + padL) dx = r.left - (box.left + padL);
+    else if (r.right > box.right - padR) dx = Math.min(r.right - (box.right - padR), r.left - (box.left + padL));
+    if (Math.abs(dx) < 1) return;
+    // Only the row moves, never the page.
+    scroller.scrollBy({ left: dx, behavior: reduce ? 'instant' : 'smooth' });
+  };
+
   const onViewBtn = (e: Event) => {
     const btn = (e.currentTarget as HTMLButtonElement | null)?.dataset.viewBtn;
     if (btn === 'list' || btn === 'grid') setView(btn, !reduce);
@@ -380,14 +408,28 @@ onPage(() => {
   }
 
   filters.addEventListener('click', onChip);
+  filters.addEventListener('focusin', onFilterFocus);
   const resetBtn = empty.querySelector<HTMLButtonElement>('[data-reset]');
   resetBtn?.addEventListener('click', onReset);
   viewBtns.forEach((b) => b.addEventListener('click', onViewBtn));
   document.addEventListener('astro:before-preparation', onBeforePreparation);
 
+  // ---------- back from a case: the keyboard position returns with the scroll ----------
+  const arrived = takeArrival();
+  if (arrived && CASE_PATH.test(arrived.from) && (!document.activeElement || document.activeElement === document.body)) {
+    // The project's row or card in the view showing (both views link to it).
+    const link = items[view].find((it) => !it.hidden && pathOf(it) === arrived.from)?.querySelector<HTMLElement>('a');
+    // A step back restores the place it was opened from. A new visit (Close or Esc after
+    // Next project, a menu link) starts at the top, where that row may be out of sight:
+    // then the content takes focus, so the next Tab starts there rather than in the header.
+    const target = arrived.type === 'traverse' && link && shownShare(link) >= 0.5 ? link : document.getElementById('main');
+    target?.focus({ preventScroll: true });
+  }
+
   return () => {
     token++;
     filters.removeEventListener('click', onChip);
+    filters.removeEventListener('focusin', onFilterFocus);
     resetBtn?.removeEventListener('click', onReset);
     viewBtns.forEach((b) => b.removeEventListener('click', onViewBtn));
     document.removeEventListener('astro:before-preparation', onBeforePreparation);

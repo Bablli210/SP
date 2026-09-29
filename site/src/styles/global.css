@@ -3,11 +3,41 @@
  * Palette, type and motion come from the approved moodboard:
  * paper, bone, concrete and ink carry everything; one accent at a time.
  */
+/*
+ * Cascade layers, lowest first: Astro's generated transition defaults
+ * (transition:name), then the site's page-transition defaults (below), then
+ * everything unlayered: a page's own transition rules. Declared here, first,
+ * so the order holds whichever stylesheet the browser meets first.
+ */
+@layer astro, transitions;
+
 @import '@fontsource-variable/archivo/wdth.css';
 @import '@fontsource/instrument-serif/400.css';
 @import '@fontsource/instrument-serif/400-italic.css';
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/500.css';
+
+/*
+ * Fallback faces sized to the web fonts, so the swap (font-display: swap)
+ * does not reflow the first screen. The display type is Archivo at 62% width,
+ * which no system font has: a bold grotesk scaled to its width stands in.
+ * Body Archivo (100% width) already matches Arial and needs none.
+ */
+@font-face {
+  font-family: 'SP Display Fallback';
+  src: local('Arial Bold'), local('Arial-BoldMT'), local('Helvetica Neue Bold'), local('HelveticaNeue-Bold'),
+    local('Liberation Sans Bold'), local('LiberationSans-Bold'), local('Roboto Bold'), local('Roboto-Bold');
+  font-weight: 100 900;
+  size-adjust: 68%;
+}
+
+@font-face {
+  font-family: 'SP Serif Fallback';
+  src: local('Times New Roman'), local('TimesNewRomanPSMT'), local('Liberation Serif'), local('LiberationSerif'),
+    local('Tinos'), local('Noto Serif'), local('NotoSerif');
+  font-weight: 400;
+  size-adjust: 81.7%;
+}
 
 :root {
   /* colour */
@@ -32,7 +62,8 @@
 
   /* type */
   --f-sans: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
-  --f-serif: 'Instrument Serif', 'Times New Roman', Times, serif;
+  --f-display: 'Archivo Variable', 'SP Display Fallback', sans-serif;
+  --f-serif: 'Instrument Serif', 'SP Serif Fallback', 'Times New Roman', Times, serif;
   --f-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
   /* scale */
@@ -46,6 +77,8 @@
   /* space */
   --g: clamp(16px, 2.8vw, 40px);
   --header-h: 72px;
+  /* room kept clear for the preview notice at the bottom of the screen (0 when it is off) */
+  --note-h: 0px;
   --radius: 2px;
 
   /* motion: one easing family for the whole site */
@@ -76,6 +109,20 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   background: var(--bg);
+  /*
+   * Keep the scrollbar's gutter on every page, so pages that do not scroll
+   * (home, 404) lay out at the same width as those that do and the fixed
+   * header holds still between them (classic, always-visible scrollbars).
+   */
+  scrollbar-gutter: stable;
+  /* Focus and anchor scrolling stop clear of the fixed header and the preview notice. */
+  scroll-padding-top: calc(var(--header-h) + 16px);
+  scroll-padding-bottom: var(--note-h);
+}
+
+/* Base.astro sets data-note while the preview notice is on. */
+html[data-note] {
+  --note-h: calc(48px + env(safe-area-inset-bottom, 0px));
 }
 
 body {
@@ -171,7 +218,7 @@ select {
 }
 
 .display {
-  font-family: var(--f-sans);
+  font-family: var(--f-display);
   font-weight: 800;
   font-stretch: 62%;
   line-height: 0.8;
@@ -230,6 +277,8 @@ select {
   position: relative;
   overflow: hidden;
   background: var(--plate);
+  /* Named covers morph between pages as plates (see the page transitions below). */
+  view-transition-class: plate;
 }
 
 .media img,
@@ -283,13 +332,71 @@ html.lenis body {
   overflow: hidden;
 }
 
-/* Page transitions: a short fade and lift; shared elements morph on their own. */
-::view-transition-old(root) {
-  animation: 0.45s var(--ease) both vt-out;
-}
+/*
+ * Page transitions: a short fade and lift; shared elements morph on their own.
+ * These are the site-wide defaults, kept in a layer so that a page's own
+ * transition rules (e.g. the case page's title and hero) always win over them,
+ * whatever their specificity or load order.
+ */
+@layer transitions {
+  ::view-transition-old(root) {
+    animation: 0.45s var(--ease) both vt-out;
+  }
 
-::view-transition-new(root) {
-  animation: 0.6s var(--ease-out) 0.1s both vt-in;
+  ::view-transition-new(root) {
+    animation: 0.6s var(--ease-out) 0.1s both vt-in;
+  }
+
+  ::view-transition-group(*) {
+    animation-duration: 0.9s;
+    animation-timing-function: var(--ease);
+  }
+
+  /*
+   * Shared covers keep their crop while the frame morphs (a 4:5 plate into a
+   * full-bleed hero): both snapshots fill the travelling frame, cropped, and
+   * nothing paints outside it. Only plates (Media.astro frames): other named
+   * elements (title, Close, header) keep their own size and overflow.
+   */
+  ::view-transition-old(*.plate),
+  ::view-transition-new(*.plate) {
+    height: 100%;
+    object-fit: cover;
+    overflow: clip;
+  }
+
+  /* A named element with no partner on the other page leaves or arrives with the page, quickly. */
+  ::view-transition-old(*):only-child {
+    animation: 0.35s var(--ease) both vt-fade-out;
+  }
+
+  ::view-transition-new(*):only-child {
+    animation: 0.5s var(--ease-out) 0.15s both vt-fade-in;
+  }
+
+  /* The header and the preview note hold still while pages change beneath them. */
+  ::view-transition-group(site-header),
+  ::view-transition-group(placeholder-note) {
+    animation-duration: 0.6s;
+  }
+
+  /*
+   * The header's own crossfade (its ground turning paper or ink) keeps pace
+   * with the page's; only the duration changes, so the default plus-lighter
+   * blend keeps identical header text steady.
+   */
+  ::view-transition-old(site-header),
+  ::view-transition-new(site-header) {
+    animation-duration: 0.3s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+      animation: none !important;
+    }
+  }
 }
 
 @keyframes vt-out {
@@ -306,27 +413,6 @@ html.lenis body {
   }
 }
 
-::view-transition-group(*) {
-  animation-duration: 0.9s;
-  animation-timing-function: var(--ease);
-}
-
-/* Shared images keep their crop while the frame morphs (a 4:5 plate into a full-bleed hero). */
-::view-transition-old(*),
-::view-transition-new(*) {
-  height: 100%;
-  object-fit: cover;
-}
-
-/* A named element with no partner on the other page leaves or arrives with the page, quickly. */
-::view-transition-old(*):only-child {
-  animation: 0.35s var(--ease) both vt-fade-out;
-}
-
-::view-transition-new(*):only-child {
-  animation: 0.5s var(--ease-out) 0.15s both vt-fade-in;
-}
-
 @keyframes vt-fade-out {
   to {
     opacity: 0;
@@ -337,12 +423,6 @@ html.lenis body {
   from {
     opacity: 0;
   }
-}
-
-/* The header and the preview note hold still while pages change beneath them. */
-::view-transition-group(site-header),
-::view-transition-group(placeholder-note) {
-  animation-duration: 0.6s;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -358,11 +438,5 @@ html.lenis body {
   .reveal.is-armed {
     transform: none;
     opacity: 1;
-  }
-
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation: none !important;
   }
 }

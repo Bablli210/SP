@@ -1,10 +1,17 @@
 ---
 /**
  * The disciplines as an accordion. Each row is a real heading button; opening
- * it grows its panel (grid rows 0fr -> 1fr) and lifts in up to three covers
- * that prove the discipline, plus a link to the filtered work index.
+ * it shows its panel and lifts in up to three covers that prove the
+ * discipline, plus a link to the filtered work index.
  * One row open at a time; the first row with work is open on arrival, and
  * /services/#<key> opens that row instead (applied before first paint).
+ *
+ * A panel's height changes at once; nothing here animates layout. accordion.ts
+ * then glides every block from where it was (transform only): the rows below
+ * slide off an opening panel, or over a closing one. So rows are opaque and
+ * each rule belongs to the row under it (a closing panel slides under the rule
+ * with that row), and the list ends in an opaque block of its own (.acc-end)
+ * that carries the last rule and the room under the list.
  *
  * Covers here carry no shared-element names: one project can sit under
  * several disciplines, and names must be unique per page.
@@ -64,48 +71,46 @@ const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
           </h2>
 
           <div class="panel" id={`${r.key}-work`} role="region" aria-labelledby={`${r.key}-btn`} data-panel>
-            <div class="clip">
-              <div class="body">
-                {r.projects.length > 0 ? (
-                  <>
-                    <ul class="cards" aria-label={`${r.label} work`}>
-                      {r.projects.map((p, j) => (
-                        <li class="card-item" style={`--j:${j}`}>
-                          <a class="card" href={projectUrl(p)} data-card>
-                            <Media
-                              class="thumb"
-                              src={p.data.cover}
-                              alt={p.data.coverAlt}
-                              ratio="4 / 3"
-                              sizes={sizes}
-                              widths={[480, 800, 1200]}
-                              priority={open}
-                            />
-                            <span class="cap label">
-                              <span class="cap-t">
-                                {p.data.title} · {p.data.year}
-                              </span>
-                              <span class="arrow" aria-hidden="true">
-                                →
-                              </span>
+            <div class="body">
+              {r.projects.length > 0 ? (
+                <>
+                  <ul class="cards" aria-label={`${r.label} work`}>
+                    {r.projects.map((p, j) => (
+                      <li class="card-item" style={`--j:${j}`}>
+                        <a class="card" href={projectUrl(p)} data-card>
+                          <Media
+                            class="thumb"
+                            src={p.data.cover}
+                            alt={p.data.coverAlt}
+                            ratio="4 / 3"
+                            sizes={sizes}
+                            widths={[480, 800, 1200]}
+                            priority={open}
+                          />
+                          <span class="cap label">
+                            <span class="cap-t">
+                              {p.data.title} · {p.data.year}
                             </span>
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                    <p class="more" style={`--j:${r.projects.length}`}>
-                      <a class="all label" href={`/work/?d=${r.key}`}>
-                        <span class="link-line">See all {r.label} work</span>
-                        <span class="arrow" aria-hidden="true">
-                          →
-                        </span>
-                      </a>
-                    </p>
-                  </>
-                ) : (
-                  <p class="label soon">Work coming soon</p>
-                )}
-              </div>
+                            <span class="arrow" aria-hidden="true">
+                              →
+                            </span>
+                          </span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                  <p class="more" style={`--j:${r.projects.length}`}>
+                    <a class="all label" href={`/work/?d=${r.key}`}>
+                      <span class="link-line">See all {r.label} work</span>
+                      <span class="arrow" aria-hidden="true">
+                        →
+                      </span>
+                    </a>
+                  </p>
+                </>
+              ) : (
+                <p class="label soon">Work coming soon</p>
+              )}
             </div>
           </div>
         </li>
@@ -113,6 +118,7 @@ const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
     })
   }
 </ol>
+<div class="acc-end" style={`--i:${rows.length}`} aria-hidden="true" data-acc-end></div>
 
 {
   /*
@@ -160,7 +166,15 @@ const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
 
 <style>
   .acc {
+    /* The glide of an open or a close (accordion.ts reads both). */
     --acc-dur: 0.85s;
+    /*
+     * An open answers a press, so it starts at once and settles softly; a close keeps
+     * var(--ease). (A candidate for a shared --ease-press token in global.css.)
+     */
+    --acc-press: cubic-bezier(0.2, 0, 0, 1);
+    /* The cues that acknowledge a press straight away: ground, sign, line. */
+    --acc-cue: 0.45s;
     /* N° column, shared with the work list so names line up across pages */
     --c-no: clamp(40px, 6.25vw, 90px);
     --c-gap: clamp(12px, 1.4vw, 20px);
@@ -174,26 +188,32 @@ const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
     overflow-anchor: none;
   }
 
-  /* State changes applied at once: arrival, deep links, reduced motion (whole list); a collapse the reader overtakes (one row). */
+  /* State changes applied at once: arrival, deep links, reduced motion. */
   .acc[data-instant] *,
   .acc[data-instant] *::before,
-  .acc[data-instant] *::after,
-  .row[data-instant]::before,
-  .row[data-instant] *,
-  .row[data-instant] *::before,
-  .row[data-instant] *::after {
+  .acc[data-instant] *::after {
     transition: none !important;
   }
 
   /* ---------- row ---------- */
+  /*
+   * Opaque and stacked in order, so while the rows glide a row covers the panel
+   * above it: the one it is sliding off (opening) or over (closing).
+   */
   .row {
     position: relative;
     isolation: isolate;
+    background: var(--bg);
     scroll-margin-top: calc(var(--header-h) + 12px);
   }
 
-  /* open row sits on a bone ground that fades in */
-  .row::before {
+  /*
+   * The open row sits on a bone ground that fades in. It is laid in two parts,
+   * header and panel body, so a closing body keeps its ground while it slides away
+   * under the next row (its row's own box is already down to the header by then).
+   */
+  .head::before,
+  .body::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -204,27 +224,40 @@ const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
     pointer-events: none;
   }
 
-  .row.is-open::before {
+  .is-open > .head::before,
+  .is-open .body::before {
     opacity: 1;
+    transition: opacity var(--acc-cue) var(--ease-out);
   }
 
   /* Without JS every panel is open and nothing toggles: no ground, no sign. */
-  .acc:not([data-js]) .row::before,
+  .acc:not([data-js]) :is(.head, .body)::before,
   .acc:not([data-js]) .sign {
     display: none;
   }
 
-  /* the rule under each row draws in on arrival */
-  .row::after {
+  /*
+   * The rule between two rows belongs to the lower one (and the rule under the last
+   * row to .acc-end), drawn over the upper row's last pixel. It draws in on arrival.
+   */
+  .row + .row::after,
+  .acc-end::before {
     content: '';
     position: absolute;
-    inset: auto 0 0;
+    inset: -1px 0 auto;
     height: 1px;
     background: var(--rule);
     transform-origin: 0 50%;
     animation: services-rule 1.3s var(--ease) both;
-    animation-delay: calc(var(--i) * 60ms);
+    animation-delay: calc((var(--i) - 1) * 60ms);
     pointer-events: none;
+  }
+
+  /* The room under the list, opaque so it can cover a panel too (see .row). services.astro sets its height. */
+  .acc-end {
+    position: relative;
+    height: var(--acc-end-h, 0px);
+    background: var(--bg);
   }
 
   @keyframes services-rule {
@@ -235,6 +268,7 @@ const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
 
   /* ---------- header ---------- */
   .head {
+    position: relative;
     font: inherit;
   }
 
@@ -292,7 +326,7 @@ const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
     font-size: var(--t-small);
     line-height: 1.4;
     color: var(--muted);
-    transition: color 0.5s var(--ease);
+    transition: color var(--acc-cue) var(--ease-out);
   }
 
   .is-open .line {
@@ -316,7 +350,7 @@ const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
     height: 1.5px;
     margin-top: -0.75px;
     background: currentColor;
-    transition: transform var(--acc-dur) var(--ease);
+    transition: transform var(--acc-cue) var(--ease-out);
   }
 
   .bar-v {
@@ -341,33 +375,31 @@ const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
     transform: translate3d(0.12em, 0, 0);
   }
 
-  /* ---------- panel: open by default, collapsed only once the script can open it ---------- */
+  /*
+   * ---------- panel: open by default, collapsed only once the script can open it ----------
+   * Its height changes at once (never animated); accordion.ts glides the rows around it.
+   * clip, not hidden: a clipped box is not a scroller, so focusing a cover cannot scroll the panel's insides.
+   */
   .panel {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 1fr;
-    visibility: visible;
-    transition:
-      grid-template-rows var(--acc-dur) var(--ease),
-      visibility 0s linear 0s;
-  }
-
-  .acc[data-js] .row:not(.is-open) > .panel {
-    grid-template-rows: 0fr;
-    visibility: hidden;
-    transition:
-      grid-template-rows var(--acc-dur) var(--ease),
-      visibility 0s linear var(--acc-dur);
-  }
-
-  /* clip, not hidden: a clipped box is not a scroller, so focusing a cover mid-reveal cannot scroll the panel's insides */
-  .clip {
-    min-width: 0;
-    min-height: 0;
     overflow: clip;
   }
 
+  .acc[data-js] .row:not(.is-open) > .panel {
+    height: 0;
+    visibility: hidden;
+  }
+
+  /* A closing panel is already out of the layout, but its body still shows while the rows below slide over it. */
+  .acc[data-js] .row.is-closing > .panel {
+    overflow: visible;
+    visibility: visible;
+  }
+
+  /* Its own opaque layer, so a body sliding away under the next row covers whatever it passes. */
   .body {
+    position: relative;
+    z-index: 0;
+    background: var(--bg);
     padding: 6px var(--g) clamp(34px, 3.6vw, 56px) calc(var(--g) + var(--c-no) + var(--c-gap));
   }
 
@@ -577,7 +609,8 @@ const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
   /* Reduced motion: global.css shortens durations but keeps delays, so arrivals are switched off outright. */
   @media (prefers-reduced-motion: reduce) {
     .btn-in,
-    .row::after,
+    .row + .row::after,
+    .acc-end::before,
     .acc:not(.is-settled) .is-open .card-item,
     .acc:not(.is-settled) .is-open .more,
     .acc:not(.is-settled) .is-open .soon {
@@ -586,8 +619,7 @@ const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
 
     .card-item,
     .more,
-    .soon,
-    .panel {
+    .soon {
       transition-delay: 0s !important;
     }
 

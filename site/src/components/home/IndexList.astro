@@ -128,7 +128,21 @@ const { projects } = Astro.props;
     transition: transform 1s var(--ease-out) calc(var(--i) * 50ms + 200ms);
   }
 
+  /*
+   * How far a hovered name slides over: 0.14em, as in the /work/ list. It is
+   * registered as a length so src/scripts/ring.ts reads it in px and keeps the
+   * cover preview clear of where the name comes to rest.
+   */
+  @property --name-shift {
+    syntax: '<length>';
+    inherits: false;
+    initial-value: 0px;
+  }
+
+  /* hugs its text, so the cover preview can keep clear of the hovered name */
   .name {
+    --name-shift: 0.14em;
+    justify-self: start;
     font-size: clamp(30px, 5.2svh, 60px);
     line-height: 1.05;
     transition:
@@ -147,12 +161,17 @@ const { projects } = Astro.props;
   }
 
   /*
-   * Hovering (or keyboard-focusing) a row dims the other names. Only the large
-   * names: the small facts keep their full contrast. Ink at 50% on paper still
-   * clears 3:1 for text this size.
+   * Hovering (or keyboard-focusing) a row dims the other names, as in the
+   * /work/ list: opacity only, and only the large names (the small facts keep
+   * their full contrast; ink at 50% on paper still clears 3:1 for text this
+   * size). The active row's N° takes the accent at once.
    */
   .rows:has(.row-link:focus-visible) .row-link:not(:focus-visible) .name {
     opacity: 0.5;
+  }
+
+  .row-link:focus-visible .no {
+    color: var(--accent);
   }
 
   @media (hover: hover) and (pointer: fine) {
@@ -161,7 +180,11 @@ const { projects } = Astro.props;
     }
 
     .row-link:hover .name {
-      transform: translate3d(14px, 0, 0);
+      transform: translate3d(var(--name-shift), 0, 0);
+    }
+
+    .row-link:hover .no {
+      color: var(--accent);
     }
   }
 

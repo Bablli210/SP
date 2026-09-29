@@ -1,9 +1,10 @@
 ---
 /**
  * The one fact strip: client, sector, discipline and the finding. The finding
- * is the only prose on the page; its key takes the project's accent.
+ * is the only prose on the page; its key takes the project's accent. Its rule
+ * runs the full width of the page, like the site's other section rules.
  */
-import { disciplineList, type Project } from '../../lib/work';
+import { disciplineLabel, type Project } from '../../lib/work';
 
 interface Props {
   project: Project;
@@ -11,10 +12,12 @@ interface Props {
 const { project } = Astro.props;
 const d = project.data;
 
-const facts = [
+// A value is one phrase, or a list whose items never break inside (a list
+// wraps between items: "Brand Identity," never splits into "Brand / Identity").
+const facts: Array<{ key: string; value: string | string[] }> = [
   { key: 'Client', value: d.client },
   { key: 'Sector', value: d.sector },
-  { key: 'Discipline', value: disciplineList(project) },
+  { key: 'Discipline', value: d.disciplines.map(disciplineLabel) },
 ];
 ---
 
@@ -25,7 +28,18 @@ const facts = [
       facts.map((f) => (
         <div class="fact">
           <dt class="label muted">{f.key}</dt>
-          <dd class="serif">{f.value}</dd>
+          <dd class:list={['serif', { list: Array.isArray(f.value) }]}>
+            {Array.isArray(f.value)
+              ? f.value.map((item, i, all) => (
+                  <Fragment>
+                    <span class="item">
+                      {item}
+                      {i < all.length - 1 && ','}
+                    </span>{' '}
+                  </Fragment>
+                ))
+              : f.value}
+          </dd>
         </div>
       ))
     }
@@ -37,13 +51,17 @@ const facts = [
 </section>
 
 <style>
+  /* The section spans the page (its gutters are padding), so the rule does too. */
+  .facts {
+    border-bottom: 1px solid var(--fg);
+  }
+
   .strip {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     column-gap: var(--g);
     row-gap: 28px;
     padding-block: clamp(28px, 3.4vw, 52px);
-    border-bottom: 1px solid var(--fg);
   }
 
   .fact {
@@ -56,6 +74,15 @@ const facts = [
     font-size: clamp(20px, 1.75vw, 27px);
     line-height: 1.16;
     text-wrap: pretty;
+  }
+
+  /* A list's lines come out even; each item keeps its comma, so no line starts with one. */
+  .list {
+    text-wrap: balance;
+  }
+
+  .item {
+    white-space: nowrap;
   }
 
   .finding dt {

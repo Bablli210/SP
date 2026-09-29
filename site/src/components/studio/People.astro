@@ -1,14 +1,20 @@
 ---
 /**
- * People: 4:5 portraits with name and role, and one open frame that leads to
- * the contact page (the careers note from src/data/site.ts).
+ * People: 4:5 portraits with name and role, and one open frame for people who
+ * want to join (the careers note from src/data/site.ts).
+ *
+ * The frame writes to the studio, not to /contact/: that page is a project
+ * brief for clients, and a portfolio does not belong in it. The address is
+ * printed under the note so it can be read or copied when no mail app opens.
  */
 import Media from '../Media.astro';
 import SectionHead from './SectionHead.astro';
-import { people, careers } from '../../data/site';
+import { people, careers, studio } from '../../data/site';
 import { studioImage } from './images';
 
 const note = careers.open ? 'Open roles' : careers.note;
+const mailHref = `mailto:${studio.email}?subject=${encodeURIComponent('Portfolio')}`;
+const [mailUser, mailDomain] = studio.email.split('@');
 ---
 
 <section class="people" aria-labelledby="people-title">
@@ -31,12 +37,15 @@ const note = careers.open ? 'Open roles' : careers.note;
       ))
     }
     <li class="person reveal" style={`--i:${people.length}`}>
-      <a class="you" href="/contact/">
+      <a class="you" href={mailHref}>
         <span class="frame">
           <span class="serif you-q">You?</span>
           <span class="arrow" aria-hidden="true">→</span>
         </span>
         <span class="label note">{note}</span>
+        <span class="label mail">
+          <span class="link-line">{mailUser}@<wbr />{mailDomain}</span>
+        </span>
       </a>
     </li>
   </ul>
@@ -113,6 +122,16 @@ const note = careers.open ? 'Open roles' : careers.note;
     margin-top: 16px;
   }
 
+  /* the address itself: lowercase and untracked so it reads as an address
+     and the domain fits a 360px phone column; it breaks after the @ there */
+  .mail {
+    display: block;
+    margin-top: 4px;
+    letter-spacing: 0;
+    text-transform: none;
+    overflow-wrap: anywhere;
+  }
+
   @media (hover: hover) {
     .you:hover .frame::before {
       opacity: 1;
@@ -124,6 +143,10 @@ const note = careers.open ? 'Open roles' : careers.note;
 
     .you:hover .arrow {
       transform: translate3d(5px, 0, 0);
+    }
+
+    .you:hover .mail .link-line {
+      background-size: 100% 1px;
     }
   }
 

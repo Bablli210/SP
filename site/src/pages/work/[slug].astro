@@ -14,7 +14,7 @@ import CaseCredits from '../../components/case/CaseCredits.astro';
 import NextProject from '../../components/case/NextProject.astro';
 import { readableAccent } from '../../components/case/accent';
 import { getProjects, projectUrl, disciplineList, type Project } from '../../lib/work';
-import { studio } from '../../data/site';
+import { studio, socialCard } from '../../data/site';
 
 export async function getStaticPaths() {
   const projects = await getProjects();
@@ -32,8 +32,15 @@ interface Props {
 const { project, next } = Astro.props;
 const d = project.data;
 
-// Social card: the cover, cropped to 1200 × 630.
-const og = await getImage({ src: d.cover, width: 1200, height: 630, fit: 'cover', format: 'jpg', quality: 82 });
+// Social card: the cover, cropped to the site's card size (Base declares it as a 1200 × 630 JPEG).
+const og = await getImage({
+  src: d.cover,
+  width: socialCard.width,
+  height: socialCard.height,
+  fit: 'cover',
+  format: 'jpg',
+  quality: 82,
+});
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -51,7 +58,16 @@ const jsonLd = {
 const style = `--accent: ${d.accent}; --accent-text: ${readableAccent(d.accent)};`;
 ---
 
-<Base title={d.title} description={d.summary} image={og.src} headerOverlay cta={false} jsonLd={jsonLd}>
+<Base
+  title={d.title}
+  description={d.summary}
+  image={og.src}
+  imageAlt={d.coverAlt}
+  headerOverlay
+  close="/work/"
+  cta={false}
+  jsonLd={jsonLd}
+>
   <article class="case" style={style} data-case>
     <CaseHero project={project} />
     <CaseFacts project={project} />
@@ -67,17 +83,10 @@ const style = `--accent: ${d.accent}; --accent-text: ${readableAccent(d.accent)}
 
 <style is:global>
   /*
-   * Shared-element morphs arriving on a case page: both snapshots fill the
-   * morphing frame (cropped, never stretched or letterboxed), so a 4:5 cover
-   * opens into the full-screen hero cleanly.
-   */
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    height: 100%;
-    object-fit: cover;
-  }
-
-  /*
+   * The cover and the hero crop to the morphing frame as plates (global.css);
+   * these rules only set the case's own timing, and win over the site-wide
+   * defaults (a lower cascade layer).
+   *
    * The cover travelling into the hero (from the ring, the index or the Next
    * band) is already loaded; the hero it becomes may still be loading. So the
    * travelling cover stays solid, and the hero fades in over it through the
@@ -93,13 +102,44 @@ const style = `--accent: ${d.accent}; --accent-text: ${readableAccent(d.accent)}
     animation: 0.55s var(--ease) 0.3s both case-fade;
   }
 
-  /* The title and Close arrive as the cover lands, and finish with it. */
+  /* The title arrives as the cover lands, and finishes with it. */
   ::view-transition-new(case-title) {
     animation: 0.6s var(--ease-out) 0.3s both case-rise;
   }
 
+  /*
+   * Close sits in the header row: between two cases (Next, Back) it holds
+   * still like the header; opening a case, it fades in as the cover lands.
+   */
+  ::view-transition-old(case-close),
   ::view-transition-new(case-close) {
+    animation: none;
+  }
+
+  ::view-transition-new(case-close):only-child {
     animation: 0.45s var(--ease) 0.45s both case-fade;
+  }
+
+  /*
+   * Arriving from the previous case's Next band (case.ts marks the root): that
+   * page stays where it is under the cover while the cover grows to fill the
+   * screen, and this one comes in beneath it as it lands. Around the cover
+   * only the page the visitor was on shows (the credits above it, the ink
+   * footer below), never this page's hero ground, whatever the cover's tone.
+   * The header changes over with the page, as the cover lands: its solid
+   * ground clearing any earlier would show the page scrolled beneath it.
+   */
+  html[data-case-arrival='next']::view-transition-old(root) {
+    animation: none;
+  }
+
+  html[data-case-arrival='next']::view-transition-new(root) {
+    animation: 0.3s var(--ease) 0.6s both case-fade;
+  }
+
+  html[data-case-arrival='next']::view-transition-old(site-header),
+  html[data-case-arrival='next']::view-transition-new(site-header) {
+    animation-delay: 0.6s;
   }
 
   @keyframes case-rise {

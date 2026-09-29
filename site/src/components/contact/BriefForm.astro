@@ -4,8 +4,11 @@
  *
  * With PUBLIC_FORM_ENDPOINT set, the brief is POSTed there (fetch, JSON
  * accept) and a thank-you replaces the form in place. Without it, the brief
- * opens as an email to the studio. With no script at all the form still
- * works: it posts to the endpoint, or hands the brief to the mail app.
+ * opens as an email to the studio, and the form gives way to "one more step"
+ * instead: nothing has reached the studio until the visitor presses send, so
+ * no thank-you yet, a way to copy the brief if no mail app opened, and a way
+ * back to the filled-in form. With no script at all the form still works: it
+ * posts to the endpoint, or hands the brief to the mail app.
  */
 import { disciplines, studio } from '../../data/site';
 
@@ -137,32 +140,56 @@ const NOT_SURE = 'Not sure yet';
 
   <div class="done" data-done></div>
 
-  <template data-done-tpl>
-    <p class="done-k label" data-done-k>Brief sent</p>
+  <!-- received: only after the endpoint answers 2xx (or for a bot) -->
+  <template data-done-tpl="sent">
+    <p class="done-k label">Brief sent</p>
     <h2 class="done-t serif" tabindex="-1" data-done-focus>
       <span class="done-l">Thank you.</span> <span class="done-l">We’ll be in touch.</span>
     </h2>
-    <p class="done-note label" data-done-note></p>
+    <a class="done-link label link-line" href="/work/">Back to the work <span aria-hidden="true">→</span></a>
+  </template>
+
+  <!-- handed to the mail app: not sent until the visitor presses send there -->
+  <template data-done-tpl="mail">
+    <p class="done-k label">Brief ready</p>
+    <h2 class="done-t serif" tabindex="-1" data-done-focus>
+      <span class="done-l">One more step.</span> <span class="done-l">Press send in your email app.</span>
+    </h2>
+    <p class="done-note label" data-done-say>
+      Your email app should have opened with the brief written out. Nothing opened? Write to <a
+        class="link-line"
+        href={`mailto:${studio.email}`}
+        data-done-mail>{studio.email}</a
+      > and paste the brief in.
+    </p>
+    <p class="done-acts">
+      <button class="done-act label link-line" type="button" data-act="copy" hidden>
+        <span class="act-t"><span class="act-idle">Copy brief</span><span class="act-ok" aria-hidden="true">Copied</span></span>
+      </button>
+      <button class="done-act label link-line" type="button" data-act="edit">Edit brief</button>
+    </p>
     <a class="done-link label link-line" href="/work/">Back to the work <span aria-hidden="true">→</span></a>
   </template>
 </div>
 
 <script>
   import { onPage, reducedMotion, getLenis } from '../../scripts/motion';
-  import { readBrief, problem, mailtoHref, wait, type FieldKey } from './brief';
+  import { readBrief, briefText, problem, mailtoHref, wait, type Brief, type FieldKey } from './brief';
 
   const MIN_SENDING = 700; // long enough to read, short enough not to feel slow
   const TIMEOUT = 15000;
+  const COPIED_FOR = 1800;
 
   onPage(() => {
     const root = document.querySelector<HTMLElement>('[data-brief]');
     const form = root?.querySelector<HTMLFormElement>('[data-form]');
     const done = root?.querySelector<HTMLElement>('[data-done]');
-    const tpl = root?.querySelector<HTMLTemplateElement>('[data-done-tpl]');
+    const tplSent = root?.querySelector<HTMLTemplateElement>('[data-done-tpl="sent"]');
+    const tplMail = root?.querySelector<HTMLTemplateElement>('[data-done-tpl="mail"]');
     const submit = root?.querySelector<HTMLButtonElement>('[data-submit]');
     const note = root?.querySelector<HTMLElement>('[data-note]');
     const status = root?.querySelector<HTMLElement>('[data-status]');
-    if (!root || !form || !done || !tpl || !submit || !note || !status) return;
+    if (!root || !form || !done || !tplSent || !tplMail || !submit || !note || !status) return;
 
     const endpoint = form.dataset.endpoint ?? '';
     const to = form.dataset.to ?? '';
@@ -184,6 +211,9 @@ const NOT_SURE = 'Not sure yet';
     let finished = false;
     let ctrl: AbortController | null = null;
     const timers: number[] = [];
+    let handed: Brief | null = null; // the brief last handed to the mail app
+    let copyTimer = 0;
+    const canCopy = window.isSecureContext && !!navigator.clipboard;
 
     /* ---------- validation ---------- */
 
@@ -252,25 +282,34 @@ const NOT_SURE = 'Not sure yet';
       note!.append(a, '.');
     }
 
-    /** Replace the form in place with the thank-you, then hand it focus. */
-    async function showDone(mode: 'sent' | 'mail', mailHref = '') {
+    /** Scroll `el` clear of the header when it starts off screen or low on it. */
+    function bringIntoView(el: HTMLElement) {
+      const top = el.getBoundingClientRect().top;
+      const header = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 72;
+      if (top >= header && top <= window.innerHeight * 0.7) return;
+      const lenis = getLenis();
+      const y = window.scrollY + top - header - 32;
+      if (lenis) lenis.scrollTo(y, { immediate: reduce });
+      else window.scrollTo({ top: y, behavior: reduce ? 'auto' : 'smooth' });
+    }
+
+    /**
+     * Replace the form in place with what happened, then hand it focus.
+     * 'sent': the studio has it. 'mail': the mail app has it, still unsent.
+     */
+    async function showDone(mode: 'sent' | 'mail', brief?: Brief, mailHref = '') {
       finished = true;
-      const frag = tpl!.content.cloneNode(true) as DocumentFragment;
-      const kicker = frag.querySelector<HTMLElement>('[data-done-k]');
-      const extra = frag.querySelector<HTMLElement>('[data-done-note]');
+      const frag = (mode === 'mail' ? tplMail! : tplSent!).content.cloneNode(true) as DocumentFragment;
       const heading = frag.querySelector<HTMLElement>('[data-done-focus]');
       let said = 'Brief sent.';
-      if (mode === 'mail' && kicker && extra) {
-        kicker.textContent = 'Email app opened';
-        const lead = 'Your brief is ready to send from there. Nothing opened? Write to ';
-        extra.append(lead);
-        const a = document.createElement('a');
-        a.href = mailHref;
-        a.className = 'link-line';
-        a.textContent = to;
-        extra.append(a, '.');
-        said = `Email app opened. ${lead}${to}.`;
-      } else extra?.remove();
+      if (mode === 'mail') {
+        handed = brief ?? null;
+        const again = frag.querySelector<HTMLAnchorElement>('[data-done-mail]');
+        if (again && mailHref) again.href = mailHref; // reopens the same filled-in email
+        const copy = frag.querySelector<HTMLButtonElement>('[data-act="copy"]');
+        if (copy && canCopy && handed) copy.hidden = false;
+        said = frag.querySelector('[data-done-say]')?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+      }
 
       if (!reduce) {
         form!.classList.add('is-leaving');
@@ -278,22 +317,52 @@ const NOT_SURE = 'Not sure yet';
       }
       form!.hidden = true;
       form!.inert = true;
-      done!.append(frag);
+      done!.replaceChildren(frag);
       root!.classList.add('is-done');
       // focus reads the heading; the status adds what happened, politely after it
       (heading ?? done!).focus({ preventScroll: true });
       status!.textContent = said;
-
       // Bring the message into view if the form was taller than the screen.
-      const top = done!.getBoundingClientRect().top;
-      const header = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 72;
-      if (top < header || top > window.innerHeight * 0.7) {
-        const lenis = getLenis();
-        const y = window.scrollY + top - header - 32;
-        if (lenis) lenis.scrollTo(y, { immediate: reduce });
-        else window.scrollTo({ top: y, behavior: reduce ? 'auto' : 'smooth' });
+      bringIntoView(done!);
+    }
+
+    /** Back to the filled-in form (mail mode), e.g. when no mail app opened. */
+    function reopen() {
+      finished = false;
+      window.clearTimeout(copyTimer);
+      root!.classList.remove('is-done');
+      done!.replaceChildren();
+      form!.classList.remove('is-leaving');
+      form!.hidden = false;
+      form!.inert = false;
+      status!.textContent = '';
+      bringIntoView(form!);
+      fields[0].input.focus({ preventScroll: true });
+    }
+
+    async function copyBrief(btn: HTMLButtonElement) {
+      if (!handed) return;
+      try {
+        await navigator.clipboard.writeText(briefText(handed));
+        btn.classList.add('is-copied');
+        status!.textContent = 'Brief copied.';
+        window.clearTimeout(copyTimer);
+        copyTimer = window.setTimeout(() => btn.classList.remove('is-copied'), COPIED_FOR);
+      } catch {
+        // no clipboard after all: the form still holds the brief to copy by hand
+        const edit = done!.querySelector<HTMLButtonElement>('[data-act="edit"]');
+        edit?.focus();
+        btn.hidden = true;
+        status!.textContent = 'The brief couldn’t be copied. Edit brief shows the form again.';
       }
     }
+
+    const onDoneClick = (e: MouseEvent) => {
+      const btn = (e.target as Element | null)?.closest<HTMLButtonElement>('[data-act]');
+      if (!btn || !done.contains(btn)) return;
+      if (btn.dataset.act === 'edit') reopen();
+      else if (btn.dataset.act === 'copy') void copyBrief(btn);
+    };
 
     /* ---------- submit ---------- */
 
@@ -323,7 +392,7 @@ const NOT_SURE = 'Not sure yet';
 
       if (!endpoint) {
         window.location.href = mail;
-        await showDone('mail', mail);
+        await showDone('mail', brief, mail);
         return;
       }
 
@@ -359,14 +428,17 @@ const NOT_SURE = 'Not sure yet';
     form.addEventListener('input', onInput);
     form.addEventListener('focusout', onBlur);
     form.addEventListener('change', onChip);
+    done.addEventListener('click', onDoneClick);
 
     return () => {
       form.removeEventListener('submit', onSubmit);
       form.removeEventListener('input', onInput);
       form.removeEventListener('focusout', onBlur);
       form.removeEventListener('change', onChip);
+      done.removeEventListener('click', onDoneClick);
       ctrl?.abort();
       timers.forEach((t) => window.clearTimeout(t));
+      window.clearTimeout(copyTimer);
     };
   });
 </script>
@@ -624,19 +696,36 @@ const NOT_SURE = 'Not sure yet';
     animation-delay: calc(240ms + var(--i) * 75ms);
   }
 
+  /*
+   * The site's solid call-to-action button (same spec as the case study's
+   * "Start a similar project" and the 404's "Back to the work"): mono label
+   * at .08em, 15/20 padding, and on hover the accent wipes in behind the text.
+   */
   .submit {
     position: relative;
     display: inline-flex;
     align-items: center;
     gap: 14px;
-    padding: 18px 24px 18px 26px;
+    padding: 15px 20px 15px 22px;
     overflow: hidden;
+    isolation: isolate;
+    white-space: nowrap;
     background: var(--fg);
     color: var(--bg);
-    font-size: 12px;
     letter-spacing: 0.08em;
     transition: transform 0.2s var(--ease-out);
     -webkit-tap-highlight-color: transparent;
+  }
+
+  .submit::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--accent-text, var(--accent));
+    transform: scaleX(0);
+    transform-origin: 100% 50%;
+    transition: transform 0.7s var(--ease);
   }
 
   /* both labels share one cell, so the button never changes width */
@@ -669,11 +758,16 @@ const NOT_SURE = 'Not sure yet';
   .arrow {
     display: inline-block;
     transition:
-      transform 0.5s var(--ease),
+      transform 0.7s var(--ease),
       opacity 0.3s var(--ease-out);
   }
 
   @media (hover: hover) {
+    .submit:hover::before {
+      transform: none;
+      transform-origin: 0 50%;
+    }
+
     .submit:hover .arrow {
       transform: translate3d(5px, 0, 0);
     }
@@ -703,6 +797,12 @@ const NOT_SURE = 'Not sure yet';
 
   .is-sending .arrow {
     opacity: 0;
+  }
+
+  /* the fill steps back while sending, so the accent hairline reads on paper */
+  .is-sending .submit::before {
+    transform: scaleX(0);
+    transform-origin: 100% 50%;
   }
 
   .is-sending .submit {
@@ -768,10 +868,51 @@ const NOT_SURE = 'Not sure yet';
     --d: 160ms;
   }
 
+  /* mail mode: copy the brief if no mail app opened, or go back to the form */
+  .done-acts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 28px;
+    margin-top: 18px;
+    --d: 200ms;
+  }
+
+  .done-act {
+    position: relative;
+    padding: 0;
+    color: var(--fg);
+  }
+
+  /* the text stays small, the target does not (about 36px tall) */
+  .done-act::after {
+    content: '';
+    position: absolute;
+    inset: -12px -8px;
+  }
+
+  /* both labels share one cell, so "Copied" never shifts its neighbour */
+  .act-t {
+    display: inline-grid;
+  }
+
+  .act-t > * {
+    grid-area: 1 / 1;
+    transition: opacity 0.3s var(--ease-out);
+  }
+
+  .act-ok,
+  .is-copied .act-idle {
+    opacity: 0;
+  }
+
+  .is-copied .act-ok {
+    opacity: 1;
+  }
+
   .done-link {
     display: inline-block;
     margin-top: 34px;
-    --d: 220ms;
+    --d: 240ms;
   }
 
   @keyframes brief-in {
@@ -817,7 +958,7 @@ const NOT_SURE = 'Not sure yet';
     .submit {
       width: 100%;
       justify-content: space-between;
-      padding-block: 20px;
+      padding-block: 17px;
     }
   }
 

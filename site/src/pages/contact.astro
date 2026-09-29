@@ -2,6 +2,9 @@
 /**
  * Contact: one screen on ink. The title and the direct lines on the left,
  * the brief on the right; on phones they stack in that order.
+ *
+ * No global footer (as in the approved wireframe): its address block would
+ * repeat the direct lines a scroll below them. The header keeps every route.
  */
 import Base from '../layouts/Base.astro';
 import Direct from '../components/contact/Direct.astro';
@@ -27,7 +30,7 @@ const jsonLd = {
 };
 ---
 
-<Base title="Contact" description={description} theme="ink" cta={false} jsonLd={jsonLd} headerOverlay>
+<Base title="Contact" description={description} theme="ink" footer={false} jsonLd={jsonLd} headerOverlay>
   <section class="contact wrap" aria-labelledby="contact-title">
     <div class="intro">
       <h1 class="display title" id="contact-title">
@@ -51,8 +54,8 @@ const jsonLd = {
     column-gap: var(--g);
     min-height: 100svh;
     padding-top: calc(var(--header-h) + clamp(20px, 3.2vw, 48px));
-    padding-bottom: clamp(48px, 6vw, 88px);
-    border-bottom: 1px solid var(--rule);
+    /* the page ends here: keep the send button clear of the preview notice */
+    padding-bottom: max(clamp(48px, 6vw, 88px), calc(var(--note-h) + 24px));
   }
 
   .intro {
@@ -62,6 +65,8 @@ const jsonLd = {
     justify-content: space-between;
     gap: 56px;
     min-width: 0;
+    /* the title is sized to this column (cqi below), not to the viewport */
+    container-type: inline-size;
   }
 
   .side {
@@ -70,10 +75,24 @@ const jsonLd = {
     min-width: 0;
   }
 
-  /* as large as the page titles elsewhere, but "project" must fit its columns */
+  /*
+   * As large as the page titles elsewhere, but "project" (3.27em wide) must
+   * fit its column: the column's width over --fit, capped at --cap. Sized
+   * from the column itself (cqi), so a scrollbar gutter cannot push it over;
+   * without container units, estimated from the viewport.
+   */
   .title {
     --cols: 7;
-    font-size: min(var(--t-display), calc(((100vw - 13 * var(--g)) * var(--cols) / 12 + (var(--cols) - 1) * var(--g)) / 3.45));
+    --fit: 3.45;
+    --cap: var(--t-display);
+    --min: 0px;
+    font-size: clamp(var(--min), ((100vw - 13 * var(--g)) * var(--cols) / 12 + (var(--cols) - 1) * var(--g)) / var(--fit), var(--cap));
+  }
+
+  @supports (width: 1cqi) {
+    .title {
+      font-size: clamp(var(--min), 100cqi / var(--fit), var(--cap));
+    }
   }
 
   /* each line rises from behind its own baseline */
@@ -84,8 +103,14 @@ const jsonLd = {
     margin-block: -0.06em -0.02em;
   }
 
+  /*
+   * The mask clips the rise, so a word wider than its column would lose
+   * letters (raised letter or word spacing, WCAG 1.4.12). Let it break inside
+   * the column instead; at normal spacing it always fits and nothing changes.
+   */
   .word {
     display: block;
+    overflow-wrap: break-word;
     animation: contact-rise 1.15s var(--ease-out) both;
     animation-delay: calc(60ms + var(--k, 0) * 90ms);
   }
@@ -126,15 +151,19 @@ const jsonLd = {
       display: block;
       min-height: 0;
       padding-top: calc(var(--header-h) + 12px);
-      padding-bottom: 72px;
+      padding-bottom: max(72px, calc(var(--note-h) + 24px));
     }
 
     .intro {
       gap: 36px;
     }
 
+    /* the phone column is the page width */
     .title {
-      font-size: clamp(64px, 27.5vw, 150px);
+      --cols: 12;
+      --fit: 3.34;
+      --cap: 150px;
+      --min: 64px;
     }
 
     .side {

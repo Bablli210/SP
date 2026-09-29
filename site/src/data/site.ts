@@ -22,6 +22,17 @@ export const studio = {
   founded: null as number | null,
 };
 
+/**
+ * The default social card (public/og.jpg). Case pages use their cover, cropped
+ * to the same size, so every card is this size.
+ */
+export const socialCard = {
+  src: '/og.jpg',
+  width: 1200,
+  height: 630,
+  alt: 'Serious Play wordmark, with the line “Serious research. Playful imagination.”',
+} as const;
+
 export const nav = [
   { href: '/work/', label: 'Work' },
   { href: '/studio/', label: 'Studio' },

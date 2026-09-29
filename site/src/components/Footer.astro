@@ -27,7 +27,8 @@ const year = new Date().getFullYear();
     <div class="contact">
       <a class="serif link-line" href={`mailto:${studio.email}`}>{studio.email}</a>
       <a class="label link-line" href={studio.instagram.url} target="_blank" rel="noopener">
-        {studio.instagram.handle} ↗
+        {studio.instagram.handle}<span aria-hidden="true"> ↗</span>
+        <span class="visually-hidden">(Instagram, opens in a new tab)</span>
       </a>
     </div>
     <nav class="ui links" aria-label="Footer">
@@ -74,7 +75,7 @@ const year = new Date().getFullYear();
 
   .base {
     display: grid;
-    grid-template-columns: 2fr 2fr 1fr;
+    grid-template-columns: 2fr 2fr auto;
     gap: 24px;
     align-items: end;
     padding-block: 28px calc(52px + env(safe-area-inset-bottom, 0px));
@@ -96,9 +97,51 @@ const year = new Date().getFullYear();
     gap: 8px 20px;
   }
 
+  /* Hit areas: the text stays small, the target does not (about 36px tall). */
+  .links a,
+  .contact a.label {
+    position: relative;
+  }
+
+  .links a::before,
+  .contact a.label::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+  }
+
+  /* Just below it sits the email link; keep clear of it. */
+  .contact a.label::before {
+    inset: -4px -10px -10px;
+  }
+
   .legal {
     justify-self: end;
     color: #a6a49e;
+    white-space: nowrap;
+  }
+
+  /* Tablets: the address on the left, the nav and the legal line stacked on the right. */
+  @media (min-width: 761px) and (max-width: 1100px) {
+    .base {
+      grid-template-columns: 1fr auto;
+      row-gap: 14px;
+    }
+
+    .contact {
+      grid-row: 1 / span 2;
+    }
+
+    .links {
+      grid-column: 2;
+      grid-row: 1;
+      justify-content: flex-end;
+    }
+
+    .legal {
+      grid-column: 2;
+      grid-row: 2;
+    }
   }
 
   @media (max-width: 760px) {

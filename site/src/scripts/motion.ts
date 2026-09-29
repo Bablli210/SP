@@ -36,31 +36,74 @@ function stopLenis() {
 }
 
 /**
+ * Settle Lenis where the page is now: any glide still running is dropped
+ * (stop() and start() both reset it, in one task, so the page never renders
+ * stopped), and it ends up running whatever stopped it before.
+ */
+function settleLenis() {
+  if (!lenis) return;
+  lenis.stop();
+  lenis.start();
+}
+
+/**
  * Pages opt out of smooth scroll with <body data-smooth="off"> (e.g. the home ring).
- * After a page change, Lenis adopts wherever the router put the page (the top, an
- * anchor, or the restored position on Back) instead of forcing the top.
+ * Lenis is created or destroyed to match, and adopts wherever the router put the
+ * page (the top, an anchor, or the restored position on Back) instead of forcing
+ * the top.
  */
 function syncSmooth() {
   if (document.body.dataset.smooth === 'off') stopLenis();
   else startLenis();
-  if (!lenis) return;
-  lenis.resize();
-  lenis.scrollTo(window.scrollY, { immediate: true, force: true });
 }
+
+/*
+ * Page changes. Lenis ignores native scrolling while it glides, so a glide left
+ * running would carry on into the next page and overwrite where the router put
+ * it (the top, or the position restored on Back).
+ *
+ * - Before the next page is fetched, freeze the old one where the visitor
+ *   clicked: the old snapshot and any shared-element morph start from there.
+ *   A stopped Lenis (the open menu) is left as it is.
+ * - Right after the swap (the router has just scrolled), adopt that position,
+ *   drop any glide started while the page was loading, restart Lenis if a
+ *   component left it stopped, and measure the new page. Swapping the root
+ *   attributes also strips Lenis's classes from <html>; restarting puts them back.
+ */
+document.addEventListener('astro:before-preparation', () => {
+  if (lenis && !lenis.isStopped) settleLenis();
+});
+
+document.addEventListener('astro:after-swap', () => {
+  syncSmooth();
+  if (!lenis) return;
+  settleLenis();
+  lenis.resize();
+});
 
 type Cleanup = void | (() => void);
 /**
  * Run `setup` on every page load, including after client-side navigation.
  * Return a cleanup function to remove listeners before the page is swapped.
+ *
+ * Setup runs once per page: the router can fire astro:page-load twice for the
+ * same page (when a newer navigation overtakes one whose scripts are still
+ * loading), and a second setup would leak the first one's listeners. Astro
+ * replaces <body> on every swap, so the body identifies the page.
  */
 export function onPage(setup: () => Cleanup) {
   let cleanup: Cleanup;
+  let setUpFor: HTMLElement | null = null;
   document.addEventListener('astro:page-load', () => {
+    if (setUpFor === document.body) return;
+    if (typeof cleanup === 'function') cleanup();
+    setUpFor = document.body;
     cleanup = setup();
   });
   document.addEventListener('astro:before-swap', () => {
     if (typeof cleanup === 'function') cleanup();
     cleanup = undefined;
+    setUpFor = null;
   });
 }
 
@@ -90,7 +133,12 @@ function setupReveals(): () => void {
 }
 
 onPage(() => {
+  // The first load has no swap; later loads were synced at the swap already.
   syncSmooth();
+  // Safety net: no page inherits a scroller that something left stopped.
+  // (This runs before any component's setup, so a component that stops
+  // Lenis on purpose still does so.)
+  if (lenis?.isStopped) lenis.start();
   return setupReveals();
 });
 

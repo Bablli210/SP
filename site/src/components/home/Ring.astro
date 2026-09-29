@@ -59,7 +59,7 @@ const label =
           href={projectUrl(p)}
           style={firstPose(i)}
           draggable="false"
-          aria-label={`${p.data.title}, N°${p.data.no}, ${p.data.sector}, ${p.data.year}`}
+          aria-label={`${p.data.title}, ${i + 1} of ${n}, N°${p.data.no}, ${p.data.sector}, ${p.data.year}`}
           data-plate
           data-slug={p.id}
           data-vt={plateName(p)}
@@ -76,7 +76,7 @@ const label =
                 alt={p.data.coverAlt}
                 ratio="4 / 5"
                 name={plateName(p)}
-                sizes="(max-width: 760px) 64vw, 30vw"
+                sizes="(max-width: 760px) 68vw, (max-width: 1100px) and (orientation: portrait) 54vw, max(160px, min(40vw, calc((100vh - 320px) * 0.7)))"
                 widths={[480, 800, 1200, 1600]}
                 priority={Math.abs(wrapK(i, n)) <= 1}
               />
@@ -140,7 +140,8 @@ const label =
   }
 
   .ring {
-    /* front plate width, and the top of the ring (where the front plate stands) */
+    /* front plate width, and the top of the ring (where the front plate stands);
+       the plate image's sizes attribute mirrors --w0 for each layout */
     --w0: max(160px, min(calc((100svh - 320px) * 0.7), 40vw));
     /* the front plate hangs just under the header, or centres when the width limits it */
     --ring-top: max(calc(var(--header-h) + 36px + var(--w0) * 1.25), calc(50svh + var(--w0) * 0.3));
@@ -345,24 +346,35 @@ const label =
     column-gap: var(--g);
     row-gap: 12px;
     pointer-events: none;
+    /* the wash behind the caption (below): how far above the bar it reaches behind
+       the name and behind the counter, and how much of it is solid behind the name */
+    --wash-name: 90px;
+    --wash-count: 40px;
+    --wash-solid: 60%;
   }
 
   /*
    * A soft wash of paper in both lower corners: the far plates and the guide
    * sink into the page there, so they never muddy the caption or the counter.
+   * Behind the name it reaches well above the bar (the far plate and the guide
+   * cross the name's line box on wide screens) and stays solid through the
+   * whole name; behind the small counter it stays low, clear of the front
+   * plate's right-hand neighbour.
    */
   .bar::before {
-    --wash: min(760px, 56vw) 100% no-repeat;
+    --wash-w: min(760px, 56vw);
     content: '';
     position: absolute;
     left: calc(-1 * var(--g));
     right: calc(-1 * var(--g));
     bottom: calc(-1 * var(--bottom));
     z-index: -1;
-    height: calc(100% + var(--bottom) + 40px);
+    height: calc(100% + var(--bottom) + var(--wash-name));
     background:
-      radial-gradient(farthest-side at 0% 100%, var(--bg) 50%, transparent) left bottom / var(--wash),
-      radial-gradient(farthest-side at 100% 100%, var(--bg) 50%, transparent) right bottom / var(--wash);
+      radial-gradient(farthest-side at 0% 100%, var(--bg) var(--wash-solid), transparent) left bottom / var(--wash-w) 100%
+        no-repeat,
+      radial-gradient(farthest-side at 100% 100%, var(--bg) 50%, transparent) right bottom / var(--wash-w)
+        calc(100% - var(--wash-name) + var(--wash-count)) no-repeat;
     pointer-events: none;
     transition: opacity 0.55s var(--ease);
   }
@@ -537,6 +549,15 @@ const label =
     opacity: 0;
   }
 
+  /* ---------- portrait tablets ---------- */
+  /* A taller screen than the desktop sizing expects: a larger ring, lowered to meet the caption. */
+  @media (min-width: 761px) and (max-width: 1100px) and (orientation: portrait) {
+    .ring {
+      --w0: max(160px, min(calc((100svh - 360px) * 0.7), 54vw));
+      --ring-top: calc(50svh + var(--w0) * 0.5 - 20px);
+    }
+  }
+
   /* ---------- mobile ---------- */
   @media (max-width: 760px) {
     .ring {
@@ -605,11 +626,14 @@ const label =
       --ring-top: calc(var(--header-h) + 6px + var(--w0) * 1.25);
     }
 
+    /* the neighbours of the front plate stand right above the caption here: a lower, lighter wash */
     .bar {
       grid-template-areas:
         'name count'
         'facts views';
       row-gap: 8px;
+      --wash-name: 40px;
+      --wash-solid: 50%;
     }
 
     .cap-name {

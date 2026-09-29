@@ -150,8 +150,11 @@ const groups = [
       display: flex;
       align-items: center;
       gap: 6px;
-      margin-right: calc(-1 * var(--g));
-      padding: 0 40px 0 16px;
+      /* Block padding (taken back by the margin) leaves room for the focus ring, which the scroller would clip. */
+      margin: -6px calc(-1 * var(--g)) -6px 0;
+      padding: 6px 42px 6px 16px;
+      /* A chip brought into view by the keyboard (controller.ts) clears the faded edges, ring included. */
+      scroll-padding-inline: 22px 42px;
       overflow-x: auto;
       overscroll-behavior-x: contain;
       scrollbar-width: none;

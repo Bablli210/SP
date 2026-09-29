@@ -23,10 +23,14 @@ export const KIND_LABEL: Record<Kind, string> = {
 
 /**
  * Column counts and how far each column starts down, in column widths.
- * Four on desktop (wireframe: 0, 80, 0, 40px at 1440), two below 1025px.
+ * Four from 1100px (wireframe: 0, 80, 0, 40px at 1440), three from 861 to
+ * 1099px, two at 860px and below. These are the Work grid's breakpoints too,
+ * so the two archives change step together; Masonry.astro holds the media
+ * queries and its `sizes`.
  */
 export const LAYOUTS = [
   { cols: 4, offsets: [0, 0.24, 0, 0.12] },
+  { cols: 3, offsets: [0, 0.22, 0.11] },
   { cols: 2, offsets: [0, 0.22] },
 ] as const;
 

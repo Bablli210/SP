@@ -11,6 +11,7 @@ finding: "Fans collected the sleeves more than the vinyl."
 cover: ../../assets/work/parade-records/cover.jpg
 coverAlt: "Parade Records, key visual (placeholder image)"
 accent: "#6D2A6B"
+heroTone: dark
 featured: true
 order: 5
 gallery:

@@ -52,8 +52,10 @@ import Spill from '../components/contact/Spill.astro';
     margin-block: -0.06em -0.02em;
   }
 
+  /* a word wider than the screen (raised text spacing) breaks, not clips */
   .word {
     display: block;
+    overflow-wrap: break-word;
     animation: lost-rise 1.15s var(--ease-out) 60ms both;
   }
 
@@ -64,17 +66,38 @@ import Spill from '../components/contact/Spill.astro';
     animation: lost-fade 1s var(--ease-out) 0.3s both;
   }
 
+  /*
+   * The site's solid call-to-action button (same spec as the case study's
+   * "Start a similar project" and the brief's "Send brief"): mono label at
+   * .08em, 15/20 padding, and on hover the accent wipes in behind the text.
+   */
   .back {
+    position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     margin-top: clamp(20px, 3svh, 30px);
     padding: 15px 20px 15px 22px;
+    overflow: hidden;
+    isolation: isolate;
+    white-space: nowrap;
     background: var(--fg);
     color: var(--bg);
     letter-spacing: 0.08em;
     animation: lost-fade 1s var(--ease-out) 0.4s both;
     transition: transform 0.2s var(--ease-out);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .back::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--accent-text, var(--accent));
+    transform: scaleX(0);
+    transform-origin: 100% 50%;
+    transition: transform 0.7s var(--ease);
   }
 
   .back:active {
@@ -83,10 +106,15 @@ import Spill from '../components/contact/Spill.astro';
 
   .arrow {
     display: inline-block;
-    transition: transform 0.5s var(--ease);
+    transition: transform 0.7s var(--ease);
   }
 
   @media (hover: hover) {
+    .back:hover::before {
+      transform: none;
+      transform-origin: 0 50%;
+    }
+
     .back:hover .arrow {
       transform: translate3d(5px, 0, 0);
     }
@@ -116,6 +144,10 @@ import Spill from '../components/contact/Spill.astro';
 
     .line {
       font-size: clamp(26px, 7.4vw, 32px);
+    }
+
+    .back {
+      padding-block: 17px;
     }
   }
 

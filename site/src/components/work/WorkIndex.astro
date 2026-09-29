@@ -32,7 +32,6 @@ const entries: Entry[] = projects.map((p) => ({
   url: projectUrl(p),
   plate: plateName(p),
   cover: p.data.cover,
-  coverAlt: p.data.coverAlt,
 }));
 
 // Only disciplines and sectors that have work behind them, in the studio's order.
@@ -235,11 +234,21 @@ const sectorChips: Chip[] = [...new Set(projects.map((p) => p.data.sector))]
     padding: 6px 0;
   }
 
+  /*
+   * Phone: the title keeps the display size every page title shares, and the
+   * view switch moves under it instead of the word shrinking to fit beside it
+   * (this also keeps the row inside a 320px screen).
+   */
   @media (max-width: 760px) {
     .head {
-      --title: clamp(76px, 22vw, 110px);
-      gap: 8px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
       padding-bottom: 20px;
+    }
+
+    .tools {
+      margin-bottom: 0;
     }
 
     .bar {

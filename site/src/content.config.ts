@@ -25,6 +25,11 @@ const projects = defineCollection({
       summary: z.string(),
       cover: image(),
       coverAlt: z.string(),
+      /**
+       * The cover's tone behind the header at the top of the case page. `dark`
+       * sets the header's text in paper while it sits over the cover.
+       */
+      heroTone: z.enum(['light', 'dark']).default('light'),
       /** The project's one accent colour (moodboard rule: one colour at a time). */
       accent: z.string().regex(/^#[0-9a-fA-F]{6}$/).default('#2b3bf2'),
       /** Shown on the home ring. Order is `order`, ascending. */
@@ -50,6 +55,11 @@ const projects = defineCollection({
         .optional(),
       credits: z.array(z.object({ role: z.string(), name: z.string() })).default([]),
       result: z.string().optional(),
+      /**
+       * Still placeholder content. While PLACEHOLDER_CONTENT (src/data/site.ts)
+       * is on, the whole site is marked as a preview; once it is off, entries
+       * still marked here are left out of the site (see src/lib/work.ts).
+       */
       placeholder: z.boolean().default(false),
     }),
 });
@@ -67,6 +77,7 @@ const lab = defineCollection({
       alt: z.string(),
       /** Optional looping video (muted mp4/webm) that plays on hover. */
       loop: z.string().optional(),
+      /** Still placeholder content: left out of the site once PLACEHOLDER_CONTENT is off. */
       placeholder: z.boolean().default(false),
     }),
 });

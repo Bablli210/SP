@@ -2,13 +2,18 @@
 /**
  * Global header: wordmark, primary nav, and a full-screen menu on small screens.
  * `overlay` gives it a soft backdrop so it stays legible over full-bleed imagery.
+ * A hero marked data-header-tone="dark" (with data-header-until) switches the
+ * header to paper text while it sits over that hero.
+ * `close` (a case study) replaces the nav and Menu, at every width, with a
+ * Close pill leading there (case.ts takes the visitor back where they came from).
  */
 import { nav, studio } from '../data/site';
 
 interface Props {
   overlay?: boolean;
+  close?: string;
 }
-const { overlay = false } = Astro.props;
+const { overlay = false, close } = Astro.props;
 const path = Astro.url.pathname;
 const isCurrent = (href: string) => path === href || (href !== '/' && path.startsWith(href));
 ---
@@ -16,43 +21,65 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
 <header class:list={['site-header', { overlay }]} data-header>
   <a class="brand ui" href="/" aria-label={`${studio.name}, home`}>Serious Play</a>
 
-  <nav class="primary ui" aria-label="Main">
-    {
-      nav.map((item) => (
-        <a class="link-line" href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
-          {item.label}
-        </a>
-      ))
-    }
-  </nav>
+  {
+    close ? (
+      <a class="close label" href={close} data-case-close transition:name="case-close">
+        <span>Close</span>
+        <span class="visually-hidden"> case study</span>
+        <svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true" focusable="false">
+          <path d="M1 1l8 8M9 1L1 9" fill="none" stroke="currentColor" stroke-width="1.3" />
+        </svg>
+      </a>
+    ) : (
+      <>
+        <nav class="primary ui" aria-label="Main">
+          {nav.map((item) => (
+            <a class="link-line" href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+              {item.label}
+            </a>
+          ))}
+        </nav>
 
-  <button class="menu-btn label" type="button" aria-expanded="false" aria-controls="site-menu" data-menu-open>
-    Menu
-  </button>
+        {/* commandfor/command open and close the menu even if the script never loads (where supported). */}
+        <button
+          class="menu-btn label"
+          type="button"
+          aria-expanded="false"
+          aria-controls="site-menu"
+          commandfor="site-menu"
+          command="show-modal"
+          data-menu-open
+        >
+          Menu
+        </button>
 
-  <dialog class="menu" id="site-menu" aria-label="Menu" data-menu>
-    <div class="menu-top">
-      <a class="ui brand-in-menu" href="/">Serious Play</a>
-      <button class="label" type="button" data-menu-close>Close</button>
-    </div>
-    <nav aria-label="Main">
-      <ul>
-        {
-          nav.map((item, i) => (
-            <li style={`--i:${i}`}>
-              <a class="display" href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
-                {item.label}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </nav>
-    <div class="menu-foot">
-      <a class="serif" href={`mailto:${studio.email}`}>{studio.email}</a>
-      <a class="label" href={studio.instagram.url} target="_blank" rel="noopener">{studio.instagram.handle} ↗</a>
-    </div>
-  </dialog>
+        <dialog class="menu" id="site-menu" aria-label="Menu" data-menu data-lenis-prevent>
+          <div class="menu-top">
+            <a class="ui brand-in-menu" href="/">Serious Play</a>
+            <button class="label" type="button" commandfor="site-menu" command="close" data-menu-close>Close</button>
+          </div>
+          <nav aria-label="Main">
+            <ul>
+              {nav.map((item, i) => (
+                <li style={`--i:${i}`}>
+                  <a class="display" href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <div class="menu-foot">
+            <a class="serif" href={`mailto:${studio.email}`}>{studio.email}</a>
+            <a class="label" href={studio.instagram.url} target="_blank" rel="noopener">
+              {studio.instagram.handle}<span aria-hidden="true"> ↗</span>
+              <span class="visually-hidden">(Instagram, opens in a new tab)</span>
+            </a>
+          </div>
+        </dialog>
+      </>
+    )
+  }
 </header>
 
 <script>
@@ -61,12 +88,14 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
   /*
    * Solid backdrop: on once content has scrolled under the header. A page with a
    * full-bleed hero marks it with data-header-until; the header stays clear
-   * over it and turns solid once the hero has passed beneath.
+   * over it and turns solid once the hero has passed beneath. While it is over
+   * a hero marked data-header-tone="dark", its text turns paper.
    */
   onPage(() => {
     const header = document.querySelector<HTMLElement>('[data-header]');
     if (!header) return;
     const until = document.querySelector<HTMLElement>('[data-header-until]');
+    const overDark = until?.dataset.headerTone === 'dark';
     let solid = false;
     let first = true;
     let ticking = false;
@@ -79,6 +108,7 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
       solid = on;
       if (first) header.style.setProperty('--solid-t', '0s');
       header.toggleAttribute('data-solid', on);
+      header.toggleAttribute('data-over-dark', overDark && !on);
       if (first) {
         void getComputedStyle(header, '::after').opacity;
         header.style.removeProperty('--solid-t');
@@ -105,33 +135,73 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     const open = document.querySelector<HTMLButtonElement>('[data-menu-open]');
     const close = document.querySelector<HTMLButtonElement>('[data-menu-close]');
     if (!dialog || !open || !close) return;
+    const links = Array.from(dialog.querySelectorAll<HTMLAnchorElement>('a'));
 
+    /** Undo everything the open menu changed outside itself. */
+    const release = () => {
+      open.setAttribute('aria-expanded', 'false');
+      getLenis()?.start();
+      dialog.classList.remove('is-covering', 'is-leaving');
+      links.forEach((a) => a.classList.remove('is-picked'));
+    };
+    // Once the menu has faded fully in, the page under it can go (see the styles).
+    const onShown = (ev: TransitionEvent) => {
+      if (ev.target === dialog && ev.propertyName === 'opacity' && dialog.open) dialog.classList.add('is-covering');
+    };
     const show = () => {
-      dialog.showModal();
+      if (!dialog.open) dialog.showModal();
       open.setAttribute('aria-expanded', 'true');
       getLenis()?.stop();
     };
     const hide = () => {
-      dialog.close();
+      if (dialog.open) dialog.close();
     };
+    // Every way the menu closes (Close, Esc, a link out of the site) comes through here.
     const onClose = () => {
-      open.setAttribute('aria-expanded', 'false');
-      getLenis()?.start();
+      release();
       open.focus();
     };
+    /*
+     * A link to another page of the site leaves the menu open: the page changes
+     * beneath it and the menu fades out over the new page with the page
+     * transition (the swap then closes it, see the cleanup), so the page being
+     * left never flashes back up in between. Anything else closes it now.
+     */
+    const onLink = (ev: MouseEvent) => {
+      const a = ev.currentTarget as HTMLAnchorElement;
+      if (ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+      const internal =
+        a.origin === location.origin &&
+        !a.target &&
+        !a.hasAttribute('download') &&
+        a.dataset.astroReload === undefined;
+      if (!internal) {
+        hide();
+        return;
+      }
+      dialog.classList.add('is-leaving');
+      a.classList.add('is-picked');
+    };
+
     open.addEventListener('click', show);
     close.addEventListener('click', hide);
     dialog.addEventListener('close', onClose);
-    // Close the menu when a link inside it is followed.
-    const links = dialog.querySelectorAll('a');
-    links.forEach((a) => a.addEventListener('click', hide));
+    dialog.addEventListener('transitionend', onShown);
+    links.forEach((a) => a.addEventListener('click', onLink));
 
     return () => {
       open.removeEventListener('click', show);
       close.removeEventListener('click', hide);
       dialog.removeEventListener('close', onClose);
-      links.forEach((a) => a.removeEventListener('click', hide));
-      if (dialog.open) dialog.close();
+      dialog.removeEventListener('transitionend', onShown);
+      links.forEach((a) => a.removeEventListener('click', onLink));
+      // The page is being swapped (a menu link, or Back/Forward with the menu
+      // open). The close event is queued and its listener is gone, so restore
+      // what the menu changed here and now; focus is the router's business.
+      if (dialog.open) {
+        dialog.close();
+        release();
+      }
     };
   });
 </script>
@@ -149,6 +219,7 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     padding: env(safe-area-inset-top, 0px) var(--g) 0;
     color: var(--fg);
     pointer-events: none;
+    transition: color var(--solid-t, 0.45s) var(--ease);
   }
 
   .site-header {
@@ -156,6 +227,11 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
   }
 
   .site-header > * {
+    pointer-events: auto;
+  }
+
+  /* Once solid, the header takes the taps it covers, so a near miss never lands on a hidden link below. */
+  .site-header[data-solid] {
     pointer-events: auto;
   }
 
@@ -184,6 +260,19 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     pointer-events: none;
   }
 
+  /* Over a dark hero: paper text, and only a faint ink shade (a paper one would haze the image). */
+  .site-header[data-over-dark] {
+    color: var(--paper);
+  }
+
+  .site-header.overlay[data-over-dark]::before {
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--ink) 30%, transparent), transparent);
+  }
+
+  .site-header[data-over-dark] :focus-visible {
+    outline-color: var(--paper);
+  }
+
   .brand {
     font-weight: 700;
   }
@@ -193,9 +282,48 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     gap: 24px;
   }
 
+  /* Hit areas: the text stays small, the target is about 44px tall. */
+  .brand,
+  .primary a {
+    position: relative;
+  }
+
+  .brand::before,
+  .primary a::before {
+    content: '';
+    position: absolute;
+    inset: -14px -10px;
+  }
+
   .menu-btn {
     display: none;
     padding: 14px 0 14px 16px;
+  }
+
+  /*
+   * Close (a case study): a pill in the nav's place, centred on the row like
+   * the wordmark. Paper with a hairline edge, so it reads over any cover and
+   * over the solid header alike.
+   */
+  .close {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px 9px 15px;
+    border-radius: 999px;
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow: 0 0 0 1px var(--rule);
+  }
+
+  .close svg {
+    transition: transform 0.6s var(--ease);
+  }
+
+  @media (hover: hover) {
+    .close:hover svg {
+      transform: rotate(90deg);
+    }
   }
 
   @media (max-width: 760px) {
@@ -206,34 +334,100 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     .menu-btn {
       display: block;
     }
+
+    .close {
+      padding: 10px 14px;
+    }
   }
 
-  /* full-screen menu */
+  /* Without scripting the menu cannot open: show the links in the header instead. */
+  @media (scripting: none) and (max-width: 760px) {
+    .menu-btn {
+      display: none;
+    }
+
+    .brand {
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .primary {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 2px 14px;
+    }
+
+    .primary a {
+      padding-block: 4px;
+      background-origin: content-box;
+    }
+
+    .primary a::before {
+      inset: -2px -7px;
+    }
+  }
+
+  /*
+   * Full-screen menu. It fades in over the page and out again (its links rise
+   * into place as it opens). Its top row sits exactly where the header's does,
+   * so the wordmark and Menu/Close hold still while the ground changes.
+   * Positioned explicitly, so its box never depends on the top layer (a closing
+   * dialog leaves it before its fade ends in browsers without `overlay`).
+   */
   .menu {
+    position: fixed;
+    inset: 0;
     width: 100%;
     max-width: none;
     height: 100%;
     max-height: none;
     margin: 0;
-    padding: calc(env(safe-area-inset-top, 0px) + 20px) var(--g) calc(env(safe-area-inset-bottom, 0px) + 28px);
+    padding: env(safe-area-inset-top, 0px) var(--g) calc(env(safe-area-inset-bottom, 0px) + 28px);
     border: 0;
     background: var(--ink);
     color: var(--paper);
     flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity 0.3s var(--ease),
+      overlay 0.3s allow-discrete,
+      display 0.3s allow-discrete;
   }
 
   .menu[open] {
     display: flex;
+    opacity: 1;
+    pointer-events: auto;
+    /* Following a menu link, the open menu fades out over the next page (global.css). */
+    view-transition-name: site-menu;
+    transition-duration: 0.45s;
+    transition-timing-function: var(--ease-out);
+  }
+
+  @starting-style {
+    .menu[open] {
+      opacity: 0;
+    }
   }
 
   .menu::backdrop {
     background: transparent;
   }
 
+  /* A followed link answers with the others stepping back, not a tap flash. */
+  .menu a,
+  .menu button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   .menu-top {
+    flex: none;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    height: calc(var(--header-h) - env(safe-area-inset-top, 0px));
   }
 
   .menu-top button {
@@ -245,7 +439,7 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
   }
 
   .menu nav {
-    margin-top: 48px;
+    margin-top: 40px;
   }
 
   .menu li {
@@ -262,11 +456,29 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     padding: 12px 0;
     font-size: clamp(56px, 18vw, 96px);
     transform: translateY(0);
+    transition: opacity 0.35s var(--ease);
   }
 
-  .menu[open] nav a {
-    animation: menu-in 0.7s var(--ease-out) both;
-    animation-delay: calc(var(--i) * 45ms + 60ms);
+  @media (prefers-reduced-motion: no-preference) {
+    .menu[open] nav a {
+      animation: menu-in 0.7s var(--ease-out) both;
+      animation-delay: calc(var(--i) * 45ms + 60ms);
+    }
+  }
+
+  /* A link has been followed: the others step back while the next page loads. */
+  .menu.is-leaving nav a:not(.is-picked) {
+    opacity: 0.35;
+  }
+
+  /*
+   * While the menu fully covers the page (or a link in it has been followed),
+   * the page under it is emptied, so a page change (a menu link, or Back with
+   * the menu open) fades the menu straight into the next page, never through
+   * the one being left. The header stays: the menu's top row sits on it.
+   */
+  :global(body:has(.menu.is-covering, .menu.is-leaving) > :not(.site-header, .placeholder-note)) {
+    visibility: hidden;
   }
 
   .menu nav a[aria-current='page'] {
@@ -283,6 +495,7 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     margin-top: auto;
     display: grid;
     gap: 8px;
+    justify-items: start;
   }
 
   .menu-foot .serif {

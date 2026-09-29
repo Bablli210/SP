@@ -5,29 +5,35 @@
  *   page. Driven by the scroll itself (Lenis' scroll event, which fires in the
  *   same frame it moves the page, or the native scroll event), so there is no
  *   loop to run and nothing to settle. Transform only; off for reduced motion.
- * - Close and Esc: back to where the visitor came from when that was the ring
- *   or the work index (history.back() keeps their place), else to /work/.
- *   Once a way out has started, further presses do nothing (a double click
- *   must never step back twice). The Close pill steps aside while reading
- *   down and returns on scroll up.
+ * - Close and Esc: back to the page the case was opened from, with its place
+ *   kept: the nearest earlier page of this site in the tab's history that is
+ *   not a case (the ring, the work index with its filter, Services...), so a
+ *   run of Next projects closes as a whole. With none (arrived directly, or a
+ *   browser without the Navigation API), to /work/. Once a way out has
+ *   started, further presses do nothing (a double click must never step back
+ *   twice). Close sits in the header row (Header.astro) and stays put.
  * - Header: Header.astro turns its backdrop solid once the hero (marked
  *   data-header-until) has passed beneath it.
  * - Shared elements: on the way out, only the element that should morph keeps
  *   its name: the hero when it is mostly on screen and we head for the ring
- *   or the index, the Next band's cover when we head for the next case.
+ *   or the index, the Next band's cover when we head for the next case (and
+ *   then the next page is told, so it keeps this one still under the cover
+ *   while it grows; see [slug].astro). The hero is warmed first (warm.ts).
  * - Film: plays muted only while on screen; a control pauses or plays it.
  */
 import { navigate, type TransitionBeforePreparationEvent, type TransitionBeforeSwapEvent } from 'astro:transitions/client';
 import { onPage, reducedMotion, getLenis, clamp } from '../../scripts/motion';
-// Installs the hero warm-up for every later navigation into a case (see warm.ts).
-import './warm';
 
-/** The pages a case is "closed" back to: the home ring and the work index. */
+/** The pages a case hands its hero back to (it morphs into their plate): the home ring and the work index. */
 const INDEX_PATH = /^\/(?:work\/?)?$/;
+/** A case study; Close never returns to one. */
+const CASE_PATH = /^\/work\/[^/]+\/?$/;
 const CLOSE_HREF = '/work/';
 /** Hero cover drifts at 70% of the page's speed; the Next band's at 90%. */
 const HERO_RATE = 0.3;
 const NEXT_RATE = 0.1;
+/** Set on the incoming page's root while it arrives from the previous case's Next band. */
+const ARRIVAL_ATTR = 'data-case-arrival';
 
 const samePath = (a: string, b: string) => a.replace(/\/+$/, '') === b.replace(/\/+$/, '');
 
@@ -40,50 +46,44 @@ interface NavigationLike {
   entries(): NavEntry[];
 }
 
-/** Path of the previous entry in this tab's history, when the browser can tell us. */
-function previousPath(): string | null {
+/**
+ * How many steps back in this tab's history the page this case was opened
+ * from is: the nearest earlier entry of this site that is not a case. 0 when
+ * there is none or the browser cannot tell.
+ */
+function stepsToOpener(): number {
   const nav = (window as unknown as { navigation?: NavigationLike }).navigation;
   const index = nav?.currentEntry?.index ?? -1;
-  if (!nav || index < 1) return null;
-  const url = nav.entries()[index - 1]?.url;
-  if (!url) return null;
-  const u = new URL(url);
-  return u.origin === location.origin ? u.pathname : null;
+  if (!nav || index < 1) return 0;
+  const entries = nav.entries();
+  for (let i = index - 1; i >= 0; i--) {
+    const url = entries[i]?.url;
+    if (!url) return 0;
+    const u = new URL(url);
+    if (u.origin !== location.origin) return 0;
+    if (!CASE_PATH.test(u.pathname)) return index - i;
+  }
+  return 0;
 }
 
-/*
- * The morph rules (both snapshots fill the travelling frame, cropped) live in
- * the case page's styles, which the router removes when it swaps in the ring
- * or the index. When a case hands its hero back to one of them, hold the same
- * rules in an adopted sheet (which the swap leaves alone) for that one
- * transition. Redundant once global.css carries them.
+/**
+ * Tell the next case that it arrives from this one's Next band: its root
+ * carries ARRIVAL_ATTR through the page transition (so [slug].astro keeps this
+ * page still under the cover while it grows, instead of showing the new
+ * page's hero ground around it), and drops it once the transition is over.
+ * Only for this navigation: if it is given up, a later swap is not marked.
  */
-const MORPH_CSS = '::view-transition-old(*),::view-transition-new(*){height:100%;object-fit:cover}';
-let holdMorph = false;
-let morphSheet: CSSStyleSheet | null = null;
-
-// Cleared at the start of every navigation; a case's own handler (added later) sets it.
-document.addEventListener('astro:before-preparation', () => {
-  holdMorph = false;
-});
-
-document.addEventListener('astro:before-swap', (ev) => {
-  if (!holdMorph) return;
-  holdMorph = false;
-  if (!('adoptedStyleSheets' in document) || typeof CSSStyleSheet.prototype.replaceSync !== 'function') return;
-  if (!morphSheet) {
-    morphSheet = new CSSStyleSheet();
-    morphSheet.replaceSync(MORPH_CSS);
-  }
-  const sheet = morphSheet;
-  if (!document.adoptedStyleSheets.includes(sheet)) document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
-  const release = () => {
-    document.adoptedStyleSheets = document.adoptedStyleSheets.filter((x) => x !== sheet);
+function markNextArrival(e: TransitionBeforePreparationEvent) {
+  const onSwap = (ev: Event) => {
+    const s = ev as TransitionBeforeSwapEvent;
+    // The router copies the new root's attributes onto this one as it swaps.
+    s.newDocument.documentElement.setAttribute(ARRIVAL_ATTR, 'next');
+    const drop = () => document.documentElement.removeAttribute(ARRIVAL_ATTR);
+    if (s.viewTransition) s.viewTransition.finished.then(drop, drop);
+    else drop();
   };
-  const vt = (ev as TransitionBeforeSwapEvent).viewTransition;
-  if (vt?.finished) vt.finished.then(release, release);
-  else release();
-});
+  document.addEventListener('astro:before-swap', onSwap, { once: true, signal: e.signal });
+}
 
 const timecode = (s: number) => {
   const t = Math.max(0, Math.floor(s || 0));
@@ -110,7 +110,8 @@ onPage(() => {
   const heroMedia = hero?.querySelector<HTMLElement>('.media') ?? null;
   const heroImg = heroMedia?.querySelector('img') ?? null;
   const title = root.querySelector<HTMLElement>('[data-case-title]');
-  const closeLink = root.querySelector<HTMLAnchorElement>('[data-case-close]');
+  // Close belongs to the header row, so it is looked for on the whole page.
+  const closeLink = document.querySelector<HTMLAnchorElement>('[data-case-close]');
   const next = document.querySelector<HTMLElement>('[data-case-next]');
   const nextLink = next?.querySelector<HTMLAnchorElement>('[data-next-link]') ?? null;
   const nextMedia = nextLink?.querySelector<HTMLElement>('.media') ?? null;
@@ -119,9 +120,9 @@ onPage(() => {
   /* ---------- Close and Esc ---------- */
 
   /*
-   * Set as soon as a way out starts (history.back() or a navigation), so a
-   * second click or Esc before the page swaps never adds a second step back.
-   * history.back() is asynchronous: if, against expectation, no navigation
+   * Set as soon as a way out starts (a step back in history or a navigation),
+   * so a second click or Esc before the page swaps never adds a second step
+   * back. history.go() is asynchronous: if, against expectation, no navigation
    * follows it, the guard lifts again so Close never goes dead.
    */
   let leaving = false;
@@ -136,15 +137,13 @@ onPage(() => {
   };
   cleanups.push(() => window.clearTimeout(leaveTimer));
 
-  /** Returns true when it handled the navigation itself. */
+  /** Returns true when it handled the navigation itself (back to the page the case was opened from). */
   const closeCase = (): boolean => {
-    const prev = previousPath();
-    if (prev && INDEX_PATH.test(prev)) {
-      startLeaving();
-      history.back();
-      return true;
-    }
-    return false;
+    const steps = stepsToOpener();
+    if (!steps) return false;
+    startLeaving();
+    history.go(-steps);
+    return true;
   };
 
   if (closeLink) {
@@ -174,7 +173,7 @@ onPage(() => {
     }
   });
 
-  /* ---------- Scroll: parallax and the Close pill ---------- */
+  /* ---------- Scroll: parallax ---------- */
 
   let vh = 0;
   let heroTop = 0;
@@ -207,33 +206,8 @@ onPage(() => {
     }
   };
 
-  /*
-   * Close stays put over the hero, steps aside while the visitor reads down
-   * the page (so it never sits on the work or the text), and comes back on the
-   * first move up, when leaving is likely. It also clears the Next band. Hidden
-   * only visually: it stays in the tab order and shows when focused.
-   */
-  let lastY = window.scrollY;
-  let travel = 0;
-  let readingDown = false;
-  let atBand = false;
-  const syncClose = () => closeLink?.classList.toggle('is-away', readingDown || atBand);
-  const trackClose = (y: number) => {
-    const dy = y - lastY;
-    lastY = y;
-    if (dy === 0) return;
-    if (dy > 0 !== (travel > 0)) travel = 0;
-    travel += dy;
-    if (y < heroH * 0.5) readingDown = false;
-    else if (travel > 48) readingDown = true;
-    else if (travel < -24) readingDown = false;
-    syncClose();
-  };
-
   const onScroll = () => {
-    const y = window.scrollY;
-    if (!reduce) paint(y);
-    if (closeLink) trackClose(y);
+    if (!reduce) paint(window.scrollY);
   };
 
   const measure = () => {
@@ -283,18 +257,6 @@ onPage(() => {
     cancelAnimationFrame(measureRaf);
   });
 
-  if (closeLink && next && 'IntersectionObserver' in window) {
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        atBand = entry.isIntersecting;
-        syncClose();
-      },
-      { rootMargin: '0px 0px -50% 0px' },
-    );
-    io.observe(next);
-    cleanups.push(() => io.disconnect());
-  }
-
   /* ---------- Shared elements on the way out ---------- */
 
   const onBeforePreparation = (ev: Event) => {
@@ -304,9 +266,10 @@ onPage(() => {
     leaving = true;
     navStarted = true;
 
-    // The title and Close only ever fade in on arrival; they never travel.
+    // The title only ever fades in on arrival; it never travels. Close keeps its
+    // name: it holds still on the way to another case and fades out above the
+    // header on the way anywhere else ([slug].astro, global.css).
     title?.style.setProperty('view-transition-name', 'none');
-    closeLink?.style.setProperty('view-transition-name', 'none');
 
     if (heroMedia) {
       // Hand the cover back only while it is mostly on screen: from further down,
@@ -321,15 +284,20 @@ onPage(() => {
       } else {
         heroMedia.style.setProperty('view-transition-name', 'none');
       }
-      holdMorph = handBack && !reduce;
     }
 
-    // The Next band's cover becomes the next case's hero (warm.ts has already
-    // arranged for that hero to be decoded before the morph starts).
+    // The Next band's cover becomes the next case's hero, when it is on screen to
+    // travel from (Forward from further up the page just changes pages).
     if (nextLink && nextMedia) {
-      const toNext = samePath(to, new URL(nextLink.href).pathname);
-      if (toNext && nextLink.dataset.plate) nextMedia.style.setProperty('view-transition-name', nextLink.dataset.plate);
-      else nextMedia.style.removeProperty('view-transition-name');
+      const plate = nextLink.dataset.plate;
+      const r = nextMedia.getBoundingClientRect();
+      const toNext = !!plate && samePath(to, new URL(nextLink.href).pathname) && r.bottom > 0 && r.top < window.innerHeight;
+      if (toNext) {
+        nextMedia.style.setProperty('view-transition-name', plate);
+        if (!reduce) markNextArrival(e);
+      } else {
+        nextMedia.style.removeProperty('view-transition-name');
+      }
     }
   };
   document.addEventListener('astro:before-preparation', onBeforePreparation);

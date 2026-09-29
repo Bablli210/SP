@@ -14,8 +14,8 @@ export interface Entry {
   disc: string;
   url: string;
   plate: string;
+  /** Shown inside links whose caption names the project, so without alt text. */
   cover: ImageMetadata;
-  coverAlt: string;
 }
 
 export interface Chip {

@@ -2,7 +2,8 @@
 /**
  * List view: one fact row per project (N°, client, sector, disciplines, year).
  * Rows settle up in a wave on first load. Hover or focus keeps one row in
- * ink and fades the rest; the cover preview lives in Peek.astro.
+ * ink and fades the rest (opacity only, never below AA); the cover preview
+ * lives in Peek.astro.
  */
 import type { Entry } from './types';
 
@@ -79,7 +80,6 @@ const { entries } = Astro.props;
     display: block;
     overflow: clip;
     padding: 16px var(--g) 13px;
-    transition: color 0.5s var(--ease);
   }
 
   .row:focus-visible {
@@ -95,7 +95,18 @@ const { entries } = Astro.props;
     max-width: 100%;
     font-size: clamp(34px, 4vw, 58px);
     line-height: 1.02;
-    transition: transform 0.8s var(--ease);
+    opacity: var(--dim-name, 1);
+    transition:
+      transform 0.8s var(--ease),
+      opacity 0.5s var(--ease);
+  }
+
+  .c-no,
+  .c-sector,
+  .c-disc,
+  .c-year {
+    opacity: var(--dim-fact, 1);
+    transition: opacity 0.5s var(--ease);
   }
 
   .row-in .c-sector,
@@ -109,14 +120,26 @@ const { entries } = Astro.props;
     text-align: right;
   }
 
-  .c-no {
-    transition: color 0.5s var(--ease);
+  /*
+   * One row in ink, the rest recede, as in the home Index. Opacity only (it
+   * runs on the compositor; animating colour re-styled the whole list every
+   * frame), and never below AA on paper: the large names at 50% of ink
+   * (3.5:1, text 30px and up), the small facts at 65% (5.8:1, about graphite).
+   * The active row's N° takes the accent at once.
+   */
+  .rows:has(.row:focus-visible) .row:not(:focus-visible) {
+    --dim-name: 0.5;
+    --dim-fact: 0.65;
   }
 
-  /* One row in ink, the rest recede. */
+  .row:focus-visible .c-no {
+    color: var(--accent);
+  }
+
   @media (hover: hover) {
     .rows:has(.row:hover) .row:not(:hover) {
-      color: var(--concrete);
+      --dim-name: 0.5;
+      --dim-fact: 0.65;
     }
 
     .row:hover .c-name {
@@ -126,14 +149,6 @@ const { entries } = Astro.props;
     .row:hover .c-no {
       color: var(--accent);
     }
-  }
-
-  .rows:has(.row:focus-visible) .row:not(:focus-visible) {
-    color: var(--concrete);
-  }
-
-  .row:focus-visible .c-no {
-    color: var(--accent);
   }
 
   /* First load: rows settle up in a wave from a visible start (inside the row's clip); the rules draw in. */
@@ -196,6 +211,7 @@ const { entries } = Astro.props;
       font-size: 30px;
     }
 
+    /* Already muted here, so it keeps its contrast while the row recedes. */
     .row-in .c-sector {
       grid-column: 2 / -1;
       grid-row: 2;
@@ -203,6 +219,7 @@ const { entries } = Astro.props;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: var(--muted);
+      opacity: 1;
     }
   }
 </style>

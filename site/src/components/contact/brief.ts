@@ -33,15 +33,20 @@ export function problem(key: FieldKey, value: string): string {
   return EMAIL.test(v) ? '' : 'Check the email address.';
 }
 
+/** The brief as plain text, one line ending (`eol`) throughout. */
+export function briefText(b: Brief, eol = '\n'): string {
+  const lines = [`Name: ${b.name}`, `Email: ${b.email}`];
+  if (b.needs.length) lines.push(`What we need: ${b.needs.join(', ')}`);
+  // the textarea gives bare LF; match whatever the rest uses
+  if (b.message) lines.push('', b.message.replace(/\r?\n/g, eol));
+  return lines.join(eol);
+}
+
 /** mailto: link to the studio with the brief in the subject and body. */
 export function mailtoHref(to: string, b: Brief): string {
   const subject = b.name ? `Project brief from ${b.name}` : 'Project brief';
-  const lines = [`Name: ${b.name}`, `Email: ${b.email}`];
-  if (b.needs.length) lines.push(`What we need: ${b.needs.join(', ')}`);
-  // one line ending throughout: the textarea gives bare LF, the rest is CRLF
-  if (b.message) lines.push('', b.message.replace(/\r?\n/g, '\r\n'));
-  // encodeURIComponent keeps line breaks as %0A, which mail apps expect.
-  const q = `subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\r\n'))}`;
+  // CRLF, as mail bodies expect; encodeURIComponent keeps it as %0D%0A.
+  const q = `subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(briefText(b, '\r\n'))}`;
   return `mailto:${to}?${q}`;
 }
 

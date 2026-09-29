@@ -2,7 +2,8 @@
 /**
  * Grid view: 4:5 covers in four columns (two on tablet, one on phone) with
  * staggered offsets, and a fact caption under each. The covers carry the
- * shared-element names, so a cover morphs into its case-study hero.
+ * shared-element names, so a cover morphs into its case-study hero. The
+ * caption names the link, so the cover inside it is decorative (alt="").
  */
 import Media from '../Media.astro';
 import type { Entry } from './types';
@@ -23,7 +24,7 @@ const sizes = '(max-width: 760px) calc(100vw - 32px), (max-width: 1099px) 46vw, 
             <Media
               class="cover"
               src={e.cover}
-              alt={e.coverAlt}
+              alt=""
               ratio="4 / 5"
               sizes={sizes}
               name={e.plate}
@@ -46,7 +47,8 @@ const sizes = '(max-width: 760px) calc(100vw - 32px), (max-width: 1099px) 46vw, 
     position: relative;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    column-gap: var(--c-gap);
+    /* The tile gutter every image grid shares (12px on phone, 20px from 1440). */
+    column-gap: var(--tile-gap, var(--c-gap));
     row-gap: clamp(56px, 6vw, 96px);
     align-items: start;
     padding: clamp(28px, 3vw, 44px) var(--g) var(--u);

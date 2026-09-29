@@ -3,28 +3,35 @@
  * Page shell: SEO, fonts, page transitions, header and footer.
  *
  * Props
- * - title / description / image: SEO and social card
+ * - title / description / image / imageAlt: SEO and social card (1200 × 630)
  * - theme: 'paper' (default) or 'ink' for dark pages
  * - smooth: false turns off smooth scroll (pages with their own scroll behaviour)
  * - footer: false hides the global footer; cta: false hides its "Start a project" band
  * - headerOverlay: header sits over a full-bleed hero with a legible backdrop
+ * - close: a case study's Close link target; the header shows it in place of the nav
  * - jsonLd: structured data object for this page
  */
 import '../styles/global.css';
 import { ClientRouter } from 'astro:transitions';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import { studio, PLACEHOLDER_CONTENT } from '../data/site';
+import { studio, socialCard, PLACEHOLDER_CONTENT } from '../data/site';
+// The two faces on every first screen (display titles, serif names), fetched
+// with the page instead of after its styles. Same files as global.css imports.
+import displayFont from '@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url';
+import serifFont from '@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff2?url';
 
 interface Props {
   title?: string;
   description?: string;
   image?: string;
+  imageAlt?: string;
   theme?: 'paper' | 'ink';
   smooth?: boolean;
   footer?: boolean;
   cta?: boolean;
   headerOverlay?: boolean;
+  close?: string;
   noindex?: boolean;
   jsonLd?: Record<string, unknown>;
 }
@@ -32,12 +39,14 @@ interface Props {
 const {
   title,
   description = studio.thesis,
-  image = '/og.jpg',
+  image = socialCard.src,
+  imageAlt = image === socialCard.src ? socialCard.alt : undefined,
   theme = 'paper',
   smooth = true,
   footer = true,
   cta = true,
   headerOverlay = false,
+  close,
   noindex = false,
   jsonLd,
 } = Astro.props;
@@ -48,7 +57,7 @@ const ogImage = new URL(image, Astro.site);
 ---
 
 <!doctype html>
-<html lang="en" data-theme={theme}>
+<html lang="en" data-theme={theme} data-note={PLACEHOLDER_CONTENT ? '' : undefined}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -57,7 +66,12 @@ const ogImage = new URL(image, Astro.site);
     <link rel="canonical" href={canonical} />
     {noindex && <meta name="robots" content="noindex" />}
     <meta name="theme-color" content={theme === 'ink' ? '#0e0e0e' : '#f3f2ee'} />
+    <link rel="preload" href={displayFont} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={serifFont} as="font" type="font/woff2" crossorigin />
+    {/* sizes="32x32" keeps browsers that read SVG icons on the SVG; the .ico is for those that do not. */}
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
     <meta property="og:type" content="website" />
@@ -66,7 +80,12 @@ const ogImage = new URL(image, Astro.site);
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content={String(socialCard.width)} />
+    <meta property="og:image:height" content={String(socialCard.height)} />
+    {imageAlt && <meta property="og:image:alt" content={imageAlt} />}
     <meta name="twitter:card" content="summary_large_image" />
+    {imageAlt && <meta name="twitter:image:alt" content={imageAlt} />}
 
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 
@@ -82,16 +101,23 @@ const ogImage = new URL(image, Astro.site);
   </head>
   <body data-theme={theme} data-smooth={smooth ? 'on' : 'off'}>
     <a class="skip-link label" href="#main">Skip to content</a>
-    <Header overlay={headerOverlay} />
+    <Header overlay={headerOverlay} close={close} />
     <main id="main" tabindex="-1">
       <slot />
     </main>
     {footer && <Footer cta={cta} />}
     {
+      /*
+       * The preview notice. It keeps the same node across pages (an explicit
+       * persist id: an automatic one differs between page templates), and is
+       * named in the styles below, not with transition:name, whose generated
+       * scope would also differ. html[data-note] reserves room for it (--note-h).
+       */
       PLACEHOLDER_CONTENT && (
-        <p class="placeholder-note label" transition:persist transition:name="placeholder-note">
-          Preview · projects and images are placeholders
-        </p>
+        <aside class="placeholder-note label" aria-label="Preview notice" transition:persist="placeholder-note">
+          <span class="note-long">Preview · projects and images are placeholders</span>
+          <span class="note-short">Preview · placeholders</span>
+        </aside>
       )
     }
   </body>
@@ -103,6 +129,7 @@ const ogImage = new URL(image, Astro.site);
     outline: none;
   }
 
+  /* Opaque ink with a light hairline edge: it reads on paper, on ink pages and over the ink footer. */
   .placeholder-note {
     position: fixed;
     left: 50%;
@@ -111,10 +138,33 @@ const ogImage = new URL(image, Astro.site);
     z-index: 90;
     padding: 6px 10px;
     border-radius: 999px;
-    background: rgba(14, 14, 14, 0.82);
-    color: #f3f2ee;
+    background: var(--ink);
+    color: var(--paper);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--paper) 35%, transparent);
     font-size: 10px;
     white-space: nowrap;
     pointer-events: none;
+    view-transition-name: placeholder-note;
+  }
+
+  .note-short {
+    display: none;
+  }
+
+  /* Phones: a short tag in the bottom-right corner, clear of the left-aligned captions. */
+  @media (max-width: 760px) {
+    .placeholder-note {
+      left: auto;
+      right: var(--g);
+      transform: none;
+    }
+
+    .note-long {
+      display: none;
+    }
+
+    .note-short {
+      display: inline;
+    }
   }
 </style>
