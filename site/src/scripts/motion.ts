@@ -142,6 +142,55 @@ onPage(() => {
   return setupReveals();
 });
 
+/*
+ * A hash typed in the address bar (or set with location.hash) makes a history
+ * entry with no state, and Astro's router ignores popstate for such entries:
+ * after leaving it by a site link, Back changes the URL but leaves the other
+ * page showing. So such an entry gets the router's shape: the index of the
+ * entry it came from (as the router does for its own hash moves) and the
+ * scroll position. Page fields (an open row, a lab viewer) are left to the
+ * pages. From popstate this waits a microtask: the router's own hash links
+ * pass through a stateless entry too and restore their state synchronously,
+ * and replacing it first would override the index the router pushed.
+ */
+let lastIndex = 0;
+const noteIndex = () => {
+  const i = (history.state as { index?: unknown } | null)?.index;
+  if (typeof i === 'number') lastIndex = i;
+};
+const adopt = () => {
+  if (history.state !== null) {
+    noteIndex();
+    return;
+  }
+  history.replaceState({ index: lastIndex, scrollX: window.scrollX, scrollY: window.scrollY }, '');
+};
+document.addEventListener('astro:page-load', noteIndex);
+addEventListener('popstate', () => {
+  if (history.state === null) queueMicrotask(adopt);
+  else noteIndex();
+});
+addEventListener('hashchange', adopt);
+
+/** The fixed header's height in px (the --header-h token). */
+export const headerHeight = (): number =>
+  parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 72;
+
+/**
+ * One of the site's easing tokens as a CSS timing function, for the Web
+ * Animations API (which cannot read var()). Falls back to the token's
+ * value in global.css if the property is missing or unusable.
+ */
+export function easeToken(name: '--ease' | '--ease-out' | '--ease-press'): string {
+  const fallback = {
+    '--ease': 'cubic-bezier(0.7, 0, 0.2, 1)',
+    '--ease-out': 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+    '--ease-press': 'cubic-bezier(0.2, 0, 0, 1)',
+  }[name];
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v && CSS.supports('animation-timing-function', v) ? v : fallback;
+}
+
 /** Linear interpolation helper for rAF-driven motion. */
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 export const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));

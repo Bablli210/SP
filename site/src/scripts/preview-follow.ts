@@ -1,7 +1,6 @@
 /**
  * The cover preview that follows the cursor over a list of projects: the home
- * Index (src/scripts/ring.ts), and the /work/ list once it adopts this module
- * (src/components/work/peek.ts has its own copy of the same maths today).
+ * Index (src/scripts/ring.ts) and the /work/ list (src/components/work/peek.ts).
  * One place for how it is placed and how it moves, so both lists behave alike.
  *
  * - It sits beside the pointer but never over the hovered name, and swings to
@@ -14,7 +13,7 @@
  * Pure placement and a follower: callers measure (outside any rAF write) and
  * pass the numbers in, so nothing here reads layout.
  */
-import { clamp } from '../../scripts/motion';
+import { clamp } from './motion';
 
 /** Space between the pointer (or the end of the name) and the preview, px. */
 export const PREVIEW_GAP = 28;

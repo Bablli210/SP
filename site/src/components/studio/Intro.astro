@@ -60,7 +60,6 @@ const detail = studioImage('studio/studio-detail.jpg');
   .title {
     grid-column: 1 / span 7;
     font-size: var(--title);
-    white-space: nowrap;
   }
 
   /* The word rises into place from behind its own baseline. */
@@ -72,8 +71,10 @@ const detail = studioImage('studio/studio-detail.jpg');
     margin-block: -0.06em -0.02em;
   }
 
+  /* a word wider than its column (raised letter spacing) breaks, never clips in the mask */
   .word {
     display: block;
+    overflow-wrap: break-word;
   }
 
   .thesis {
@@ -179,10 +180,6 @@ const detail = studioImage('studio/studio-detail.jpg');
   }
 
   @media (max-width: 760px) {
-    .intro {
-      --title: clamp(88px, 29vw, 132px);
-    }
-
     .top {
       row-gap: 20px;
     }

@@ -41,7 +41,8 @@ Everything the studio needs to replace is in three places. Anything in `[square 
 - `accent` is the project's one colour on its case study.
 - `finding` is the single sentence of prose on a case study. Keep it to one fact or insight.
 - `film` (optional): `src` is a path under `public/` (e.g. `/films/halwa-house.mp4`) and `poster` an image in the project folder.
-- Delete the `placeholder: true` line once a project is real.
+- `heroTone: dark` for a dark cover: the header's text turns paper while it sits over the case study's hero (the default is `light`).
+- Projects and lab entries still marked `placeholder: true` are left out of the live site once PLACEHOLDER_CONTENT (`src/data/site.ts`) is false, and the build lists them. Delete the line once the project is real.
 
 **2. Lab** (`src/content/lab/*.md` and `src/assets/lab/`)
 
@@ -84,3 +85,4 @@ The build is a folder of static files (`dist/`), so any static host works. On Ve
 
 - `scripts/snap.cjs <url> <out> [--full] [--reduced]`: desktop and phone screenshots with console errors and overflow checks (needs Playwright).
 - `scripts/make-placeholders.mjs`: regenerates the placeholder images (see the warning above).
+- `node scripts/make-icons.mjs`: regenerates `public/apple-touch-icon.png` and `public/favicon.ico` after a change to `public/favicon.svg`.

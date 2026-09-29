@@ -149,11 +149,15 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
       if (ev.target === dialog && ev.propertyName === 'opacity' && dialog.open) dialog.classList.add('is-covering');
     };
     const show = () => {
-      if (!dialog.open) dialog.showModal();
+      // Browsers with invoker commands open it from the button's command attribute.
+      if (!dialog.open && !('command' in HTMLButtonElement.prototype)) dialog.showModal();
       open.setAttribute('aria-expanded', 'true');
       getLenis()?.stop();
     };
-    const hide = () => {
+    const hasCommands = 'command' in HTMLButtonElement.prototype;
+    // Close carries command="close"; let the browser run it where supported.
+    const hide = (ev?: Event) => {
+      if (hasCommands && ev?.currentTarget === close) return;
       if (dialog.open) dialog.close();
     };
     // Every way the menu closes (Close, Esc, a link out of the site) comes through here.

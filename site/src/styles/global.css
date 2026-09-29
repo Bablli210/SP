@@ -72,10 +72,13 @@
   --t-body: 16px;
   --t-lead: clamp(22px, 2.2vw, 30px);
   --t-name: clamp(34px, 4.4vw, 64px);
+  /* The five page titles (Work, Studio, Services, Lab, Contact); one phone size below. */
   --t-display: clamp(96px, 16vw, 240px);
 
   /* space */
   --g: clamp(16px, 2.8vw, 40px);
+  /* gutter between image tiles (work grid, lab, services cards, studio method and people) */
+  --tile-gap: clamp(12px, 1.4vw, 20px);
   --header-h: 72px;
   /* room kept clear for the preview notice at the bottom of the screen (0 when it is off) */
   --note-h: 0px;
@@ -84,7 +87,13 @@
   /* motion: one easing family for the whole site */
   --ease: cubic-bezier(0.7, 0, 0.2, 1);
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* motion that answers a press: starts at once, settles softly */
+  --ease-press: cubic-bezier(0.2, 0, 0, 1);
   --dur: 0.7s;
+
+  /* hover and focus in lists: the other items dim to this (3:1 or better), the one in hand nudges right */
+  --dim: 0.5;
+  --nudge: 0.12em;
 
   color-scheme: light;
 }
@@ -118,6 +127,12 @@ html {
   /* Focus and anchor scrolling stop clear of the fixed header and the preview notice. */
   scroll-padding-top: calc(var(--header-h) + 16px);
   scroll-padding-bottom: var(--note-h);
+}
+
+@media (max-width: 760px) {
+  :root {
+    --t-display: clamp(72px, 25vw, 124px);
+  }
 }
 
 /* Base.astro sets data-note while the preview notice is on. */

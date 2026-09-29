@@ -219,16 +219,25 @@ const LAYOUT = [
     }
   }
 
-  /* portrait phones get their own jumble; landscape ones keep the wide spread */
-  @media (max-width: 760px) and (orientation: portrait) {
+  /*
+   * Portrait phones and tablets get their own jumble (the wide spread leaves a
+   * tall empty band above it); landscape screens keep the wide spread.
+   */
+  @media (max-width: 1100px) and (orientation: portrait) {
     .spill {
-      --w: min(37vw, 21svh);
+      --w: min(30vw, 22svh);
     }
 
     .piece {
       --rot: var(--mr);
       left: var(--mx);
       bottom: calc(var(--mb) * var(--w));
+    }
+  }
+
+  @media (max-width: 760px) and (orientation: portrait) {
+    .spill {
+      --w: min(37vw, 21svh);
     }
   }
 

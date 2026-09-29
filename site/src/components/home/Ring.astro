@@ -227,10 +227,9 @@ const label =
   }
 
   /*
-   * Page transitions: no plate is a shared element by default, so arriving
-   * before ring.ts has loaded is a plain crossfade (a snapshot ignores the
-   * plate's own fade and veil, so named plates would flash in at full
-   * strength). ring.ts names the one plate that morphs, from data-vt.
+   * Page transitions: no plate is a shared element by default (a snapshot
+   * ignores the plate's own fade and veil, so named plates would flash in at
+   * full strength). ring.ts names the one plate that morphs, from data-vt.
    */
   .plate :global(.media) {
     view-transition-name: none;
@@ -661,6 +660,14 @@ const label =
 
     .views button {
       padding: 8px 14px 7px;
+    }
+  }
+
+  /* The Ring / Index toggle and the swipe hint need the script to do anything. */
+  @media (scripting: none) {
+    .views,
+    .hint {
+      display: none;
     }
   }
 </style>

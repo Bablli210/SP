@@ -146,6 +146,32 @@ const jsonLd = {
     }
   }
 
+  /*
+   * Tablets held upright (up to 1024 × 1366): side by side, the two columns
+   * leave a tall empty band. Stack them as on a phone, title sized by width.
+   */
+  @media (min-width: 761px) and (max-width: 1100px) and (orientation: portrait) {
+    .contact {
+      display: block;
+      min-height: 0;
+    }
+
+    .intro {
+      gap: 44px;
+    }
+
+    .title {
+      font-size: min(var(--t-display), 17vw);
+    }
+
+    .side {
+      max-width: 720px;
+      margin-top: 72px;
+      padding-top: 32px;
+      border-top: 1px solid var(--rule);
+    }
+  }
+
   @media (max-width: 760px) {
     .contact {
       display: block;
@@ -158,12 +184,9 @@ const jsonLd = {
       gap: 36px;
     }
 
-    /* the phone column is the page width */
+    /* the phone size every page title shares ("project" fits it down to 320px) */
     .title {
-      --cols: 12;
-      --fit: 3.34;
-      --cap: 150px;
-      --min: 64px;
+      font-size: var(--t-display);
     }
 
     .side {

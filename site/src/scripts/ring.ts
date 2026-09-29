@@ -16,7 +16,7 @@ import { prefetch } from 'astro:prefetch';
 import type { TransitionBeforePreparationEvent } from 'astro:transitions/client';
 import { reducedMotion, clamp } from './motion';
 import { GEOMETRY, MOBILE_QUERY, pose, pxPerStep, wrapK, type RingGeometry } from '../components/home/geometry';
-import { aimAtPointer, aimAtRow, follower, type PreviewBox } from '../components/home/preview-follow';
+import { aimAtPointer, aimAtRow, follower, type PreviewBox } from './preview-follow';
 
 const STORE_FRONT = 'sp:ring-front';
 const STORE_HINT = 'sp:ring-hint';
@@ -209,31 +209,6 @@ function nameOnly(plates: HTMLElement[], keep: number) {
   });
 }
 
-/**
- * Before the transition starts, decode the image the shared element becomes on
- * the next page, so the morph never lands on an empty frame. Capped short: the
- * page holds still while this waits (the pressed plate shows the click landed),
- * and a slow network should cost the morph a frame, not the visitor a pause.
- */
-async function warmShared(doc: Document, name: string, cap = 250) {
-  const css = Array.from(doc.querySelectorAll('style'))
-    .map((st) => st.textContent ?? '')
-    .join('\n');
-  const esc = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const hit = new RegExp(`\\[data-astro-transition-scope="([^"]+)"\\]\\s*\\{\\s*view-transition-name:\\s*${esc}\\s*;`).exec(css);
-  if (!hit) return;
-  const img = doc.querySelector<HTMLImageElement>(`[data-astro-transition-scope="${hit[1]}"] img`);
-  if (!img) return;
-  const pre = new Image();
-  const sizes = img.getAttribute('sizes');
-  const srcset = img.getAttribute('srcset');
-  const src = img.getAttribute('src');
-  if (sizes) pre.sizes = sizes;
-  if (srcset) pre.srcset = srcset;
-  if (src) pre.src = src;
-  await Promise.race([pre.decode().catch(() => {}), new Promise((r) => window.setTimeout(r, cap))]);
-}
-
 /* ---------- arriving by a page transition ---------- */
 
 let fromPath = '';
@@ -246,9 +221,9 @@ document.addEventListener('astro:before-preparation', (e) => {
  * transition captures it: lay the ring out on the project we came back from
  * (so its case hero morphs back into its plate), or where the visitor left it.
  *
- * This only runs once ring.ts has loaded, i.e. the visitor has been on the
- * home before in this tab. Arriving for the first time, every plate keeps the
- * stylesheet's view-transition-name: none and the page simply crossfades.
+ * Base.astro loads ring.ts on every page, so this runs on every arrival at
+ * the home by the router. Arriving from anywhere but a case page, every plate
+ * keeps the stylesheet's view-transition-name: none and the page crossfades.
  */
 document.addEventListener('astro:after-swap', () => {
   const root = document.querySelector<HTMLElement>('[data-ring]');
@@ -725,7 +700,7 @@ export function initRing(): (() => void) | void {
 
   /* ---------- index preview ---------- */
   /*
-   * Placement and motion come from components/home/preview-follow.ts: beside
+   * Placement and motion come from scripts/preview-follow.ts: beside
    * the pointer, never over the hovered name, below the header, with the same
    * follow, lean and rise as the /work/ list. A keyboard-focused row gets it
    * after its name, just above or below the row so its focus ring stays clear.
@@ -849,14 +824,8 @@ export function initRing(): (() => void) | void {
       const i = plateForPath(plates, e.to.pathname);
       if (i >= 0 && Math.abs(wrapK(i - cur, n)) <= 1.01) keep = i;
     }
+    // The hero's image is decoded ahead of the swap by case/warm.ts (site-wide).
     nameOnly(plates, keep);
-    const name = peekName || (keep >= 0 ? (plates[keep].dataset.vt ?? '') : '');
-    if (!name || reduce) return;
-    const load = e.loader;
-    e.loader = async () => {
-      await load();
-      await warmShared(e.newDocument, name);
-    };
   }
 
   function onRowClick(e: MouseEvent) {
@@ -892,6 +861,16 @@ export function initRing(): (() => void) | void {
   /* ---------- start ---------- */
   plates.forEach((p, i) => p.classList.toggle('is-front', i === active));
   render();
+
+  // Back from a case (Close, Esc, Back): focus returns to the plate it came
+  // from, now at the front, instead of dropping to the top of the document.
+  // Never on a fresh load: fromPath is only set by a router navigation.
+  if (CASE_PATH.test(fromPath)) {
+    const back = plateForPath(plates, fromPath);
+    const act = document.activeElement;
+    if (back >= 0 && (!act || act === document.body)) plates[back].focus({ preventScroll: true });
+  }
+  fromPath = '';
 
   // Once the first screen is in, fetch the rest of the plates and the previews.
   const warm = () => {

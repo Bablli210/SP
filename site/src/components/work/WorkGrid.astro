@@ -1,7 +1,7 @@
 ---
 /**
- * Grid view: 4:5 covers in four columns (two on tablet, one on phone) with
- * staggered offsets, and a fact caption under each. The covers carry the
+ * Grid view: 4:5 covers in four columns (three, then two on tablets, one on
+ * phones; the Lab's steps) with staggered offsets, and a fact caption under each. The covers carry the
  * shared-element names, so a cover morphs into its case-study hero. The
  * caption names the link, so the cover inside it is decorative (alt="").
  */
@@ -12,7 +12,7 @@ interface Props {
   entries: Entry[];
 }
 const { entries } = Astro.props;
-const sizes = '(max-width: 760px) calc(100vw - 32px), (max-width: 1099px) 46vw, 23vw';
+const sizes = '(max-width: 760px) calc(100vw - 32px), (max-width: 860px) 46vw, (max-width: 1099px) 31vw, 23vw';
 ---
 
 <div class="grid-view" data-panel="grid">
@@ -32,7 +32,9 @@ const sizes = '(max-width: 760px) calc(100vw - 32px), (max-width: 1099px) 46vw, 
             />
             <span class="cap">
               <span class="cap-main"><span class="cap-no">N°{e.no}<span class="sep" aria-hidden="true">·</span></span><span class="cap-title">{e.title}</span><span class="cap-year"><span class="sep" aria-hidden="true">·</span>{e.year}</span></span>
-              <span class="cap-meta"><span class="meta-no">{e.no} · </span>{e.sector} · {e.disc}</span>
+              <span class="cap-meta"><span class="meta-no">{e.no} · </span><span class="nw">{e.sector} ·</span>{' '}{e.discs.map((label, k) => (
+                <>{k > 0 && ' '}<span class="nw">{label}{k < e.discs.length - 1 ? ',' : ''}</span></>
+              ))}</span>
             </span>
           </a>
         </li>
@@ -54,10 +56,24 @@ const sizes = '(max-width: 760px) calc(100vw - 32px), (max-width: 1099px) 46vw, 
     padding: clamp(28px, 3vw, 44px) var(--g) var(--u);
   }
 
-  /* Every other column steps down; counted over what is showing, so it holds while filtering. */
+  /*
+   * Every other column steps down (four or two columns); counted over what is
+   * showing, so it holds while filtering. With three, only the middle one does.
+   */
   @media (min-width: 761px) {
     .cell:nth-child(4n + 2 of :not([hidden], .is-leaving)),
     .cell:nth-child(4n + 4 of :not([hidden], .is-leaving)) {
+      translate: 0 var(--u);
+    }
+  }
+
+  @media (min-width: 861px) and (max-width: 1099px) {
+    .cell:nth-child(4n + 2 of :not([hidden], .is-leaving)),
+    .cell:nth-child(4n + 4 of :not([hidden], .is-leaving)) {
+      translate: none;
+    }
+
+    .cell:nth-child(3n + 2 of :not([hidden], .is-leaving)) {
       translate: 0 var(--u);
     }
   }
@@ -105,6 +121,11 @@ const sizes = '(max-width: 760px) calc(100vw - 32px), (max-width: 1099px) 46vw, 
     color: var(--muted);
   }
 
+  /* a sector or discipline never breaks inside itself, only between them */
+  .nw {
+    white-space: nowrap;
+  }
+
   .meta-no {
     display: none;
   }
@@ -115,7 +136,7 @@ const sizes = '(max-width: 760px) calc(100vw - 32px), (max-width: 1099px) 46vw, 
     }
 
     .grid:has(.card:hover) .card:not(:hover) {
-      opacity: 0.42;
+      opacity: var(--dim);
     }
 
     .card :global(.media img) {
@@ -146,12 +167,14 @@ const sizes = '(max-width: 760px) calc(100vw - 32px), (max-width: 1099px) 46vw, 
   }
 
   /*
-   * Page transitions: arrive.ts names only the cover that morphs. Should the
-   * index arrive before that script is loaded, a cover with no partner on the
-   * page being left moves in with the page instead of fading on its own.
+   * Page transitions: arrive.ts names only the cover that morphs. A plate like
+   * every shared cover (global.css crops plates to the morphing frame; the new
+   * element's classes decide the pseudo-elements' classes, so the case -> grid
+   * hand-back needs it here). A cover with no partner on the page being left
+   * moves in with the page instead of fading on its own.
    */
   .cell :global(.media) {
-    view-transition-class: work-cover;
+    view-transition-class: plate work-cover;
   }
 
   :global(::view-transition-new(*.work-cover):only-child) {
@@ -178,6 +201,12 @@ const sizes = '(max-width: 760px) calc(100vw - 32px), (max-width: 1099px) 46vw, 
   }
 
   @media (max-width: 1099px) {
+    .grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 860px) {
     .grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }

@@ -81,7 +81,7 @@ const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
                           <Media
                             class="thumb"
                             src={p.data.cover}
-                            alt={p.data.coverAlt}
+                            alt=""
                             ratio="4 / 3"
                             sizes={sizes}
                             widths={[480, 800, 1200]}
@@ -156,7 +156,12 @@ const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
     void acc.offsetHeight;
     acc.removeAttribute('data-instant');
     if (remembered && typeof st.scrollY === 'number') window.scrollTo({ top: st.scrollY, behavior: 'instant' });
-    else if (fromHash && hit) hit.scrollIntoView({ block: 'start', behavior: 'instant' });
+    // Not scrollIntoView: that would add html's scroll-padding-top to the row's scroll-margin.
+    else if (fromHash && hit)
+      window.scrollTo({
+        top: hit.getBoundingClientRect().top + window.scrollY - (parseFloat(getComputedStyle(hit).scrollMarginTop) || 0),
+        behavior: 'instant',
+      });
   })();
 </script>
 
@@ -168,11 +173,8 @@ const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
   .acc {
     /* The glide of an open or a close (accordion.ts reads both). */
     --acc-dur: 0.85s;
-    /*
-     * An open answers a press, so it starts at once and settles softly; a close keeps
-     * var(--ease). (A candidate for a shared --ease-press token in global.css.)
-     */
-    --acc-press: cubic-bezier(0.2, 0, 0, 1);
+    /* An open answers a press, so it starts at once and settles softly; a close keeps var(--ease). */
+    --acc-press: var(--ease-press);
     /* The cues that acknowledge a press straight away: ground, sign, line. */
     --acc-cue: 0.45s;
     /* N° column, shared with the work list so names line up across pages */
@@ -363,7 +365,7 @@ const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
 
   @media (hover: hover) {
     .btn:hover .name {
-      transform: translate3d(0.12em, 0, 0);
+      transform: translate3d(var(--nudge), 0, 0);
     }
 
     .btn:hover .line {
@@ -372,7 +374,7 @@ const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
   }
 
   .btn:focus-visible .name {
-    transform: translate3d(0.12em, 0, 0);
+    transform: translate3d(var(--nudge), 0, 0);
   }
 
   /*
@@ -524,7 +526,7 @@ const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
     }
 
     .cards:has(.card:hover) .card:not(:hover) {
-      opacity: 0.45;
+      opacity: var(--dim);
     }
   }
 
@@ -557,8 +559,9 @@ const sizes = '(max-width: 760px) min(74vw, 340px), 28vw';
     }
 
     .line {
-      grid-column: 2;
+      grid-column: 2 / -1;
       grid-row: 2;
+      text-wrap: pretty;
     }
 
     .sign {

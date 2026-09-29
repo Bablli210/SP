@@ -376,7 +376,12 @@ const NOT_SURE = 'Not sure yet';
 
       const bad = fields.filter((f) => !mark(f));
       if (bad.length) {
-        bad[0].input.focus();
+        // Keep the field's number and label in view with its input, not just the input.
+        const { wrap, input } = bad[0];
+        const r = wrap.getBoundingClientRect();
+        const header = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 72;
+        if (r.top < header || r.bottom > window.innerHeight) wrap.scrollIntoView({ block: 'center' });
+        input.focus({ preventScroll: true });
         return;
       }
 

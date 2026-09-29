@@ -12,6 +12,8 @@ export interface Entry {
   d: string;
   /** Discipline labels, comma separated (display). */
   disc: string;
+  /** Discipline labels, one per discipline (display, where each is kept whole). */
+  discs: string[];
   url: string;
   plate: string;
   /** Shown inside links whose caption names the project, so without alt text. */

@@ -41,7 +41,6 @@ const two = (n: number) => String(n).padStart(2, '0');
 
   .title {
     font-size: var(--title);
-    white-space: nowrap;
   }
 
   /* The word rises into place from behind its own baseline. */
@@ -53,8 +52,10 @@ const two = (n: number) => String(n).padStart(2, '0');
     margin-block: -0.06em -0.02em;
   }
 
+  /* a word wider than its column (raised letter spacing) breaks, never clips in the mask */
   .word {
     display: block;
+    overflow-wrap: break-word;
     animation: services-rise 1.15s var(--ease-out) 0.08s both;
   }
 
@@ -94,9 +95,27 @@ const two = (n: number) => String(n).padStart(2, '0');
     }
   }
 
+  /*
+   * Phones share one title size (--t-display); "Services" is the widest title
+   * (3.46em), so it also stays within its own width, measured from the column
+   * (a classic scrollbar's gutter at 320px would otherwise break the word).
+   */
   @media (max-width: 760px) {
     .head {
-      --title: clamp(72px, 25vw, 124px);
+      container-type: inline-size;
+    }
+  }
+
+  @supports (width: 1cqi) {
+    @media (max-width: 760px) {
+      .title {
+        font-size: min(var(--title), 100cqi / 3.5);
+      }
+    }
+  }
+
+  @media (max-width: 760px) {
+    .head {
       flex-direction: column;
       align-items: stretch;
       gap: 20px;

@@ -29,6 +29,7 @@ const entries: Entry[] = projects.map((p) => ({
   year: p.data.year,
   d: p.data.disciplines.join(' '),
   disc: disciplineList(p),
+  discs: p.data.disciplines.map(disciplineLabel),
   url: projectUrl(p),
   plate: plateName(p),
   cover: p.data.cover,

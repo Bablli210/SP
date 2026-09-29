@@ -59,7 +59,7 @@ const [mailUser, mailDomain] = studio.email.split('@');
   .grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: clamp(40px, 4vw, 64px) var(--g);
+    gap: clamp(40px, 4vw, 64px) var(--tile-gap);
     margin-top: clamp(32px, 3.6vw, 56px);
   }
 
@@ -75,6 +75,7 @@ const [mailUser, mailDomain] = studio.email.split('@');
 
   .role {
     margin-top: 6px;
+    text-wrap: balance;
   }
 
   /* ---------- the open frame ---------- */
@@ -167,7 +168,6 @@ const [mailUser, mailDomain] = studio.email.split('@');
 
   @media (max-width: 760px) {
     .grid {
-      column-gap: 12px;
       row-gap: 36px;
     }
 

@@ -1,10 +1,13 @@
 /**
- * The cover that follows the cursor over the list view.
- * One rAF loop: it lerps toward the pointer, leans with the speed it trails
- * by, and stops as soon as it has settled. Keyboard focus places it beside
- * the focused row. Reduced motion: it sits at the pointer with no lag or lean.
+ * The cover that follows the cursor over the list view. Placement and motion
+ * are shared with the home Index (src/scripts/preview-follow.ts): beside the
+ * pointer, never over the hovered name, below the header, one rAF loop that
+ * lerps, leans and stops once settled. Keyboard focus places it after the
+ * focused row's name, just below the row (or above it near the bottom), so
+ * the row's focus ring stays clear. Reduced motion: no lag, lean or rise.
  */
-import { reducedMotion, clamp } from '../../scripts/motion';
+import { headerHeight, reducedMotion } from '../../scripts/motion';
+import { aimAtPointer, aimAtRow, follower, type PreviewBox } from '../../scripts/preview-follow';
 
 export interface Peek {
   /** The list view is showing (the peek only works there). */
@@ -18,86 +21,50 @@ export function setupPeek(root: HTMLElement, list: HTMLElement): Peek | null {
 
   const fine = window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 761px)');
   const reduce = reducedMotion();
+  const f = follower(el, reduce);
   const frames = new Map<string, HTMLElement>();
-  el.querySelectorAll<HTMLElement>('[data-peek-id]').forEach((f) => frames.set(f.dataset.peekId ?? '', f));
+  el.querySelectorAll<HTMLElement>('[data-peek-id]').forEach((fr) => frames.set(fr.dataset.peekId ?? '', fr));
 
   let enabled = true;
   let shown = false;
   let active: string | null = null;
   let named: HTMLElement | null = null;
-  let x = 0;
-  let y = 0;
-  let tx = 0;
-  let ty = 0;
-  let rot = 0;
-  let raf = 0;
-  let last = 0;
   let px = -1;
   let py = -1;
-  let w = 0;
-  let h = 0;
-  let headerH = 72;
+  let box: PreviewBox = { w: 0, h: 0, top: 80 };
 
   const measure = () => {
-    w = el.offsetWidth;
-    h = el.offsetHeight;
-    headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 72;
+    box = { w: el.offsetWidth, h: el.offsetHeight, top: headerHeight() + 8 };
   };
   measure();
 
-  const write = () => {
-    el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) rotate(${rot.toFixed(3)}deg)`;
+  /** How far a hovered name slides over (var(--nudge) in WorkList.astro), px. */
+  const shiftOf = (name: HTMLElement) => {
+    const v = getComputedStyle(document.documentElement).getPropertyValue('--nudge').trim();
+    const n = parseFloat(v) || 0;
+    return v.endsWith('em') ? n * parseFloat(getComputedStyle(name).fontSize) : n;
   };
 
   /**
-   * Aim beside the pointer, but never over the hovered name: the cover keeps
-   * clear of it and swings to the pointer's other side near the right edge.
+   * Right edge of a row's name where it comes to rest: its layout box, plus
+   * the slide when hovered. (Its drawn box would lag while the slide runs.)
    */
-  const aimAtPointer = (row: HTMLElement) => {
-    const gap = 28;
-    const vw = document.documentElement.clientWidth;
+  const nameRight = (row: HTMLElement, hovered: boolean) => {
     const name = row.querySelector<HTMLElement>('.c-name');
-    const clear = name ? name.getBoundingClientRect().right + gap : 0;
-    tx = Math.max(px + gap, clear);
-    if (tx + w > vw - 16) tx = px - gap - w;
-    ty = clamp(py - h / 2, headerH + 8, window.innerHeight - h - 16);
+    const parent = name?.offsetParent;
+    if (!name || !parent) return 0;
+    const left = parent.getBoundingClientRect().left + parent.clientLeft;
+    return left + name.offsetLeft + name.offsetWidth + (hovered ? shiftOf(name) : 0);
   };
 
-  const aimAtRow = (row: HTMLElement) => {
-    const r = row.getBoundingClientRect();
-    const name = row.querySelector<HTMLElement>('.c-name');
-    tx = Math.min((name?.getBoundingClientRect().right ?? r.left) + 28, r.right - w - 16);
-    ty = clamp(r.top + r.height / 2 - h / 2, headerH + 8, window.innerHeight - h - 16);
+  const toPointer = (row: HTMLElement) => {
+    if (!box.w) measure();
+    f.to(aimAtPointer(px, py, nameRight(row, true), box), !shown);
   };
 
-  const tick = (now: number) => {
-    const dt = Math.min(64, now - last);
-    last = now;
-    if (reduce) {
-      x = tx;
-      y = ty;
-      rot = 0;
-    } else {
-      const k = 1 - Math.pow(1 - 0.14, dt / 16.667);
-      x += (tx - x) * k;
-      y += (ty - y) * k;
-      const lean = clamp((tx - x) * 0.035, -7, 7);
-      rot += (lean - rot) * Math.min(1, k * 1.6);
-    }
-    const settled = Math.abs(tx - x) < 0.1 && Math.abs(ty - y) < 0.1 && Math.abs(rot) < 0.01;
-    if (settled) {
-      x = tx;
-      y = ty;
-      rot = 0;
-    }
-    write();
-    raf = settled ? 0 : requestAnimationFrame(tick);
-  };
-
-  const kick = () => {
-    if (raf) return;
-    last = performance.now();
-    raf = requestAnimationFrame(tick);
+  const toRow = (row: HTMLElement) => {
+    if (!box.w) measure();
+    f.to(aimAtRow(row.getBoundingClientRect(), nameRight(row, false), box), !shown);
   };
 
   const clearName = () => {
@@ -114,13 +81,8 @@ export function setupPeek(root: HTMLElement, list: HTMLElement): Peek | null {
     }
     if (!shown) {
       shown = true;
-      // Arrive at the target with a short rise instead of flying in from afar.
-      x = tx;
-      y = ty + (reduce ? 0 : 24);
-      rot = 0;
       el.classList.add('is-on');
     }
-    kick();
   };
 
   const hide = () => {
@@ -142,7 +104,8 @@ export function setupPeek(root: HTMLElement, list: HTMLElement): Peek | null {
     py = e.clientY;
     const row = rowAt(e.target);
     if (!row) return hide();
-    aimAtPointer(row);
+    if (!enabled || !fine.matches) return;
+    toPointer(row);
     show(row.dataset.id ?? '');
   };
 
@@ -151,7 +114,8 @@ export function setupPeek(root: HTMLElement, list: HTMLElement): Peek | null {
     if (px < 0 || !enabled) return;
     const row = rowAt(document.elementFromPoint(px, py));
     if (!row) return hide();
-    aimAtPointer(row);
+    if (!fine.matches) return;
+    toPointer(row);
     show(row.dataset.id ?? '');
   };
 
@@ -162,7 +126,8 @@ export function setupPeek(root: HTMLElement, list: HTMLElement): Peek | null {
   const onFocusIn = (e: FocusEvent) => {
     const row = rowAt(e.target);
     if (!row || !row.matches(':focus-visible')) return;
-    aimAtRow(row);
+    if (!enabled || !fine.matches) return;
+    toRow(row);
     show(row.dataset.id ?? '');
   };
 
@@ -203,8 +168,7 @@ export function setupPeek(root: HTMLElement, list: HTMLElement): Peek | null {
       if (!on) hide();
     },
     destroy() {
-      cancelAnimationFrame(raf);
-      raf = 0;
+      f.stop();
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', measure);

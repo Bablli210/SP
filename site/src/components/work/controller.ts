@@ -3,7 +3,8 @@
  * covers' part in page transitions.
  *
  * - Arriving: arrive.ts sets up the incoming index before the transition
- *   captures it (imported here, so it is registered once the index has loaded).
+ *   captures it (Base.astro registers it site-wide, so it runs on the first
+ *   arrival too).
  *   Back from a case (Close, Esc, Back), keyboard focus returns to that
  *   project's row or card when the page comes back to it, else to the content,
  *   so the next Tab carries on from there instead of from the top.
@@ -49,20 +50,6 @@ const MOTION: Record<View, SetMotion> = {
     enter: (el) => [{ target: el, from: { transform: 'translate3d(0, 40px, 0)', opacity: 0 } }],
   },
 };
-
-/** Decode the case hero before the morph starts, so the cover never lands on an empty frame. Capped. */
-async function warmHero(doc: Document, cap = 450) {
-  const img = doc.querySelector<HTMLImageElement>('[data-case-hero] img');
-  if (!img) return;
-  const pre = new Image();
-  const sizes = img.getAttribute('sizes');
-  const srcset = img.getAttribute('srcset');
-  const src = img.getAttribute('src');
-  if (sizes) pre.sizes = sizes;
-  if (srcset) pre.srcset = srcset;
-  if (src) pre.src = src;
-  await Promise.race([pre.decode().catch(() => {}), new Promise((r) => window.setTimeout(r, cap))]);
-}
 
 /* ---------- the page ---------- */
 
@@ -382,16 +369,9 @@ onPage(() => {
           return !!r && r.bottom > 0 && r.top < window.innerHeight;
         })) ||
       null;
-    nameOnly(items.grid, keep);
     // The list hands its floating cover over instead (peek.ts names it on click).
-    const morphs = !!keep || !!root.querySelector('[data-peek] .media[style*="view-transition-name"]');
-    if (morphs && !reduce) {
-      const load = e.loader;
-      e.loader = async () => {
-        await load();
-        await warmHero(e.newDocument);
-      };
-    }
+    // case/warm.ts (site-wide) decodes the hero before the morph starts.
+    nameOnly(items.grid, keep);
   };
 
   // ---------- start (applyInitial has painted the view, chips and count) ----------

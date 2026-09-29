@@ -77,7 +77,7 @@ const label = `Method, ${method.length} steps. Swipe or scroll sideways to move 
     margin-top: var(--sec);
     /* about three and a half steps across, never taller than the screen allows */
     --card: clamp(240px, min(27vw, (100svh - 300px) * 0.75), 460px);
-    --gap: clamp(14px, 1.6vw, 24px);
+    --gap: var(--tile-gap);
   }
 
   /* ---------- controls ---------- */
@@ -303,7 +303,6 @@ const label = `Method, ${method.length} steps. Swipe or scroll sideways to move 
   @media (max-width: 760px) {
     .method {
       --card: 74vw;
-      --gap: 12px;
     }
 
     .hint {
@@ -313,6 +312,13 @@ const label = `Method, ${method.length} steps. Swipe or scroll sideways to move 
     .ctl {
       width: 40px;
       height: 40px;
+    }
+  }
+
+  /* 320px: the hint (aria-hidden) gives its room to the ← / → controls */
+  @media (max-width: 339px) {
+    .hint {
+      display: none;
     }
   }
 </style>

@@ -101,14 +101,6 @@ const { entries } = Astro.props;
       opacity 0.5s var(--ease);
   }
 
-  .c-no,
-  .c-sector,
-  .c-disc,
-  .c-year {
-    opacity: var(--dim-fact, 1);
-    transition: opacity 0.5s var(--ease);
-  }
-
   .row-in .c-sector,
   .row-in .c-disc {
     font-size: var(--t-small);
@@ -121,15 +113,13 @@ const { entries } = Astro.props;
   }
 
   /*
-   * One row in ink, the rest recede, as in the home Index. Opacity only (it
-   * runs on the compositor; animating colour re-styled the whole list every
-   * frame), and never below AA on paper: the large names at 50% of ink
-   * (3.5:1, text 30px and up), the small facts at 65% (5.8:1, about graphite).
-   * The active row's N° takes the accent at once.
+   * One row in ink, the rest recede, as in the home Index: only the large
+   * names dim (opacity only, it runs on the compositor), to var(--dim) (ink at
+   * 50% on paper is 3.5:1, text 30px and up); the small facts keep their full
+   * contrast. The active row's N° takes the accent at once.
    */
   .rows:has(.row:focus-visible) .row:not(:focus-visible) {
-    --dim-name: 0.5;
-    --dim-fact: 0.65;
+    --dim-name: var(--dim);
   }
 
   .row:focus-visible .c-no {
@@ -138,12 +128,11 @@ const { entries } = Astro.props;
 
   @media (hover: hover) {
     .rows:has(.row:hover) .row:not(:hover) {
-      --dim-name: 0.5;
-      --dim-fact: 0.65;
+      --dim-name: var(--dim);
     }
 
     .row:hover .c-name {
-      transform: translate3d(0.14em, 0, 0);
+      transform: translate3d(var(--nudge), 0, 0);
     }
 
     .row:hover .c-no {

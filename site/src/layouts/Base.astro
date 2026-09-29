@@ -33,6 +33,7 @@ interface Props {
   headerOverlay?: boolean;
   close?: string;
   noindex?: boolean;
+  ogType?: 'website' | 'article';
   jsonLd?: Record<string, unknown>;
 }
 
@@ -48,6 +49,7 @@ const {
   headerOverlay = false,
   close,
   noindex = false,
+  ogType = 'website',
   jsonLd,
 } = Astro.props;
 
@@ -74,7 +76,7 @@ const ogImage = new URL(image, Astro.site);
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content={studio.name} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />

@@ -66,7 +66,7 @@ const sizes = '(max-width: 860px) calc(50vw - 24px), (max-width: 1099px) calc(33
 
   .masonry {
     --cols: 4;
-    --gap: clamp(8px, 1.15vw, 18px);
+    --gap: var(--tile-gap);
     /* one column's width, from the field's content width */
     --cw: calc((100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols));
     position: relative;

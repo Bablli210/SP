@@ -129,7 +129,7 @@ const { projects } = Astro.props;
   }
 
   /*
-   * How far a hovered name slides over: 0.14em, as in the /work/ list. It is
+   * How far a hovered name slides over: var(--nudge), as in the /work/ list. It is
    * registered as a length so src/scripts/ring.ts reads it in px and keeps the
    * cover preview clear of where the name comes to rest.
    */
@@ -141,7 +141,7 @@ const { projects } = Astro.props;
 
   /* hugs its text, so the cover preview can keep clear of the hovered name */
   .name {
-    --name-shift: 0.14em;
+    --name-shift: var(--nudge);
     justify-self: start;
     font-size: clamp(30px, 5.2svh, 60px);
     line-height: 1.05;
@@ -167,7 +167,7 @@ const { projects } = Astro.props;
    * size). The active row's N° takes the accent at once.
    */
   .rows:has(.row-link:focus-visible) .row-link:not(:focus-visible) .name {
-    opacity: 0.5;
+    opacity: var(--dim);
   }
 
   .row-link:focus-visible .no {
@@ -176,7 +176,7 @@ const { projects } = Astro.props;
 
   @media (hover: hover) and (pointer: fine) {
     .rows:hover .row-link:not(:hover) .name {
-      opacity: 0.5;
+      opacity: var(--dim);
     }
 
     .row-link:hover .name {

@@ -5,6 +5,8 @@
  */
 export const EASE = 'cubic-bezier(0.7, 0, 0.2, 1)';
 export const EASE_OUT = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+/** Motion that answers a press: starts at once, settles softly (--ease-press in global.css). */
+export const EASE_PRESS = 'cubic-bezier(0.2, 0, 0, 1)';
 export const TAG = 'lab-motion';
 
 export const own = (el: Element, subtree = false): Animation[] =>

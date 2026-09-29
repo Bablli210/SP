@@ -510,6 +510,35 @@ onPage(() => {
     if (!leanRaf) leanRaf = requestAnimationFrame(leanTick);
   };
 
+  /*
+   * Narrow screens: the cards scroll sideways. A card reached with the keyboard
+   * is brought fully into view by scrolling only its row of cards (never the
+   * page), to its snap position. After the browser's own focus scroll, so the
+   * two never fight; nothing moves when the card is already in full view.
+   */
+  let focusRaf = 0;
+  listen(acc, 'focusin', (e) => {
+    const card = (e.target as Element).closest?.<HTMLElement>('.card');
+    const cards = card?.closest<HTMLElement>('.cards');
+    if (!card || !cards || !card.matches(':focus-visible')) return;
+    cancelAnimationFrame(focusRaf);
+    focusRaf = requestAnimationFrame(() => {
+      focusRaf = 0;
+      if (cards.scrollWidth <= cards.clientWidth + 1) return;
+      const cs = getComputedStyle(cards);
+      const padL = parseFloat(cs.scrollPaddingLeft) || 0;
+      const padR = parseFloat(cs.scrollPaddingRight) || 0;
+      const box = cards.getBoundingClientRect();
+      const r = (card.parentElement ?? card).getBoundingClientRect();
+      if (r.left >= box.left + padL - 1 && r.right <= box.right - padR + 1) return;
+      cards.scrollTo({
+        left: cards.scrollLeft + r.left - (box.left + padL),
+        behavior: reducedMotion() ? 'instant' : 'smooth',
+      });
+    });
+  });
+  offs.push(() => cancelAnimationFrame(focusRaf));
+
   const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   if (fine && !reducedMotion()) {
     acc.querySelectorAll<HTMLElement>('[data-card]').forEach((card) => {

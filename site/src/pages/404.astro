@@ -133,6 +133,13 @@ import Spill from '../components/contact/Spill.astro';
     }
   }
 
+  /* upright tablets: a bigger code over the portrait jumble (Spill.astro) */
+  @media (min-width: 761px) and (max-width: 1100px) and (orientation: portrait) {
+    .code {
+      font-size: min(30vw, 22svh);
+    }
+  }
+
   @media (max-width: 760px) {
     .copy {
       padding-top: calc(var(--header-h) + clamp(12px, 5svh, 48px));

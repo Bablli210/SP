@@ -19,7 +19,7 @@
  */
 import type { TransitionBeforePreparationEvent } from 'astro:transitions/client';
 import { getLenis } from '../../scripts/motion';
-import { EASE, EASE_OUT, done, flip, play, pose, stop } from './anim';
+import { EASE, EASE_OUT, EASE_PRESS, done, flip, play, pose, stop } from './anim';
 
 export interface Viewer {
   open(tile: HTMLElement): void;
@@ -277,9 +277,14 @@ export function setupViewer(
     const from = tileMedia(tile).getBoundingClientRect();
     const to = hold.getBoundingClientRect();
     lift(tile);
-    const a = play(hold, [{ transform: flip(from, to) }, { transform: 'none' }], { duration: 900, easing: EASE });
-    play(bg, [{ opacity: 0 }, { opacity: 1 }], { duration: 560, easing: EASE });
-    for (const el of [...chrome, capOf(frame)]) play(el, rise, { duration: 800, delay: 380, easing: EASE_OUT, fill: 'backwards' });
+    // A press gets an answer at once: the image starts moving on the first
+    // frame and settles softly, and the chrome rises as it nears its place.
+    // (Reopened from history, it keeps the site's in-out ease.)
+    const ease = fromHistory ? EASE : EASE_PRESS;
+    const rise0 = fromHistory ? 380 : 220;
+    const a = play(hold, [{ transform: flip(from, to) }, { transform: 'none' }], { duration: 900, easing: ease });
+    play(bg, [{ opacity: 0 }, { opacity: 1 }], { duration: 560, easing: ease });
+    for (const el of [...chrome, capOf(frame)]) play(el, rise, { duration: 800, delay: rise0, easing: EASE_OUT, fill: 'backwards' });
     done(a).then(() => {
       if (my === token && state === 'opening') state = 'open';
     });
