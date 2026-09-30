@@ -65,7 +65,7 @@ Copy `.env.example` to `.env` and set `PUBLIC_FORM_ENDPOINT` to any form backend
 - [ ] Real projects, lab entries, studio facts and images in; no `[brackets]` left (`grep -rn "\[" src/data src/content`).
 - [ ] `PLACEHOLDER_CONTENT = false` in `src/data/site.ts`. This removes the preview notice and lets search engines in (`robots.txt`).
 - [ ] `PUBLIC_FORM_ENDPOINT` set, and a test brief received.
-- [ ] `site` in `astro.config.mjs` matches the real domain (it drives canonical URLs, the sitemap and social cards).
+- [ ] Set the `SITE_URL` environment variable to the real domain (e.g. `https://seriousplaystudio.com`). It drives canonical URLs, the sitemap and social cards; without it they point at the preview, `https://sp.o-rbit.co`.
 - [ ] Replace `public/og.jpg` (1200×630) with a real social card.
 - [ ] `npm run check` and `npm run build` both clean.
 

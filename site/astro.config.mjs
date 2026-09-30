@@ -29,7 +29,9 @@ function robotsGuard() {
 
 // https://docs.astro.build/en/reference/configuration-reference/
 export default defineConfig({
-  site: 'https://seriousplaystudio.com',
+  // Where the site lives: canonical URLs, the sitemap and social cards use it.
+  // Preview on sp.o-rbit.co; set SITE_URL=https://seriousplaystudio.com at launch.
+  site: process.env.SITE_URL || 'https://sp.o-rbit.co',
   integrations: [sitemap(), robotsGuard()],
   prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
   image: { responsiveStyles: true, layout: 'constrained' },
